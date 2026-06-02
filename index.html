@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SFE — Sistema Financeiro Empresarial</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#060d1a;--navy2:#0a1628;--navy3:#0f2040;
+  --s9:#111820;--s8:#1a2332;--s7:#243040;--s6:#334455;--s5:#445566;
+  --s4:#6688aa;--s3:#8899bb;--s2:#aabbd0;--s1:#ccd8e8;--s0:#e8eef8;
+  --gold:#c8940a;--glt:#e8b020;--gbg:#1a1400;--gbd:#3a2a00;
+  --grn:#1a8a4a;--glt2:#22aa5a;--gbg2:#001a0a;
+  --red:#c0271a;--rlt:#e03020;--rbg:#1a0500;--rbd:#3a0a00;
+  --amb:#b07010;--alt:#d89020;--abg:#1a1000;
+  --blu:#185fa5;--blt:#2888d8;--bbg:#001020;
+  --clt:#0a9abf;
+  --bor:rgba(255,255,255,0.07);--bhi:rgba(255,255,255,0.13);
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* SYS BAR */
+.sys-bar{height:36px;background:var(--navy2);border-bottom:2px solid var(--gold);display:flex;align-items:center;padding:0 16px;position:fixed;top:0;left:0;right:0;z-index:1000;gap:0}
+.sys-logo{display:flex;align-items:center;gap:10px;padding-right:18px;border-right:1px solid var(--bor);margin-right:16px;flex-shrink:0}
+.sys-logo-mark{width:20px;height:20px;background:var(--gold);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
+.sys-logo-text{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--s1);text-transform:uppercase}
+.sys-product{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s3);letter-spacing:.8px;text-transform:uppercase;flex:1}
+.sys-meta{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.sys-field{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px}
+.sys-field-label{color:var(--s5);text-transform:uppercase;letter-spacing:.5px}
+.sys-field-val{color:var(--s2);font-weight:500}
+.sys-sep{width:1px;height:18px;background:var(--bor)}
+.sys-status{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:3px 10px;border:1px solid var(--bor);border-radius:2px}
+.led{width:6px;height:6px;border-radius:50%;background:var(--s6)}
+.led.live{background:var(--glt2);box-shadow:0 0 6px var(--glt2);animation:blink 2.5s infinite}
+.led.demo{background:var(--glt);box-shadow:0 0 6px var(--glt)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* NAV BAR */
+.nav-bar{height:40px;background:var(--s9);border-bottom:1px solid var(--border);display:flex;align-items:stretch;position:fixed;top:36px;left:0;right:0;z-index:999;border-bottom:1px solid var(--bor)}
+.nav-mod{display:flex;align-items:center;padding:0 16px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--s4);cursor:pointer;border-right:1px solid var(--bor);transition:all .15s;gap:6px;user-select:none;white-space:nowrap}
+.nav-mod:hover{background:var(--s8);color:var(--s1)}
+.nav-mod.active{background:var(--navy3);color:var(--glt);border-bottom:2px solid var(--glt);margin-bottom:-1px}
+.nav-mod-num{font-size:9px;color:var(--s6);font-weight:400}
+.nav-right{margin-left:auto;display:flex;align-items:center;padding:0 12px;gap:8px;border-left:1px solid var(--bor)}
+.btn-sys{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:4px 12px;border-radius:2px;cursor:pointer;border:1px solid var(--bhi);transition:all .12s;background:transparent;color:var(--s3)}
+.btn-sys:hover{background:var(--s8);color:var(--s0);border-color:var(--s4)}
+.btn-sys.pri{background:var(--navy3);border-color:var(--gbd);color:var(--glt)}
+.btn-sys.pri:hover{background:var(--navy2);border-color:var(--gold)}
+.sel-sys{font-family:var(--mono);font-size:10px;font-weight:500;background:var(--s8);border:1px solid var(--bhi);border-radius:2px;color:var(--s2);padding:4px 8px;outline:none;cursor:pointer}
+
+/* LAYOUT */
+.layout{margin-top:76px;display:flex;min-height:calc(100vh - 76px)}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-width:220px;background:var(--s9);border-right:1px solid var(--bor);display:flex;flex-direction:column;position:sticky;top:76px;height:calc(100vh - 76px);overflow-y:auto;flex-shrink:0}
+.sb-head{padding:7px 14px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--s4);background:var(--navy2);border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between}
+.sb-item{display:flex;align-items:center;padding:9px 14px;gap:9px;font-size:13px;font-weight:500;color:var(--s2);cursor:pointer;transition:background .12s;border-bottom:1px solid var(--bor);user-select:none;position:relative}
+.sb-item:hover{background:var(--s8);color:var(--s0)}
+.sb-item.active{background:var(--navy3);color:var(--glt)}
+.sb-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
+.sb-code{font-family:var(--mono);font-size:9px;color:var(--s5);width:30px;flex-shrink:0;font-weight:400}
+.sb-badge{margin-left:auto;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:1px;background:var(--rbg);color:var(--rlt);border:1px solid var(--red)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;background:var(--navy)}
+.page{display:none}
+.page.active{display:block}
+
+/* CTX BAR */
+.ctx{height:32px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:10}
+.ctx-path{font-family:var(--mono);font-size:10px;color:var(--s5);display:flex;align-items:center;gap:5px;flex:1}
+.ctx-seg{color:var(--s4)}
+.ctx-seg.cur{color:var(--s1);font-weight:600}
+.ctx-sep{color:var(--s7)}
+.ctx-tools{display:flex;align-items:center;gap:6px}
+.ctx-info{font-family:var(--mono);font-size:9px;color:var(--s6)}
+
+/* SECTION BAND */
+.sband{display:flex;align-items:center;gap:12px;background:var(--navy2);border-bottom:1px solid var(--bor);padding:6px 16px}
+.sid{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--glt);letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0}
+.sname{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--s3);text-transform:uppercase;letter-spacing:.8px}
+.sline{flex:1;height:1px;background:var(--bor)}
+.stag{font-family:var(--mono);font-size:9px;color:var(--s5);padding:2px 7px;border:1px solid var(--bor);border-radius:1px}
+.stag.gold{color:var(--glt);border-color:var(--gbd)}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--bor)}
+.kpi-cell{padding:16px 18px;border-right:1px solid var(--bor);position:relative}
+.kpi-cell:last-child{border-right:none}
+.kpi-cell::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--s6))}
+.kpi-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.kpi-code{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);letter-spacing:1px;text-transform:uppercase}
+.kpi-flag{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:1px}
+.kpi-amt{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:6px}
+.kpi-lbl{font-size:12px;color:var(--s4);font-weight:400;margin-bottom:8px}
+.kpi-sub{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s5)}
+.vpos{color:var(--glt2)}.vneg{color:var(--rlt)}.vgold{color:var(--glt)}
+
+/* GRID */
+.dgrid{display:grid;grid-template-columns:1.5fr 1fr;border-bottom:1px solid var(--bor)}
+.dgrid-3{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bor)}
+.dpanel{border-right:1px solid var(--bor);display:flex;flex-direction:column}
+.dpanel:last-child{border-right:none}
+.dp-head{background:var(--s9);border-bottom:1px solid var(--bor);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dp-title{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--s2)}
+.dp-meta{font-family:var(--mono);font-size:9px;color:var(--s6);display:flex;align-items:center;gap:8px}
+.dp-body{padding:14px;flex:1}
+
+/* TABLE */
+.etable{width:100%;border-collapse:collapse}
+.etable th{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5);text-align:left;padding:6px 10px;border-bottom:1px solid var(--bhi);white-space:nowrap}
+.etable th.r{text-align:right}
+.etable td{padding:9px 10px;font-size:13px;border-bottom:1px solid var(--bor);vertical-align:middle}
+.etable tr:last-child td{border-bottom:none}
+.etable tr:hover td{background:rgba(255,255,255,.02)}
+.ecode{font-family:var(--mono);font-size:10px;color:var(--s5);font-weight:500}
+.ename{font-weight:600;color:var(--s0)}
+.emono{font-family:var(--mono);font-size:12px;font-weight:500}
+.bar-mini{height:3px;background:var(--s8);margin-top:4px}
+.bar-fill{height:100%;background:var(--clt);transition:width .5s}
+
+/* TX LOG */
+.tx-hdr{display:grid;grid-template-columns:72px 1fr 80px 100px 110px;padding:6px 14px;background:var(--s9);border-bottom:1px solid var(--bhi)}
+.tx-hdr span{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5)}
+.tx-row{display:grid;grid-template-columns:72px 1fr 80px 100px 110px;padding:8px 14px;border-bottom:1px solid var(--bor);font-size:13px;transition:background .1s;cursor:default}
+.tx-row:hover{background:rgba(255,255,255,.02)}
+.tx-date{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--s4)}
+.tx-desc{color:var(--s1);font-weight:500;padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tx-bank{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s5)}
+.cat-lbl{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 7px;border-radius:1px;text-transform:uppercase;letter-spacing:.5px;display:inline-block;white-space:nowrap}
+.tx-amt{font-family:var(--mono);font-size:13px;font-weight:600;text-align:right}
+
+/* ALERTS */
+.alert-entry{display:grid;grid-template-columns:22px 1fr auto;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bor);align-items:start}
+.alert-entry:hover{background:rgba(255,255,255,.02)}
+.asev{width:22px;height:22px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0;margin-top:1px}
+.atitle{font-size:13px;font-weight:600;color:var(--s0);margin-bottom:3px}
+.adesc{font-size:12px;color:var(--s4);line-height:1.5}
+.ats{font-family:var(--mono);font-size:9px;color:var(--s6);white-space:nowrap;margin-top:2px}
+
+/* CATS */
+.cat-row{display:grid;grid-template-columns:10px 1fr 110px 50px 120px;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bor);align-items:center}
+.cat-row:hover{background:rgba(255,255,255,.02)}
+.cdot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.cnm{font-size:13px;font-weight:500;color:var(--s1)}
+.cval{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--s0);text-align:right}
+.cpct{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--s4);text-align:right}
+.cbar{height:5px;background:var(--s8);border-radius:0;overflow:hidden}
+.cbar-fill{height:100%;transition:width .6s}
+
+/* BANK CARDS */
+.bank-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
+.bank-card{background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:16px;position:relative;overflow:hidden}
+.bank-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--bc,var(--s6))}
+.bank-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.bank-card-name{font-size:13px;font-weight:600;color:var(--s1)}
+.bank-card-code{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:1px}
+.bank-card-bal{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.5px;margin-bottom:4px}
+.bank-card-lbl{font-size:11px;color:var(--s5);font-weight:400}
+.bank-card-num{font-family:var(--mono);font-size:10px;color:var(--s6);margin-top:8px;padding-top:8px;border-top:1px solid var(--bor)}
+
+/* CASHFLOW PAGE */
+.cf-grid{display:grid;grid-template-columns:2fr 1fr;gap:0;border-bottom:1px solid var(--bor)}
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--bor)}
+.sum-cell{padding:14px 18px;border-right:1px solid var(--bor)}
+.sum-cell:last-child{border-right:none}
+.sum-lbl{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.sum-val{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-.5px}
+
+/* CONSOLE */
+.con-head{background:var(--navy2);border-bottom:1px solid var(--bor);padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+.con-title{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s3);display:flex;align-items:center;gap:8px}
+.con-badge{font-size:9px;padding:2px 8px;border:1px solid var(--gbd);background:var(--gbg);color:var(--glt);border-radius:1px;font-family:var(--mono);font-weight:600}
+.con-body{padding:16px}
+.con-row{display:flex;gap:10px;align-items:center}
+.con-prompt{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gold);flex-shrink:0}
+.con-input{flex:1;background:var(--s9);border:1px solid var(--bhi);border-radius:2px;color:var(--s0);font-family:var(--mono);font-size:13px;font-weight:500;padding:9px 14px;outline:none;caret-color:var(--glt)}
+.con-input:focus{border-color:var(--gbd);background:var(--navy2)}
+.con-input::placeholder{color:var(--s6)}
+.con-out{margin-top:14px;padding:14px 16px;background:var(--s9);border:1px solid var(--bor);border-left:3px solid var(--gold);font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--s2);display:none;white-space:pre-wrap}
+.con-out.show{display:block}
+.con-out-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block;font-weight:600}
+
+/* CONFIG MODAL */
+.modal{position:fixed;inset:0;background:rgba(6,13,26,.92);z-index:2000;display:none;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:var(--s9);border:1px solid var(--bhi);border-top:3px solid var(--gold);width:620px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--s1)}
+.modal-close{font-family:var(--mono);font-size:16px;color:var(--s5);cursor:pointer;background:none;border:none;line-height:1;padding:0 4px}
+.modal-close:hover{color:var(--s0)}
+.modal-body{padding:20px 18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-label{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5)}
+.form-input{background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s0);font-family:var(--mono);font-size:13px;font-weight:500;padding:9px 12px;outline:none;width:100%}
+.form-input:focus{border-color:var(--gbd)}
+.form-input::placeholder{color:var(--s7)}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--bor);display:flex;gap:8px;align-items:center}
+.modal-hint{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--s6)}
+
+/* MISC */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--navy)}
+::-webkit-scrollbar-thumb{background:var(--s7)}
+.empty{padding:32px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--s7);text-transform:uppercase;letter-spacing:1px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page.active{animation:fadeIn .2s ease}
+</style>
+</head>
+<body>
+
+<!-- SYS BAR -->
+<div class="sys-bar">
+  <div class="sys-logo">
+    <div class="sys-logo-mark"></div>
+    <span class="sys-logo-text">SFE</span>
+  </div>
+  <div class="sys-product">Sistema Financeiro Empresarial &nbsp;·&nbsp; v1.0</div>
+  <div class="sys-meta">
+    <div class="sys-field"><span class="sys-field-label">Empresa</span><span class="sys-field-val" id="sys-co">—</span></div>
+    <div class="sys-sep"></div>
+    <div class="sys-field"><span class="sys-field-label">CNPJ</span><span class="sys-field-val" id="sys-cnpj">—</span></div>
+    <div class="sys-sep"></div>
+    <div class="sys-field"><span class="sys-field-label">Atualizado</span><span class="sys-field-val" id="sys-time">—</span></div>
+    <div class="sys-sep"></div>
+    <div class="sys-status"><div class="led demo" id="s-led"></div><span id="s-msg" style="font-family:var(--mono);font-size:10px;color:var(--glt);font-weight:600">DEMO</span></div>
+  </div>
+</div>
+
+<!-- NAV BAR -->
+<nav class="nav-bar">
+  <div class="nav-mod active" onclick="navTo('painel',this)"><span class="nav-mod-num">F01</span>Painel Executivo</div>
+  <div class="nav-mod" onclick="navTo('bancos',this)"><span class="nav-mod-num">F02</span>Posição Bancária</div>
+  <div class="nav-mod" onclick="navTo('fluxo',this)"><span class="nav-mod-num">F03</span>Fluxo de Caixa</div>
+  <div class="nav-mod" onclick="navTo('lancamentos',this)"><span class="nav-mod-num">F04</span>Lançamentos</div>
+  <div class="nav-mod" onclick="navTo('categorias',this)"><span class="nav-mod-num">F05</span>Categorias</div>
+  <div class="nav-mod" onclick="navTo('alertas',this)"><span class="nav-mod-num">F06</span>Alertas <span class="sb-badge" id="nav-badge" style="margin-left:6px;display:none">0</span></div>
+  <div class="nav-mod" onclick="navTo('pagar',this)"><span class="nav-mod-num">F07</span>Contas a Pagar</div>
+  <div class="nav-mod" onclick="navTo('receber',this)"><span class="nav-mod-num">F08</span>Contas a Receber</div>
+  <div class="nav-mod" onclick="navTo('clientes',this)"><span class="nav-mod-num">F09</span>Clientes</div>
+  <div class="nav-mod" onclick="navTo('fornecedores',this)"><span class="nav-mod-num">F10</span>Fornecedores</div>
+  <div class="nav-right">
+    <select class="sel-sys" id="period-sel" onchange="renderAll()">
+      <option value="30">30 DIAS</option>
+      <option value="90">90 DIAS</option>
+      <option value="180">180 DIAS</option>
+    </select>
+    <button class="btn-sys" onclick="openModal()">⚙ PARÂM.</button>
+    <button class="btn-sys pri" onclick="renderAll()">↻ ATUALIZAR</button>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-head"><span>Módulos</span><span style="color:var(--s7)">SFE</span></div>
+    <div class="sb-item active" onclick="navTo('painel',null,this)"><span class="sb-code">GCB</span>Painel Executivo</div>
+    <div class="sb-item" onclick="navTo('bancos',null,this)"><span class="sb-code">BNK</span>Posição Bancária</div>
+    <div class="sb-item" onclick="navTo('fluxo',null,this)"><span class="sb-code">FLX</span>Fluxo de Caixa</div>
+    <div class="sb-item" onclick="navTo('lancamentos',null,this)"><span class="sb-code">TRN</span>Lançamentos</div>
+    <div class="sb-item" onclick="navTo('categorias',null,this)"><span class="sb-code">CAT</span>Categorias</div>
+    <div class="sb-item" onclick="navTo('alertas',null,this)"><span class="sb-code">ALT</span>Alertas<span class="sb-badge" id="sb-badge">0</span></div>
+    <div class="sb-item" onclick="navTo('ia',null,this)"><span class="sb-code">AI</span>Análise IA</div>
+    <div class="sb-item" onclick="navTo('pagar',null,this)"><span class="sb-code">CP</span>Contas a Pagar</div>
+    <div class="sb-item" onclick="navTo('receber',null,this)"><span class="sb-code">CR</span>Contas a Receber</div>
+    <div class="sb-item" onclick="navTo('clientes',null,this)"><span class="sb-code">CLI</span>Clientes</div>
+    <div class="sb-item" onclick="navTo('fornecedores',null,this)"><span class="sb-code">FRN</span>Fornecedores</div>
+
+    <div class="sb-head" style="margin-top:8px"><span>Bancos Conectados</span></div>
+    <div id="sb-banks"></div>
+
+    <div class="sb-head" style="margin-top:auto"><span>Sistema</span></div>
+    <div class="sb-item" onclick="openModal()"><span class="sb-code">⚙</span>Configurações</div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- ══ F01: PAINEL ══ -->
+    <div id="page-painel" class="page active">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F01</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Painel Executivo</span></div><div class="ctx-tools"><span class="ctx-info" id="p-updated">—</span><button class="btn-sys" onclick="exportCSV()">⬇ CSV</button></div></div>
+
+      <div class="sband"><span class="sid">GCB-001</span><span class="sname">Indicadores de Posição</span><div class="sline"></div><span class="stag" id="kpi-date">—</span></div>
+      <div class="kpi-strip">
+        <div class="kpi-cell" style="--c:var(--clt)">
+          <div class="kpi-hdr"><span class="kpi-code">SALDO.CONS</span><span class="kpi-flag" id="f1" style="background:rgba(10,112,144,.2);color:var(--clt);border:1px solid var(--clt)44">—</span></div>
+          <div class="kpi-amt vpos" id="kv-saldo">—</div>
+          <div class="kpi-lbl">Saldo Consolidado</div>
+          <div class="kpi-sub" id="ks-saldo">—</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--glt2)">
+          <div class="kpi-hdr"><span class="kpi-code">CRED.TOT</span><span class="kpi-flag" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">▲ CRÉD</span></div>
+          <div class="kpi-amt vpos" id="kv-ent">—</div>
+          <div class="kpi-lbl">Total de Créditos</div>
+          <div class="kpi-sub" id="ks-ent">—</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--rlt)">
+          <div class="kpi-hdr"><span class="kpi-code">DEB.TOT</span><span class="kpi-flag" style="background:var(--rbg);color:var(--rlt);border:1px solid var(--red)">▼ DÉB</span></div>
+          <div class="kpi-amt vneg" id="kv-sai">—</div>
+          <div class="kpi-lbl">Total de Débitos</div>
+          <div class="kpi-sub" id="ks-sai">—</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--gold)">
+          <div class="kpi-hdr"><span class="kpi-code">RES.LIQ</span><span class="kpi-flag" id="f4" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">POS</span></div>
+          <div class="kpi-amt vgold" id="kv-res">—</div>
+          <div class="kpi-lbl">Resultado Líquido</div>
+          <div class="kpi-sub" id="ks-res">—</div>
+        </div>
+      </div>
+
+      <div class="sband"><span class="sid">GCB-001B</span><span class="sname">Contas a Pagar / Receber</span><div class="sline"></div><span class="stag" id="cpcr-date">—</span></div>
+      <div class="kpi-strip">
+        <div class="kpi-cell" style="--c:var(--rlt)">
+          <div class="kpi-hdr"><span class="kpi-code">CP.VENC.HOJE</span><span class="kpi-flag" id="cp-hoje-flag" style="background:var(--rbg);color:var(--rlt);border:1px solid var(--red)">—</span></div>
+          <div class="kpi-amt vneg" id="cp-hoje-val">R$ 0,00</div>
+          <div class="kpi-lbl">Vence Hoje / Vencido</div>
+          <div class="kpi-sub" id="cp-hoje-sub">0 TÍTULOS</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--alt)">
+          <div class="kpi-hdr"><span class="kpi-code">CP.PROX7D</span><span class="kpi-flag" style="background:var(--abg);color:var(--alt);border:1px solid var(--amb)">7D</span></div>
+          <div class="kpi-amt" style="color:var(--alt)" id="cp-7d-val">R$ 0,00</div>
+          <div class="kpi-lbl">A Pagar — Próx. 7 Dias</div>
+          <div class="kpi-sub" id="cp-7d-sub">0 TÍTULOS</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--glt2)">
+          <div class="kpi-hdr"><span class="kpi-code">CR.VENC.HOJE</span><span class="kpi-flag" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">—</span></div>
+          <div class="kpi-amt vpos" id="cr-hoje-val">R$ 0,00</div>
+          <div class="kpi-lbl">A Receber Hoje / Vencido</div>
+          <div class="kpi-sub" id="cr-hoje-sub">0 TÍTULOS</div>
+        </div>
+        <div class="kpi-cell" style="--c:var(--clt)">
+          <div class="kpi-hdr"><span class="kpi-code">CR.PROX7D</span><span class="kpi-flag" style="background:rgba(10,112,144,.2);color:var(--clt);border:1px solid var(--clt)44">7D</span></div>
+          <div class="kpi-amt" style="color:var(--clt)" id="cr-7d-val">R$ 0,00</div>
+          <div class="kpi-lbl">A Receber — Próx. 7 Dias</div>
+          <div class="kpi-sub" id="cr-7d-sub">0 TÍTULOS</div>
+        </div>
+      </div>
+
+      <div class="sband"><span class="sid">GCB-002</span><span class="sname">Evolução do Fluxo</span><div class="sline"></div><span class="stag" id="cf-tag">30 DIAS</span></div>
+      <div style="padding:16px;height:260px"><canvas id="cf-chart-main"></canvas></div>
+
+      <div class="sband"><span class="sid">GCB-003</span><span class="sname">Últimos Lançamentos</span><div class="sline"></div><span class="stag" id="tx-tag">—</span></div>
+      <div class="tx-hdr"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span style="text-align:right">Valor (R$)</span></div>
+      <div id="tx-log-main"></div>
+    </div>
+
+    <!-- ══ F02: BANCOS ══ -->
+    <div id="page-bancos" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F02</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Posição Bancária</span></div><div class="ctx-tools"><span class="ctx-info" id="bk-count">—</span></div></div>
+
+      <div class="sband"><span class="sid">BNK-001</span><span class="sname">Saldo por Instituição Financeira</span><div class="sline"></div><span class="stag" id="bk-total">—</span></div>
+      <div class="bank-cards" id="bank-cards"></div>
+
+      <div class="sband"><span class="sid">BNK-002</span><span class="sname">Tabela Consolidada</span><div class="sline"></div></div>
+      <div class="dp-body" style="padding:0">
+        <table class="etable">
+          <thead><tr><th>Cód.</th><th>Instituição</th><th>Tipo</th><th>Agência/Conta</th><th class="r">Saldo</th><th class="r">Part.%</th><th>Participação</th></tr></thead>
+          <tbody id="bk-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ F03: FLUXO ══ -->
+    <div id="page-fluxo" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F03</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Fluxo de Caixa</span></div></div>
+
+      <div class="sband"><span class="sid">FLX-001</span><span class="sname">Resumo do Período</span><div class="sline"></div></div>
+      <div class="summary-row">
+        <div class="sum-cell"><div class="sum-lbl">Total Entradas</div><div class="sum-val vpos" id="fl-ent">—</div></div>
+        <div class="sum-cell"><div class="sum-lbl">Total Saídas</div><div class="sum-val vneg" id="fl-sai">—</div></div>
+        <div class="sum-cell"><div class="sum-lbl">Resultado</div><div class="sum-val vgold" id="fl-res">—</div></div>
+      </div>
+
+      <div class="sband"><span class="sid">FLX-002</span><span class="sname">Evolução Diária — Créditos vs Débitos</span><div class="sline"></div></div>
+      <div style="padding:20px;height:300px"><canvas id="cf-chart-full"></canvas></div>
+
+      <div class="sband"><span class="sid">FLX-003</span><span class="sname">Projeção de Caixa (30 dias)</span><div class="sline"></div><span class="stag gold">IA PREDITIVA</span></div>
+      <div style="padding:20px;height:220px"><canvas id="cf-proj"></canvas></div>
+    </div>
+
+    <!-- ══ F04: LANÇAMENTOS ══ -->
+    <div id="page-lancamentos" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F04</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Lançamentos</span></div><div class="ctx-tools"><span class="ctx-info" id="ln-count">—</span><button class="btn-sys" onclick="exportCSV()">⬇ CSV</button></div></div>
+      <div class="sband"><span class="sid">TRN-001</span><span class="sname">Log de Lançamentos</span><div class="sline"></div></div>
+      <div class="tx-hdr"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span style="text-align:right">Valor (R$)</span></div>
+      <div id="tx-log-full"></div>
+    </div>
+
+    <!-- ══ F05: CATEGORIAS ══ -->
+    <div id="page-categorias" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F05</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Categorias</span></div><div class="ctx-tools"><span class="ctx-info" id="cat-total">—</span></div></div>
+
+      <div class="sband"><span class="sid">CAT-001</span><span class="sname">Distribuição de Despesas</span><div class="sline"></div></div>
+      <div class="dgrid">
+        <div class="dpanel">
+          <div class="dp-head"><span class="dp-title">Gráfico de Composição</span><span class="dp-meta">DOUGHNUT</span></div>
+          <div style="padding:16px;height:280px"><canvas id="pie-chart"></canvas></div>
+        </div>
+        <div class="dpanel">
+          <div class="dp-head"><span class="dp-title">Detalhe por Categoria</span><span class="dp-meta" id="cat-count">—</span></div>
+          <div id="cat-rows"></div>
+        </div>
+      </div>
+
+      <div class="sband"><span class="sid">CAT-002</span><span class="sname">Evolução Mensal por Categoria</span><div class="sline"></div></div>
+      <div style="padding:16px;height:240px"><canvas id="cat-bar"></canvas></div>
+    </div>
+
+    <!-- ══ F06: ALERTAS ══ -->
+    <div id="page-alertas" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F06</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Alertas Operacionais</span></div><div class="ctx-tools"><span class="ctx-info" id="alt-count">—</span></div></div>
+      <div class="sband"><span class="sid">ALT-001</span><span class="sname">Ocorrências e Alertas Ativos</span><div class="sline"></div></div>
+      <div id="alt-log"></div>
+    </div>
+
+    <!-- ══ IA ══ -->
+    <div id="page-ia" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Console de Análise IA</span></div></div>
+      <div class="sband"><span class="sid">AI-001</span><span class="sname">Consulta em Linguagem Natural</span><div class="sline"></div><span class="stag gold">CLAUDE SONNET 4</span></div>
+      <div class="con-head">
+        <div class="con-title"><span>▶</span>Analista Financeiro Virtual<span class="con-badge">claude-sonnet-4</span></div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--s6)">NLP/FIN · v1.0</span>
+      </div>
+      <div class="con-body">
+        <div class="con-row">
+          <span class="con-prompt">SFE&gt;</span>
+          <input class="con-input" id="ai-input" type="text" placeholder="Ex: Tenho saldo para fechar a folha? / Quais os maiores custos do mês? / Há risco de ruptura de caixa?" onkeypress="if(event.key==='Enter')runQuery()">
+          <button class="btn-sys pri" id="ai-btn" onclick="runQuery()" style="padding:9px 18px">EXECUTAR</button>
+        </div>
+        <div class="con-out" id="ai-out"><span class="con-out-lbl">▶ RESPOSTA — Claude Sonnet 4</span><span id="ai-txt"></span></div>
+
+        <div style="margin-top:20px;border-top:1px solid var(--bor);padding-top:16px">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Consultas Rápidas</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px" id="quick-queries"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:40px"></div>
+
+    <!-- ══ F07: CONTAS A PAGAR ══ -->
+    <div id="page-pagar" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F07</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Contas a Pagar</span></div><div class="ctx-tools"><span class="ctx-info" id="cp-count">—</span><button class="btn-sys pri" onclick="openFormCP()">+ NOVO TÍTULO</button></div></div>
+
+      <div class="sband"><span class="sid">CP-001</span><span class="sname">Resumo de Posição</span><div class="sline"></div></div>
+      <div class="kpi-strip">
+        <div class="kpi-cell" style="--c:var(--rlt)"><div class="kpi-hdr"><span class="kpi-code">VENCIDO</span></div><div class="kpi-amt vneg" id="cp-s-venc">R$ 0,00</div><div class="kpi-lbl">Total Vencido</div><div class="kpi-sub" id="cp-s-venc-n">0 títulos</div></div>
+        <div class="kpi-cell" style="--c:var(--alt)"><div class="kpi-hdr"><span class="kpi-code">HOJE/7 DIAS</span></div><div class="kpi-amt" style="color:var(--alt)" id="cp-s-7d">R$ 0,00</div><div class="kpi-lbl">Vence em 7 Dias</div><div class="kpi-sub" id="cp-s-7d-n">0 títulos</div></div>
+        <div class="kpi-cell" style="--c:var(--glt2)"><div class="kpi-hdr"><span class="kpi-code">PAGO MÊS</span></div><div class="kpi-amt vpos" id="cp-s-pago">R$ 0,00</div><div class="kpi-lbl">Pago no Mês</div><div class="kpi-sub" id="cp-s-pago-n">0 títulos</div></div>
+        <div class="kpi-cell" style="--c:var(--clt)"><div class="kpi-hdr"><span class="kpi-code">A PAGAR TOTAL</span></div><div class="kpi-amt" style="color:var(--clt)" id="cp-s-total">R$ 0,00</div><div class="kpi-lbl">Total em Aberto</div><div class="kpi-sub" id="cp-s-total-n">0 títulos</div></div>
+      </div>
+
+      <div class="sband"><span class="sid">CP-002</span><span class="sname">Títulos a Pagar</span><div class="sline"></div><span class="stag" id="cp-filter-tag">TODOS</span></div>
+      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
+        <button class="btn-sys active-filter" id="cpf-todos"   onclick="filterCP('todos')"   style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
+        <button class="btn-sys" id="cpf-vencido" onclick="filterCP('vencido')" >VENCIDOS</button>
+        <button class="btn-sys" id="cpf-hoje"    onclick="filterCP('hoje')"    >VENCE HOJE</button>
+        <button class="btn-sys" id="cpf-7d"      onclick="filterCP('7d')"      >PRÓX. 7 DIAS</button>
+        <button class="btn-sys" id="cpf-pendente"onclick="filterCP('pendente')">PENDENTES</button>
+        <button class="btn-sys" id="cpf-pago"    onclick="filterCP('pago')"    >PAGOS</button>
+        <div style="margin-left:auto"><input id="cp-search" type="text" placeholder="Buscar fornecedor..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:200px" oninput="renderCP()"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="etable" style="min-width:800px">
+          <thead><tr><th>Status</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Emissão</th><th>Vencimento</th><th class="r">Valor</th><th>Ações</th></tr></thead>
+          <tbody id="cp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORM CP -->
+    <div class="modal" id="modal-cp" onclick="if(event.target===this)closeFormCP()">
+      <div class="modal-box" style="width:680px">
+        <div class="modal-hdr"><span class="modal-title">Lançar Conta a Pagar — F07</span><button class="modal-close" onclick="closeFormCP()">✕</button></div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Fornecedor *</label><input class="form-input" id="cp-forn" type="text" placeholder="Nome do fornecedor" list="forn-list"><datalist id="forn-list"></datalist></div>
+            <div class="form-field"><label class="form-label">Categoria</label>
+              <select class="form-input" id="cp-cat">
+                <option>Fornecedores</option><option>Folha de Pagamento</option><option>Impostos</option>
+                <option>Aluguel</option><option>Serviços</option><option>Fretes e Logística</option>
+                <option>Financeiro</option><option>Outros</option>
+              </select>
+            </div>
+            <div class="form-field"><label class="form-label">Descrição *</label><input class="form-input" id="cp-desc" type="text" placeholder="Ex: NF-e 004521 — Insumos"></div>
+            <div class="form-field"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cp-val" type="number" step="0.01" placeholder="0,00"></div>
+            <div class="form-field"><label class="form-label">Data de Emissão</label><input class="form-input" id="cp-emis" type="date"></div>
+            <div class="form-field"><label class="form-label">Data de Vencimento *</label><input class="form-input" id="cp-venc" type="date"></div>
+            <div class="form-field"><label class="form-label">Banco para Pagamento</label>
+              <select class="form-input" id="cp-banco">
+                <option value="SC">Sicredi</option><option value="BB">Banco do Brasil</option>
+                <option value="BD">Bradesco</option><option value="CX">Caixa Econômica</option><option value="ST">Santander</option>
+              </select>
+            </div>
+            <div class="form-field"><label class="form-label">Nº Documento</label><input class="form-input" id="cp-doc" type="text" placeholder="NF / Boleto / Contrato"></div>
+          </div>
+          <div class="form-field" style="margin-bottom:0"><label class="form-label">Observações</label><input class="form-input" id="cp-obs" type="text" placeholder="Observações adicionais"></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-sys pri" onclick="saveCP()">SALVAR TÍTULO</button>
+          <button class="btn-sys" onclick="closeFormCP()">CANCELAR</button>
+          <input type="hidden" id="cp-edit-id">
+          <span class="modal-hint">* campos obrigatórios</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ F08: CONTAS A RECEBER ══ -->
+    <div id="page-receber" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F08</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Contas a Receber</span></div><div class="ctx-tools"><span class="ctx-info" id="cr-count">—</span><button class="btn-sys pri" onclick="openFormCR()">+ NOVO TÍTULO</button></div></div>
+
+      <div class="sband"><span class="sid">CR-001</span><span class="sname">Resumo de Posição</span><div class="sline"></div></div>
+      <div class="kpi-strip">
+        <div class="kpi-cell" style="--c:var(--rlt)"><div class="kpi-hdr"><span class="kpi-code">INADIMPLENTE</span></div><div class="kpi-amt vneg" id="cr-s-venc">R$ 0,00</div><div class="kpi-lbl">Total Inadimplente</div><div class="kpi-sub" id="cr-s-venc-n">0 clientes</div></div>
+        <div class="kpi-cell" style="--c:var(--alt)"><div class="kpi-hdr"><span class="kpi-code">VENCE 7 DIAS</span></div><div class="kpi-amt" style="color:var(--alt)" id="cr-s-7d">R$ 0,00</div><div class="kpi-lbl">A Receber em 7 Dias</div><div class="kpi-sub" id="cr-s-7d-n">0 títulos</div></div>
+        <div class="kpi-cell" style="--c:var(--glt2)"><div class="kpi-hdr"><span class="kpi-code">RECEBIDO MÊS</span></div><div class="kpi-amt vpos" id="cr-s-rec">R$ 0,00</div><div class="kpi-lbl">Recebido no Mês</div><div class="kpi-sub" id="cr-s-rec-n">0 títulos</div></div>
+        <div class="kpi-cell" style="--c:var(--clt)"><div class="kpi-hdr"><span class="kpi-code">A RECEBER TOTAL</span></div><div class="kpi-amt" style="color:var(--clt)" id="cr-s-total">R$ 0,00</div><div class="kpi-lbl">Total em Aberto</div><div class="kpi-sub" id="cr-s-total-n">0 títulos</div></div>
+      </div>
+
+      <div class="sband"><span class="sid">CR-002</span><span class="sname">Títulos a Receber</span><div class="sline"></div></div>
+      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
+        <button class="btn-sys" id="crf-todos"    onclick="filterCR('todos')"    style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
+        <button class="btn-sys" id="crf-vencido"  onclick="filterCR('vencido')"  >VENCIDOS</button>
+        <button class="btn-sys" id="crf-hoje"     onclick="filterCR('hoje')"     >VENCE HOJE</button>
+        <button class="btn-sys" id="crf-7d"       onclick="filterCR('7d')"       >PRÓX. 7 DIAS</button>
+        <button class="btn-sys" id="crf-pendente" onclick="filterCR('pendente')" >PENDENTES</button>
+        <button class="btn-sys" id="crf-recebido" onclick="filterCR('recebido')" >RECEBIDOS</button>
+        <div style="margin-left:auto"><input id="cr-search" type="text" placeholder="Buscar cliente..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:200px" oninput="renderCR()"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="etable" style="min-width:800px">
+          <thead><tr><th>Status</th><th>Cliente</th><th>Descrição</th><th>Emissão</th><th>Vencimento</th><th>Dias</th><th class="r">Valor</th><th>Ações</th></tr></thead>
+          <tbody id="cr-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORM CR -->
+    <div class="modal" id="modal-cr" onclick="if(event.target===this)closeFormCR()">
+      <div class="modal-box" style="width:680px">
+        <div class="modal-hdr"><span class="modal-title">Lançar Conta a Receber — F08</span><button class="modal-close" onclick="closeFormCR()">✕</button></div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Cliente *</label><input class="form-input" id="cr-cli" type="text" placeholder="Nome do cliente" list="cli-list"><datalist id="cli-list"></datalist></div>
+            <div class="form-field"><label class="form-label">Tipo</label>
+              <select class="form-input" id="cr-tipo">
+                <option>NF-e / Duplicata</option><option>Boleto</option><option>PIX</option>
+                <option>Cheque</option><option>Contrato</option><option>Outros</option>
+              </select>
+            </div>
+            <div class="form-field"><label class="form-label">Descrição *</label><input class="form-input" id="cr-desc" type="text" placeholder="Ex: NF-e 12045 — Pedido #3301"></div>
+            <div class="form-field"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cr-val" type="number" step="0.01" placeholder="0,00"></div>
+            <div class="form-field"><label class="form-label">Data de Emissão</label><input class="form-input" id="cr-emis" type="date"></div>
+            <div class="form-field"><label class="form-label">Data de Vencimento *</label><input class="form-input" id="cr-venc" type="date"></div>
+            <div class="form-field"><label class="form-label">Nº Documento / NF</label><input class="form-input" id="cr-doc" type="text" placeholder="Número da NF-e ou boleto"></div>
+            <div class="form-field"><label class="form-label">CNPJ/CPF Cliente</label><input class="form-input" id="cr-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+          </div>
+          <div class="form-field" style="margin-bottom:0"><label class="form-label">Observações</label><input class="form-input" id="cr-obs" type="text" placeholder="Observações adicionais"></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-sys pri" onclick="saveCR()">SALVAR TÍTULO</button>
+          <button class="btn-sys" onclick="closeFormCR()">CANCELAR</button>
+          <input type="hidden" id="cr-edit-id">
+          <span class="modal-hint">* campos obrigatórios</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ F09: CLIENTES ══ -->
+    <div id="page-clientes" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F09</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Cadastro de Clientes</span></div><div class="ctx-tools"><span class="ctx-info" id="cli-count">—</span><button class="btn-sys pri" onclick="openFormCliente()">+ NOVO CLIENTE</button></div></div>
+
+      <div class="sband"><span class="sid">CLI-001</span><span class="sname">Base de Clientes</span><div class="sline"></div></div>
+      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
+        <button class="btn-sys" id="clf-todos"  onclick="filterCLI('todos')"  style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
+        <button class="btn-sys" id="clf-ativo"  onclick="filterCLI('ativo')"  >ATIVOS</button>
+        <button class="btn-sys" id="clf-inativo"onclick="filterCLI('inativo')">INATIVOS</button>
+        <div style="margin-left:auto"><input id="cli-search" type="text" placeholder="Buscar cliente ou CNPJ..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:240px" oninput="renderClientes()"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="etable" style="min-width:900px">
+          <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ/CPF</th><th>Contato</th><th>Cidade/UF</th><th class="r">Limite Crédito</th><th class="r">Total CR Aberto</th><th>Ações</th></tr></thead>
+          <tbody id="cli-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORM CLIENTE -->
+    <div class="modal" id="modal-cli" onclick="if(event.target===this)closeFormCliente()">
+      <div class="modal-box" style="width:720px">
+        <div class="modal-hdr"><span class="modal-title">Cadastro de Cliente — F09</span><button class="modal-close" onclick="closeFormCliente()">✕</button></div>
+        <div class="modal-body">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--bor)">DADOS CADASTRAIS</div>
+          <div class="form-grid">
+            <div class="form-field" style="grid-column:span 2"><label class="form-label">Razão Social *</label><input class="form-input" id="cli-razao" type="text" placeholder="Nome completo da empresa ou pessoa"></div>
+            <div class="form-field"><label class="form-label">CNPJ / CPF *</label><input class="form-input" id="cli-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+            <div class="form-field"><label class="form-label">Nome Fantasia</label><input class="form-input" id="cli-fantasia" type="text" placeholder="Nome fantasia"></div>
+            <div class="form-field"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="cli-ie" type="text" placeholder="000.000.000.000"></div>
+            <div class="form-field"><label class="form-label">Status</label><select class="form-input" id="cli-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">CONTATO E ENDEREÇO</div>
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Responsável / Contato</label><input class="form-input" id="cli-contato" type="text" placeholder="Nome do responsável"></div>
+            <div class="form-field"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="cli-tel" type="text" placeholder="(47) 99999-9999"></div>
+            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="cli-email" type="email" placeholder="email@empresa.com.br"></div>
+            <div class="form-field"><label class="form-label">Cidade / UF</label><input class="form-input" id="cli-cidade" type="text" placeholder="Blumenau / SC"></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">DADOS COMERCIAIS</div>
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Limite de Crédito (R$)</label><input class="form-input" id="cli-limite" type="number" step="0.01" placeholder="0,00"></div>
+            <div class="form-field"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="cli-prazo" type="number" placeholder="30"></div>
+            <div class="form-field" style="grid-column:span 2"><label class="form-label">Observações</label><input class="form-input" id="cli-obs" type="text" placeholder="Observações comerciais"></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-sys pri" onclick="saveCliente()">SALVAR CLIENTE</button>
+          <button class="btn-sys" onclick="closeFormCliente()">CANCELAR</button>
+          <input type="hidden" id="cli-edit-id">
+          <span class="modal-hint">* campos obrigatórios</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ F10: FORNECEDORES ══ -->
+    <div id="page-fornecedores" class="page">
+      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F10</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Cadastro de Fornecedores</span></div><div class="ctx-tools"><span class="ctx-info" id="frn-count">—</span><button class="btn-sys pri" onclick="openFormFornecedor()">+ NOVO FORNECEDOR</button></div></div>
+
+      <div class="sband"><span class="sid">FRN-001</span><span class="sname">Base de Fornecedores</span><div class="sline"></div></div>
+      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
+        <button class="btn-sys" id="frnf-todos"  onclick="filterFRN('todos')"  style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
+        <button class="btn-sys" id="frnf-ativo"  onclick="filterFRN('ativo')"  >ATIVOS</button>
+        <button class="btn-sys" id="frnf-inativo"onclick="filterFRN('inativo')">INATIVOS</button>
+        <div style="margin-left:auto"><input id="frn-search" type="text" placeholder="Buscar fornecedor ou CNPJ..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:240px" oninput="renderFornecedores()"></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="etable" style="min-width:900px">
+          <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ</th><th>Categoria</th><th>Contato</th><th>Cidade/UF</th><th class="r">Total CP Aberto</th><th>Ações</th></tr></thead>
+          <tbody id="frn-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FORM FORNECEDOR -->
+    <div class="modal" id="modal-frn" onclick="if(event.target===this)closeFormFornecedor()">
+      <div class="modal-box" style="width:720px">
+        <div class="modal-hdr"><span class="modal-title">Cadastro de Fornecedor — F10</span><button class="modal-close" onclick="closeFormFornecedor()">✕</button></div>
+        <div class="modal-body">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--bor)">DADOS CADASTRAIS</div>
+          <div class="form-grid">
+            <div class="form-field" style="grid-column:span 2"><label class="form-label">Razão Social *</label><input class="form-input" id="frn-razao" type="text" placeholder="Nome completo do fornecedor"></div>
+            <div class="form-field"><label class="form-label">CNPJ *</label><input class="form-input" id="frn-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+            <div class="form-field"><label class="form-label">Nome Fantasia</label><input class="form-input" id="frn-fantasia" type="text" placeholder="Nome fantasia"></div>
+            <div class="form-field"><label class="form-label">Categoria Principal</label>
+              <select class="form-input" id="frn-cat">
+                <option>Fornecedores</option><option>Fretes e Logística</option><option>Serviços</option>
+                <option>Aluguel</option><option>Financeiro</option><option>Outros</option>
+              </select>
+            </div>
+            <div class="form-field"><label class="form-label">Status</label><select class="form-input" id="frn-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">CONTATO E ENDEREÇO</div>
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Responsável / Contato</label><input class="form-input" id="frn-contato" type="text" placeholder="Nome do responsável"></div>
+            <div class="form-field"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="frn-tel" type="text" placeholder="(47) 99999-9999"></div>
+            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="frn-email" type="email" placeholder="email@fornecedor.com.br"></div>
+            <div class="form-field"><label class="form-label">Cidade / UF</label><input class="form-input" id="frn-cidade" type="text" placeholder="Blumenau / SC"></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">DADOS BANCÁRIOS</div>
+          <div class="form-grid">
+            <div class="form-field"><label class="form-label">Banco</label><input class="form-input" id="frn-banco" type="text" placeholder="Ex: Sicredi / BB / Bradesco"></div>
+            <div class="form-field"><label class="form-label">Agência / Conta</label><input class="form-input" id="frn-conta" type="text" placeholder="0256 / 12345-6"></div>
+            <div class="form-field"><label class="form-label">Chave PIX</label><input class="form-input" id="frn-pix" type="text" placeholder="CNPJ, e-mail ou chave aleatória"></div>
+            <div class="form-field"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="frn-prazo" type="number" placeholder="30"></div>
+          </div>
+          <div class="form-field" style="margin-top:4px"><label class="form-label">Observações</label><input class="form-input" id="frn-obs" type="text" placeholder="Observações sobre o fornecedor"></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-sys pri" onclick="saveFornecedor()">SALVAR FORNECEDOR</button>
+          <button class="btn-sys" onclick="closeFormFornecedor()">CANCELAR</button>
+          <input type="hidden" id="frn-edit-id">
+          <span class="modal-hint">* campos obrigatórios</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-hdr"><span class="modal-title">Parâmetros — SFE v1.0</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="form-label">URL Backend Railway</label><input class="form-input" id="f-be" type="text" placeholder="https://sfe-backend-production.up.railway.app"></div>
+        <div class="form-field"><label class="form-label">Claude API Key</label><input class="form-input" id="f-ckey" type="password" placeholder="sk-ant-api03-..."></div>
+        <div class="form-field"><label class="form-label">Razão Social</label><input class="form-input" id="f-co" type="text" placeholder="Nome da Empresa Ltda"></div>
+        <div class="form-field"><label class="form-label">CNPJ</label><input class="form-input" id="f-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-sys pri" onclick="saveParams()">SALVAR E CONECTAR</button>
+      <button class="btn-sys" onclick="closeModal()">CANCELAR</button>
+      <span class="modal-hint">Dados salvos localmente no navegador</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ EMPRESA DEMO ══
+const DEMO = {
+  co:   'Distribuidora Sul Catarinense Ltda',
+  cnpj: '12.348.756/0001-09',
+  banks: [
+    {name:'Sicredi',        code:'SC', color:'#3FA110', type:'CONTA CORRENTE PJ', agency:'0256', account:'12345-6', balance:142580.40},
+    {name:'Banco do Brasil',code:'BB', color:'#1194F6', type:'CONTA CORRENTE PJ', agency:'3421', account:'89012-3', balance:67230.15},
+    {name:'Bradesco',       code:'BD', color:'#e5173f', type:'CONTA CORRENTE PJ', agency:'1892', account:'45678-9', balance:28940.00},
+    {name:'Caixa Econômica',code:'CX', color:'#296fa7', type:'CONTA POUPANÇA PJ',  agency:'0077', account:'23456-7', balance:15600.00},
+    {name:'Santander',      code:'ST', color:'#cc0000', type:'CONTA CORRENTE PJ', agency:'0543', account:'67890-1', balance:8320.50},
+  ],
+};
+
+const CAT_COLORS = {
+  'Vendas':'#1a8a4a','Folha de Pagamento':'#c0271a','Fornecedores':'#b07010',
+  'Aluguel':'#5040a0','Impostos':'#c05010','Serviços':'#0a7090',
+  'Fretes e Logística':'#0a6070','Transferência':'#446688',
+  'Financeiro':'#185fa5','Outros':'#445566',
+};
+const CAT_BG = {
+  'Vendas':'#001a0a','Folha de Pagamento':'#1a0500','Fornecedores':'#1a1000',
+  'Aluguel':'#0a0820','Impostos':'#1a0800','Serviços':'#001018',
+  'Fretes e Logística':'#001418','Transferência':'#080e14',
+  'Financeiro':'#000a18','Outros':'#0a0e12',
+};
+
+// ══ STATE ══
+let S = { accounts:[], transactions:[], cfg:{} };
+let charts = {};
+
+// ══ BOOT ══
+document.addEventListener('DOMContentLoaded', () => {
+  setInterval(() => {
+    document.getElementById('sys-time').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+
+  const saved = localStorage.getItem('sfe_v4');
+  if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
+
+  buildDemo();
+  renderAll();
+  buildQuickQueries();
+});
+
+function applyConfig() {
+  if (S.cfg.be)    document.getElementById('f-be').value    = S.cfg.be;
+  if (S.cfg.ckey)  document.getElementById('f-ckey').value  = S.cfg.ckey;
+  if (S.cfg.co)    document.getElementById('f-co').value    = S.cfg.co;
+  if (S.cfg.cnpj)  document.getElementById('f-cnpj').value  = S.cfg.cnpj;
+}
+
+// ══ DEMO DATA ══
+function buildDemo() {
+  S.accounts = DEMO.banks;
+
+  const TXNS = [
+    // Vendas (entradas)
+    {d:-1, desc:'Recebimento NF-e 045821 — Supermercado Bom Preço',    cat:'Vendas',             bank:'SC', amt: 48200.00},
+    {d:-2, desc:'TED Recebida — Atacadão Sul Distribuidora',            cat:'Transferência',      bank:'BB', amt: 32500.00},
+    {d:-2, desc:'Boleto Liquidado — Rede Familiar Supermercados',       cat:'Vendas',             bank:'SC', amt: 19840.50},
+    {d:-3, desc:'Recebimento NF-e 045798 — Mercado Central Ltda',      cat:'Vendas',             bank:'BB', amt: 27600.00},
+    {d:-4, desc:'PIX Recebido — Distribuidora Norte SC',                cat:'Transferência',      bank:'SC', amt: 15000.00},
+    {d:-5, desc:'Recebimento NF-e 045756 — GPA Comércio',              cat:'Vendas',             bank:'SC', amt: 38900.00},
+    {d:-6, desc:'TED — Cooperativa Agrícola Regional',                  cat:'Transferência',      bank:'BB', amt: 22100.00},
+    {d:-8, desc:'Recebimento NF-e 045701 — Rede Compra Certa',         cat:'Vendas',             bank:'SC', amt: 51200.00},
+    {d:-9, desc:'PIX — Supermercado Vale Verde',                        cat:'Vendas',             bank:'BB', amt: 8900.00},
+    {d:-11,desc:'Recebimento Duplicata 3421/A — Comércio União',       cat:'Vendas',             bank:'BD', amt: 31500.00},
+    // Saídas
+    {d:-1, desc:'Pagamento RH — Folha Competência 05/2026',             cat:'Folha de Pagamento', bank:'SC', amt:-68400.00},
+    {d:-2, desc:'FGTS Competência 05/2026 — Caixa Econômica',          cat:'Folha de Pagamento', bank:'CX', amt:-9820.00},
+    {d:-3, desc:'NF-e 009812 — Frigorífico Saudade Ltda',              cat:'Fornecedores',       bank:'SC', amt:-42600.00},
+    {d:-3, desc:'NF-e 023415 — Laticínios Serrana S.A.',               cat:'Fornecedores',       bank:'BB', amt:-28900.00},
+    {d:-4, desc:'DAS Simples Nacional — Competência 04/2026',           cat:'Impostos',           bank:'BB', amt:-12480.00},
+    {d:-5, desc:'DARF IRPJ/CSLL — 1º Trimestre 2026',                  cat:'Impostos',           bank:'BB', amt:-18600.00},
+    {d:-5, desc:'Aluguel Galpão Industrial — Rua das Indústrias 420',  cat:'Aluguel',            bank:'SC', amt:-8500.00},
+    {d:-6, desc:'Frete CIF — Transportadora Rota Sul Ltda',            cat:'Fretes e Logística', bank:'SC', amt:-6840.00},
+    {d:-7, desc:'NF-e 034521 — Bebidas Rio Cotia S.A.',                cat:'Fornecedores',       bank:'SC', amt:-34200.00},
+    {d:-7, desc:'ISS Municipal — Competência 04/2026',                  cat:'Impostos',           bank:'BB', amt:-3240.00},
+    {d:-8, desc:'Frete FOB — Transportadora Flor da Serra',            cat:'Fretes e Logística', bank:'BB', amt:-4200.00},
+    {d:-9, desc:'Energia Elétrica — Celesc Distribuição',              cat:'Serviços',           bank:'SC', amt:-2840.00},
+    {d:-9, desc:'Internet Fibra — Claro Empresas',                     cat:'Serviços',           bank:'SC', amt:-890.00},
+    {d:-10,desc:'Honorários Contabilidade — Escritório Santos & Assis', cat:'Serviços',          bank:'BB', amt:-3200.00},
+    {d:-11,desc:'NF-e 018234 — Biscoitos & Cia Indústria',             cat:'Fornecedores',       bank:'SC', amt:-19800.00},
+    {d:-12,desc:'Aluguel Sede Administrativa — Centro Blumenau',       cat:'Aluguel',            bank:'BB', amt:-4200.00},
+    {d:-13,desc:'INSS Patronal — Competência 04/2026',                  cat:'Folha de Pagamento', bank:'SC', amt:-14200.00},
+    {d:-14,desc:'Manutenção Frota — Auto Mecânica Progresso',          cat:'Serviços',           bank:'BD', amt:-3800.00},
+    {d:-15,desc:'NF-e 005621 — Grãos & Cereais do Sul Ltda',           cat:'Fornecedores',       bank:'SC', amt:-22100.00},
+    {d:-16,desc:'Juros Limite de Crédito — Sicredi',                   cat:'Financeiro',         bank:'SC', amt:-1840.00},
+    {d:-18,desc:'NF-e 078234 — Embalagens Plásticas SC Ltda',          cat:'Fornecedores',       bank:'BB', amt:-8400.00},
+    {d:-20,desc:'Recebimento NF-e 045612 — Rede Econômica Ltda',       cat:'Vendas',             bank:'SC', amt: 44300.00},
+    {d:-21,desc:'Frete — Log Express Sul',                              cat:'Fretes e Logística', bank:'SC', amt:-5100.00},
+    {d:-22,desc:'DAS Simples Nacional — Ajuste 03/2026',                cat:'Impostos',           bank:'BB', amt:-4200.00},
+    {d:-24,desc:'NF-e 011234 — Importadora Global Foods',              cat:'Fornecedores',       bank:'SC', amt:-31200.00},
+    {d:-25,desc:'Recebimento NF-e 045534 — Comércio Sul',              cat:'Vendas',             bank:'BB', amt: 28600.00},
+    {d:-27,desc:'Licença ERP Cloud — Software Financeiro',             cat:'Serviços',           bank:'BB', amt:-1980.00},
+    {d:-28,desc:'Folha Adiantamento — 1ª Quinzena 05/2026',            cat:'Folha de Pagamento', bank:'SC', amt:-34200.00},
+    {d:-29,desc:'NF-e 045421 — Doces & Guloseimas BR',                 cat:'Fornecedores',       bank:'SC', amt:-15600.00},
+    {d:-30,desc:'Recebimento Boleto — Cliente Mercado Bom',            cat:'Vendas',             bank:'BD', amt: 16800.00},
+  ];
+
+  S.transactions = TXNS.map((t,i) => {
+    const d = new Date(Date.now() + t.d*86400000);
+    return {
+      id: `T${String(i+1).padStart(5,'0')}`,
+      description: t.desc,
+      date: d.toISOString(),
+      amount: t.amt,
+      _bank: t.bank,
+      _bankFull: DEMO.banks.find(b=>b.code===t.bank)?.name || t.bank,
+      _category: t.cat,
+    };
+  }).sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  document.getElementById('sys-co').textContent   = DEMO.co.length > 28 ? DEMO.co.slice(0,28)+'…' : DEMO.co;
+  document.getElementById('sys-cnpj').textContent = DEMO.cnpj;
+}
+
+// ══ FORMAT ══
+const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const fmtD = s => new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+const fmtK = v => v >= 1000000 ? `R$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `R$${(v/1000).toFixed(0)}k` : `R$${v}`;
+
+// ══ NAVIGATION ══
+function navTo(page, navEl, sbEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-mod').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (sbEl)  sbEl.classList.add('active');
+  // sync both nav and sidebar
+  if (!navEl && !sbEl) return;
+}
+
+// ══ RENDER ALL ══
+function renderAll() {
+  const now = new Date();
+  const days = parseInt(document.getElementById('period-sel').value);
+  const from = new Date(Date.now() - days*86400000);
+  const txs  = S.transactions.filter(t => new Date(t.date) >= from);
+
+  document.getElementById('kpi-date').textContent  = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('p-updated').textContent = `${txs.length} REGISTROS · ${days} DIAS`;
+  document.getElementById('cf-tag').textContent    = `${days} DIAS`;
+  document.getElementById('tx-tag').textContent    = `${Math.min(txs.length,10)} / ${txs.length} REG.`;
+
+  renderKPIs(txs);
+  renderBanks();
+  renderCashflow(txs, days);
+  renderTxLog(txs);
+  renderAlerts(txs);
+  renderCats(txs);
+  renderSidebar();
+  renderProjection(txs);
+}
+
+// ══ KPIs ══
+function renderKPIs(txs) {
+  const saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const ent   = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const res   = ent - sai;
+
+  document.getElementById('kv-saldo').textContent = fmt(saldo);
+  document.getElementById('kv-ent').textContent   = fmt(ent);
+  document.getElementById('kv-sai').textContent   = fmt(sai);
+  document.getElementById('kv-res').textContent   = fmt(res);
+
+  document.getElementById('ks-saldo').textContent = `${S.accounts.length} CONTAS ATIVAS`;
+  document.getElementById('ks-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
+  document.getElementById('ks-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
+  document.getElementById('ks-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
+
+  document.getElementById('f1').textContent = `${S.accounts.length}B`;
+  const f4 = document.getElementById('f4');
+  f4.textContent = res >= 0 ? 'POSITIVO' : 'NEGATIVO';
+  f4.style.background = res >= 0 ? 'var(--gbg2)' : 'var(--rbg)';
+  f4.style.color = res >= 0 ? 'var(--glt2)' : 'var(--rlt)';
+  f4.style.border = `1px solid ${res >= 0 ? 'var(--grn)' : 'var(--red)'}`;
+  document.getElementById('kv-res').className = 'kpi-amt ' + (res>=0?'vgold':'vneg');
+
+  // Fluxo page summary
+  document.getElementById('fl-ent').textContent = fmt(ent);
+  document.getElementById('fl-sai').textContent = fmt(sai);
+  document.getElementById('fl-res').textContent = fmt(res);
+}
+
+// ══ BANKS ══
+function renderBanks() {
+  const total = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  document.getElementById('bk-count').textContent = `${S.accounts.length} INSTITUIÇÕES`;
+  document.getElementById('bk-total').textContent = `TOTAL: ${fmt(total)}`;
+
+  // Cards
+  document.getElementById('bank-cards').innerHTML = S.accounts.map(a => {
+    const pct = ((a.balance/total)*100).toFixed(1);
+    const pos = a.balance >= 0;
+    return `<div class="bank-card" style="--bc:${a.color}">
+      <div class="bank-card-top">
+        <span class="bank-card-name">${a.name}</span>
+        <span class="bank-card-code" style="background:${a.color}22;color:${a.color};border:1px solid ${a.color}44">${a.code}</span>
+      </div>
+      <div class="bank-card-bal" style="color:${pos?'var(--glt2)':'var(--rlt)'}">${fmt(a.balance)}</div>
+      <div class="bank-card-lbl">${a.type}</div>
+      <div class="bank-card-num">Ag: ${a.agency} · Conta: ${a.account} · ${pct}% do total</div>
+    </div>`;
+  }).join('');
+
+  // Table
+  document.getElementById('bk-tbody').innerHTML = S.accounts.map((a,i) => {
+    const pct = ((a.balance/total)*100).toFixed(1);
+    const pos = a.balance >= 0;
+    return `<tr>
+      <td class="ecode">${String(i+1).padStart(3,'0')}</td>
+      <td><div class="ename">${a.name}</div><div class="bar-mini" style="width:${pct}%;max-width:120px"><div class="bar-fill" style="width:100%;background:${a.color}"></div></div></td>
+      <td class="emono" style="color:var(--s5);font-size:11px">${a.type}</td>
+      <td class="ecode">Ag ${a.agency} / Cta ${a.account}</td>
+      <td class="emono r" style="text-align:right;color:${pos?'var(--glt2)':'var(--rlt)'}">${fmt(a.balance)}</td>
+      <td class="emono r" style="text-align:right;color:var(--s5)">${pct}%</td>
+      <td style="width:100px"><div style="height:4px;background:var(--s8)"><div style="height:100%;width:${pct}%;background:${a.color}"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ CASHFLOW CHART ══
+function buildCFChart(id, txs, days) {
+  const bkt = Math.min(12,days), sz = Math.ceil(days/bkt);
+  const labels=[],ins=[],outs=[];
+  for (let i=bkt-1;i>=0;i--) {
+    const end=new Date(Date.now()-i*sz*86400000), start=new Date(Date.now()-(i+1)*sz*86400000);
+    labels.push(end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+    const sl=txs.filter(t=>{const d=new Date(t.date);return d>=start&&d<=end;});
+    ins.push(sl.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0));
+    outs.push(Math.abs(sl.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)));
+  }
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[
+    {label:'Créditos',data:ins, backgroundColor:'rgba(26,138,74,.3)', borderColor:'rgba(34,170,90,.9)', borderWidth:1,borderRadius:2},
+    {label:'Débitos', data:outs,backgroundColor:'rgba(192,39,26,.2)', borderColor:'rgba(224,48,32,.8)',  borderWidth:1,borderRadius:2},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{
+    legend:{labels:{color:'#6688aa',font:{family:'IBM Plex Mono',size:10},boxWidth:10}},
+    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
+  },scales:{
+    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9}}},
+    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
+  }}});
+}
+
+function renderCashflow(txs, days) {
+  buildCFChart('cf-chart-main', txs, days);
+  buildCFChart('cf-chart-full', txs, days);
+}
+
+// ══ PROJECTION ══
+function renderProjection(txs) {
+  const daily_avg_in  = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0) / 30;
+  const daily_avg_out = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)) / 30;
+  let saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const labels=[], data=[];
+  for (let i=0;i<30;i++) {
+    const d = new Date(Date.now()+i*86400000);
+    labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+    saldo += (daily_avg_in - daily_avg_out);
+    data.push(Math.round(saldo));
+  }
+  if (charts['cf-proj']) charts['cf-proj'].destroy();
+  charts['cf-proj'] = new Chart(document.getElementById('cf-proj'),{type:'line',data:{labels,datasets:[{
+    label:'Saldo Projetado',data,
+    borderColor:'rgba(232,176,32,.8)',backgroundColor:'rgba(232,176,32,.06)',
+    borderWidth:2,pointRadius:0,tension:.4,fill:true
+  }]},options:{responsive:true,maintainAspectRatio:false,plugins:{
+    legend:{labels:{color:'#6688aa',font:{family:'IBM Plex Mono',size:10}}},
+    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}
+  },scales:{
+    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9}}},
+    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
+  }}});
+}
+
+// ══ TX LOG ══
+function renderTxRows(txs, limit) {
+  return txs.slice(0,limit||999).map(t => {
+    const cat=t._category||'Outros', color=CAT_COLORS[cat]||'#445566', cbg=CAT_BG[cat]||'#080e14', pos=t.amount>0;
+    const bkColor = DEMO.banks.find(b=>b.code===t._bank)?.color || '#446688';
+    return `<div class="tx-row">
+      <span class="tx-date">${fmtD(t.date)}</span>
+      <span class="tx-desc">${t.description}</span>
+      <span class="tx-bank" style="color:${bkColor}">${t._bank}</span>
+      <span><span class="cat-lbl" style="background:${cbg};color:${color};border:1px solid ${color}44">${cat.slice(0,10).toUpperCase()}</span></span>
+      <span class="tx-amt ${pos?'vpos':'vneg'}">${pos?'+':''}${fmt(t.amount)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderTxLog(txs) {
+  document.getElementById('tx-log-main').innerHTML = renderTxRows(txs,10);
+  document.getElementById('tx-log-full').innerHTML = renderTxRows(txs);
+  document.getElementById('ln-count').textContent  = `${txs.length} LANÇAMENTOS`;
+}
+
+// ══ ALERTS ══
+function renderAlerts(txs) {
+  const alerts=[];
+  const saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const ent   = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const folha = Math.abs(txs.filter(t=>t._category==='Folha de Pagamento').reduce((s,t)=>s+t.amount,0));
+  const imp   = txs.filter(t=>t._category==='Impostos'&&t.amount<0);
+  const frete = Math.abs(txs.filter(t=>t._category==='Fretes e Logística').reduce((s,t)=>s+t.amount,0));
+
+  if (saldo < 50000)
+    alerts.push({s:'C',bg:'var(--rbg)',fc:'var(--rlt)',title:'SALDO ABAIXO DO LIMITE OPERACIONAL',desc:`Saldo consolidado ${fmt(saldo)} está abaixo do parâmetro mínimo de R$ 50.000,00 para distribuidora. Risco de descontinuidade de pagamentos.`});
+  if (folha>0 && saldo < folha*1.2)
+    alerts.push({s:'A',bg:'var(--abg)',fc:'var(--alt)',title:'RESERVA DE FOLHA INSUFICIENTE',desc:`Folha estimada em ${fmt(folha)}. Saldo atual cobre ${((saldo/folha)*100).toFixed(0)}% — margem abaixo do recomendado (120%).`});
+  if (imp.length)
+    alerts.push({s:'A',bg:'rgba(176,112,16,.15)',fc:'var(--alt)',title:`${imp.length} OBRIGAÇÕES FISCAIS NO PERÍODO`,desc:`Total recolhido: ${fmt(Math.abs(imp.reduce((s,t)=>s+t.amount,0)))}. Verifique competências pendentes no módulo F03.`});
+  if (frete > sai*0.08)
+    alerts.push({s:'I',bg:'rgba(10,96,112,.15)',fc:'var(--clt)',title:'CUSTO LOGÍSTICO ACIMA DO PARÂMETRO',desc:`Fretes representam ${((frete/sai)*100).toFixed(1)}% das saídas. Benchmark setor: máx 6-7%. Avaliar renegociação com transportadoras.`});
+  if (ent > sai*1.1)
+    alerts.push({s:'I',bg:'var(--gbg2)',fc:'var(--glt2)',title:'RESULTADO OPERACIONAL POSITIVO',desc:`Receitas ${((ent/sai-1)*100).toFixed(1)}% acima dos custos. Margem operacional: ${((( ent-sai)/ent)*100).toFixed(1)}%.`});
+  if (!alerts.length)
+    alerts.push({s:'I',bg:'var(--gbg2)',fc:'var(--glt2)',title:'SEM OCORRÊNCIAS CRÍTICAS',desc:'Todos os indicadores dentro dos parâmetros configurados para o período.'});
+
+  const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
+  ['sb-badge','nav-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (crit>0) {el.textContent=crit;el.style.display='';}
+    else el.style.display='none';
+  });
+  document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
+  document.getElementById('alt-log').innerHTML = alerts.map(a=>`
+    <div class="alert-entry">
+      <div class="asev" style="background:${a.bg};color:${a.fc}">${a.s}</div>
+      <div><div class="atitle">${a.title}</div><div class="adesc">${a.desc}</div></div>
+      <div class="ats">${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+}
+
+// ══ CATEGORIES ══
+function renderCats(txs) {
+  const map={};
+  txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+  const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const total=entries.reduce((s,e)=>s+e[1],0);
+  document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
+  document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
+
+  document.getElementById('cat-rows').innerHTML = entries.map(([c,v])=>{
+    const pct=(v/total*100).toFixed(1),col=CAT_COLORS[c]||'#445566';
+    return `<div class="cat-row"><div class="cdot" style="background:${col}"></div><div class="cnm">${c}</div><div class="cval">${fmt(v)}</div><div class="cpct">${pct}%</div><div class="cbar"><div class="cbar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  }).join('');
+
+  // Pie
+  if (charts['pie']) charts['pie'].destroy();
+  charts['pie'] = new Chart(document.getElementById('pie-chart'),{type:'doughnut',data:{
+    labels:entries.map(e=>e[0]),
+    datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>(CAT_COLORS[e[0]]||'#445566')+'40'),borderColor:entries.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:2,hoverOffset:8}]
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
+    legend:{display:false},
+    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)`}}
+  }}});
+
+  // Category bar (evolution)
+  const top5 = entries.slice(0,5);
+  const months = ['Mar','Abr','Mai'];
+  const multipliers = [[0.85,0.92,1],[0.78,0.88,1],[0.90,0.95,1],[0.82,0.91,1],[0.88,0.94,1]];
+  if (charts['catbar']) charts['catbar'].destroy();
+  charts['catbar'] = new Chart(document.getElementById('cat-bar'),{type:'bar',data:{
+    labels:months,
+    datasets:top5.map(([c,v],i)=>({
+      label:c, data:multipliers[i].map(m=>Math.round(v*m)),
+      backgroundColor:(CAT_COLORS[c]||'#445566')+'66',
+      borderColor:CAT_COLORS[c]||'#445566',
+      borderWidth:1,borderRadius:2
+    }))
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{
+    legend:{labels:{color:'#6688aa',font:{family:'IBM Plex Mono',size:9},boxWidth:10}},
+    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
+  },scales:{
+    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9}}},
+    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
+  }}});
+}
+
+// ══ SIDEBAR BANKS ══
+function renderSidebar() {
+  document.getElementById('sb-banks').innerHTML = S.accounts.map(a=>`
+    <div class="sb-item" style="font-size:12px">
+      <span class="sb-code" style="color:${a.color};font-weight:600">${a.code}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.name}</span>
+      <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:${a.balance>=0?'var(--glt2)':'var(--rlt)'};flex-shrink:0">${fmtK(a.balance)}</span>
+    </div>`).join('');
+}
+
+// ══ AI ══
+function buildQuickQueries() {
+  const qs = [
+    'Tenho saldo para pagar a folha de maio?',
+    'Qual meu maior custo operacional?',
+    'Há risco de ruptura de caixa nos próximos 30 dias?',
+    'Qual a margem operacional do período?',
+    'O custo logístico está adequado para o setor?',
+  ];
+  document.getElementById('quick-queries').innerHTML = qs.map(q=>
+    `<button class="btn-sys" onclick="document.getElementById('ai-input').value='${q}';runQuery()" style="font-size:10px;padding:5px 10px;text-transform:none;letter-spacing:0;font-family:var(--font)">${q}</button>`
+  ).join('');
+}
+
+async function runQuery() {
+  const q = document.getElementById('ai-input').value.trim();
+  if (!q) return;
+
+  const btn = document.getElementById('ai-btn'); btn.disabled=true; btn.textContent='...';
+  showAI('⏳ Analisando...');
+
+  const days = parseInt(document.getElementById('period-sel').value);
+  const from = new Date(Date.now()-days*86400000);
+  const txs  = S.transactions.filter(t=>new Date(t.date)>=from);
+  const saldo= S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const ent  = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai  = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const map  = {};
+  txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+
+  const ctx = `EMPRESA: ${DEMO.co} | CNPJ: ${DEMO.cnpj} | SETOR: Distribuidora de alimentos e bebidas, SC
+PERÍODO ANALISADO: ${days} dias | FONTE: ${S.cfg.be?'PLUGGY/REAL':'DEMO'}
+SALDO CONSOLIDADO: ${fmt(saldo)} (${S.accounts.length} contas)
+TOTAL CRÉDITOS: ${fmt(ent)} (${txs.filter(t=>t.amount>0).length} lançamentos)
+TOTAL DÉBITOS: ${fmt(sai)} (${txs.filter(t=>t.amount<0).length} lançamentos)
+RESULTADO LÍQUIDO: ${fmt(ent-sai)} | MARGEM: ${ent>0?((ent-sai)/ent*100).toFixed(1):'0'}%
+
+SALDO POR BANCO:
+${S.accounts.map(a=>`  ${a.name} (${a.code}): ${fmt(a.balance)}`).join('\n')}
+
+DESPESAS POR CATEGORIA:
+${Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`  ${c}: ${fmt(v)} (${(v/sai*100).toFixed(1)}%)`).join('\n')}
+
+ÚLTIMOS LANÇAMENTOS:
+${txs.slice(0,6).map(t=>`  ${fmtD(t.date)} | ${t.description} | ${fmt(t.amount)}`).join('\n')}`;
+
+  const system = 'Você é um analista financeiro sênior especializado em distribuidoras e PMEs brasileiras. Responda em português, de forma objetiva e direta. Use R$ para valores. Seja específico com números e dê recomendações práticas e acionáveis.';
+  const messages = [{role:'user',content:`DADOS FINANCEIROS DA EMPRESA:\n${ctx}\n\nCONSULTA DO GESTOR: ${q}`}];
+
+  // Tenta backend Railway primeiro (resolve CORS e protege a key)
+  const beUrl = S.cfg.be || 'https://sfe-backend-production.up.railway.app';
+  try {
+    const r = await fetch(`${beUrl}/api/claude`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system, messages, max_tokens:1200})
+    });
+    if (!r.ok) throw new Error(`Backend ${r.status}`);
+    const d = await r.json();
+    showAI(d.content?.[0]?.text || 'SEM RESPOSTA.');
+    btn.disabled=false; btn.textContent='EXECUTAR';
+    return;
+  } catch(e) {
+    console.warn('Backend indisponível, tentando direto:', e.message);
+  }
+
+  // Fallback: tenta direto se tiver a key configurada
+  if (S.cfg.ckey) {
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':S.cfg.ckey,'anthropic-version':'2023-06-01'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,system,messages})
+      });
+      const d = await r.json();
+      showAI(d.content?.[0]?.text||'SEM RESPOSTA.');
+    } catch(e){ showAI('ERRO: '+e.message+'. Configure a URL do Backend em ⚙ PARÂM.'); }
+  } else {
+    showAI('Para usar a Análise IA, configure a URL do Backend Railway em ⚙ PARÂM.\n\nURL: https://sfe-backend-production.up.railway.app\n\nO backend protege sua API Key e resolve o problema de CORS.');
+  }
+  btn.disabled=false; btn.textContent='EXECUTAR';
+}
+
+function showAI(text) {
+  document.getElementById('ai-txt').textContent = text;
+  document.getElementById('ai-out').className = 'con-out show';
+}
+
+// ══ EXPORT ══
+function exportCSV() {
+  const days = parseInt(document.getElementById('period-sel').value);
+  const from = new Date(Date.now()-days*86400000);
+  const txs  = S.transactions.filter(t=>new Date(t.date)>=from);
+  const rows = [['Data','Descrição','Banco','Categoria','Valor (R$)','Débito/Crédito']];
+  txs.forEach(t=>rows.push([new Date(t.date).toLocaleDateString('pt-BR'),t.description,t._bankFull||t._bank,t._category||'',t.amount,t.amount>0?'CRÉDITO':'DÉBITO']));
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=`SFE_Lancamentos_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ══ CONFIG ══
+function openModal()  { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function saveParams() {
+  S.cfg = {
+    be:   document.getElementById('f-be').value.trim().replace(/\/$/,''),
+    ckey: document.getElementById('f-ckey').value.trim(),
+    co:   document.getElementById('f-co').value.trim(),
+    cnpj: document.getElementById('f-cnpj').value.trim(),
+  };
+  localStorage.setItem('sfe_v4', JSON.stringify(S.cfg));
+  closeModal();
+}
+// ════════════════════════════════════════════════
+// MÓDULO V2 — CONTAS A PAGAR / RECEBER
+// ════════════════════════════════════════════════
+
+const CP_KEY = 'sfe_cp_v1';
+const CR_KEY = 'sfe_cr_v1';
+
+// ── Status helpers ──
+const today    = () => new Date().toISOString().split('T')[0];
+const diffDays = (d) => Math.ceil((new Date(d) - new Date(today())) / 86400000);
+
+function statusCP(item) {
+  if (item.status === 'pago') return 'pago';
+  const d = diffDays(item.vencimento);
+  if (d < 0)  return 'vencido';
+  if (d === 0) return 'hoje';
+  if (d <= 7)  return '7d';
+  return 'pendente';
+}
+
+function statusCR(item) {
+  if (item.status === 'recebido') return 'recebido';
+  const d = diffDays(item.vencimento);
+  if (d < 0)  return 'vencido';
+  if (d === 0) return 'hoje';
+  if (d <= 7)  return '7d';
+  return 'pendente';
+}
+
+const STATUS_LABELS = {
+  vencido:  {txt:'VENCIDO',  bg:'var(--rbg)',           fc:'var(--rlt)',  bd:'var(--red)'},
+  hoje:     {txt:'HOJE',     bg:'rgba(176,112,16,.15)',  fc:'var(--alt)',  bd:'var(--amb)'},
+  '7d':     {txt:'7 DIAS',   bg:'rgba(10,112,144,.15)',  fc:'var(--clt)',  bd:'var(--clt)'},
+  pendente: {txt:'PENDENTE', bg:'var(--s8)',             fc:'var(--s3)',   bd:'var(--s6)'},
+  pago:     {txt:'PAGO',     bg:'var(--gbg2)',           fc:'var(--glt2)', bd:'var(--grn)'},
+  recebido: {txt:'RECEBIDO', bg:'var(--gbg2)',           fc:'var(--glt2)', bd:'var(--grn)'},
+};
+
+function statusBadge(s) {
+  const l = STATUS_LABELS[s] || STATUS_LABELS.pendente;
+  return `<span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:1px;background:${l.bg};color:${l.fc};border:1px solid ${l.bd}">${l.txt}</span>`;
+}
+
+// ── Storage ──
+function loadCP() { try { return JSON.parse(localStorage.getItem(CP_KEY)||'[]'); } catch(e){ return []; } }
+function saveCP_data(data) { localStorage.setItem(CP_KEY, JSON.stringify(data)); }
+function loadCR() { try { return JSON.parse(localStorage.getItem(CR_KEY)||'[]'); } catch(e){ return []; } }
+function saveCR_data(data) { localStorage.setItem(CR_KEY, JSON.stringify(data)); }
+
+// ── Seed demo data on first load ──
+function seedDemoData() {
+  if (loadCP().length > 0) return;
+
+  const demoCP = [
+    {id:'cp001', fornecedor:'Frigorífico Saudade Ltda',    descricao:'NF-e 009812 — Carnes Bov.',       categoria:'Fornecedores',       emissao: offset(-5), vencimento: offset(-2), valor:42600, banco:'SC', doc:'NF009812', obs:'', status:'pendente'},
+    {id:'cp002', fornecedor:'Laticínios Serrana S.A.',     descricao:'NF-e 023415 — Laticínios',        categoria:'Fornecedores',       emissao: offset(-8), vencimento: offset(0),  valor:28900, banco:'BB', doc:'NF023415', obs:'', status:'pendente'},
+    {id:'cp003', fornecedor:'Receita Federal',              descricao:'DAS Simples Nacional 05/2026',    categoria:'Impostos',           emissao: offset(-3), vencimento: offset(3),  valor:12480, banco:'BB', doc:'DAS052026', obs:'', status:'pendente'},
+    {id:'cp004', fornecedor:'FGTS / Caixa Econômica',      descricao:'FGTS Competência 05/2026',        categoria:'Folha de Pagamento', emissao: offset(-2), vencimento: offset(5),  valor:9820,  banco:'CX', doc:'FGTS0526', obs:'', status:'pendente'},
+    {id:'cp005', fornecedor:'Imobiliária Progresso Ltda',  descricao:'Aluguel Galpão Industrial Mai',   categoria:'Aluguel',            emissao: offset(-1), vencimento: offset(7),  valor:8500,  banco:'SC', doc:'CTR2024/A', obs:'', status:'pendente'},
+    {id:'cp006', fornecedor:'Transportadora Rota Sul',     descricao:'Frete CIF — Cargas Mai/2026',     categoria:'Fretes e Logística', emissao: offset(-4), vencimento: offset(-1), valor:6840,  banco:'SC', doc:'CTE008821', obs:'', status:'pendente'},
+    {id:'cp007', fornecedor:'Grãos & Cereais do Sul',      descricao:'NF-e 005621 — Grãos Soja',        categoria:'Fornecedores',       emissao: offset(-15),vencimento: offset(-8), valor:22100, banco:'SC', doc:'NF005621', obs:'', status:'pago'},
+    {id:'cp008', fornecedor:'Bebidas Rio Cotia S.A.',      descricao:'NF-e 034521 — Bebidas Mai',       categoria:'Fornecedores',       emissao: offset(-7), vencimento: offset(12), valor:34200, banco:'SC', doc:'NF034521', obs:'', status:'pendente'},
+    {id:'cp009', fornecedor:'Prefeitura de Blumenau',      descricao:'ISS Municipal 04/2026',           categoria:'Impostos',           emissao: offset(-6), vencimento: offset(2),  valor:3240,  banco:'BB', doc:'ISS042026', obs:'', status:'pendente'},
+    {id:'cp010', fornecedor:'Receita Federal',              descricao:'DARF IRPJ/CSLL 1T2026',          categoria:'Impostos',           emissao: offset(-10),vencimento: offset(-3), valor:18600, banco:'BB', doc:'DARF1T26', obs:'', status:'pago'},
+  ];
+
+  const demoCR = [
+    {id:'cr001', cliente:'Supermercado Bom Preço Ltda',   descricao:'NF-e 045821 — Pedido #4521', tipo:'NF-e / Duplicata', emissao: offset(-5), vencimento: offset(-3), valor:48200, doc:'NF045821', cnpj:'12.345.678/0001-90', obs:'', status:'pendente'},
+    {id:'cr002', cliente:'Atacadão Sul Distribuidora',    descricao:'Duplicata 3421/A',           tipo:'NF-e / Duplicata', emissao: offset(-8), vencimento: offset(0),  valor:32500, doc:'DUP3421A', cnpj:'23.456.789/0001-01', obs:'', status:'pendente'},
+    {id:'cr003', cliente:'Rede Familiar Supermercados',   descricao:'NF-e 045798 — Pedido #4498', tipo:'Boleto',          emissao: offset(-6), vencimento: offset(5),  valor:19840, doc:'NF045798', cnpj:'34.567.890/0001-12', obs:'', status:'pendente'},
+    {id:'cr004', cliente:'Mercado Central Ltda',          descricao:'NF-e 045756 — Pedido #4432', tipo:'NF-e / Duplicata', emissao: offset(-12),vencimento: offset(-5), valor:27600, doc:'NF045756', cnpj:'45.678.901/0001-23', obs:'', status:'pendente'},
+    {id:'cr005', cliente:'GPA Comércio',                  descricao:'NF-e 045701 — Pedido #4401', tipo:'Boleto',          emissao: offset(-4), vencimento: offset(8),  valor:38900, doc:'NF045701', cnpj:'56.789.012/0001-34', obs:'', status:'pendente'},
+    {id:'cr006', cliente:'Cooperativa Agrícola Regional', descricao:'Contrato Fornec. #88/2026',   tipo:'Contrato',        emissao: offset(-20),vencimento: offset(15), valor:22100, doc:'CTR88/26', cnpj:'67.890.123/0001-45', obs:'', status:'pendente'},
+    {id:'cr007', cliente:'Rede Econômica Ltda',           descricao:'NF-e 045612 — Pedido #4334', tipo:'NF-e / Duplicata', emissao: offset(-25),vencimento: offset(-10),valor:44300, doc:'NF045612', cnpj:'78.901.234/0001-56', obs:'', status:'recebido'},
+    {id:'cr008', cliente:'Comércio Sul',                  descricao:'NF-e 045534 — Pedido #4290', tipo:'PIX',             emissao: offset(-3), vencimento: offset(3),  valor:28600, doc:'NF045534', cnpj:'89.012.345/0001-67', obs:'', status:'pendente'},
+    {id:'cr009', cliente:'Supermercado Vale Verde',       descricao:'NF-e 045489 — Pedido #4255', tipo:'Boleto',          emissao: offset(-2), vencimento: offset(10), valor:16800, doc:'NF045489', cnpj:'90.123.456/0001-78', obs:'', status:'pendente'},
+    {id:'cr010', cliente:'Comércio União',                descricao:'Duplicata 3320/B',           tipo:'NF-e / Duplicata', emissao: offset(-18),vencimento: offset(-7), valor:31500, doc:'DUP3320B', cnpj:'01.234.567/0001-89', obs:'', status:'pendente'},
+  ];
+
+  saveCP_data(demoCP);
+  saveCR_data(demoCR);
+}
+
+function offset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// ── CP FILTERS ──
+let cpFilter = 'todos';
+let crFilter = 'todos';
+
+function filterCP(f) {
+  cpFilter = f;
+  document.querySelectorAll('[id^="cpf-"]').forEach(b => {
+    b.style.color = ''; b.style.borderColor = '';
+  });
+  const btn = document.getElementById('cpf-'+f);
+  if (btn) { btn.style.color='var(--glt)'; btn.style.borderColor='var(--gbd)'; }
+  renderCP();
+}
+
+function filterCR(f) {
+  crFilter = f;
+  document.querySelectorAll('[id^="crf-"]').forEach(b => {
+    b.style.color = ''; b.style.borderColor = '';
+  });
+  const btn = document.getElementById('crf-'+f);
+  if (btn) { btn.style.color='var(--glt)'; btn.style.borderColor='var(--gbd)'; }
+  renderCR();
+}
+
+// ── RENDER CP ──
+function renderCP() {
+  const data   = loadCP();
+  const search = (document.getElementById('cp-search')?.value||'').toLowerCase();
+
+  let filtered = data.filter(item => {
+    const s = statusCP(item);
+    const matchFilter = cpFilter === 'todos' || s === cpFilter;
+    const matchSearch = !search || item.fornecedor.toLowerCase().includes(search) || item.descricao.toLowerCase().includes(search);
+    return matchFilter && matchSearch;
+  });
+
+  filtered.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+  document.getElementById('cp-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
+
+  document.getElementById('cp-tbody').innerHTML = filtered.map(item => {
+    const s = statusCP(item);
+    const d = diffDays(item.vencimento);
+    const dStr = s==='pago' ? '—' : d===0 ? 'HOJE' : d<0 ? `${Math.abs(d)}d atraso` : `${d}d`;
+    return `<tr>
+      <td>${statusBadge(s)}</td>
+      <td><div class="ename" style="font-size:13px">${item.fornecedor}</div><div class="ecode">${item.doc||'—'}</div></td>
+      <td style="font-size:12px;color:var(--s2)">${item.descricao}</td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:${CAT_COLORS[item.categoria]||'#446688'}">${item.categoria}</span></td>
+      <td class="ecode">${item.emissao}</td>
+      <td class="ecode" style="color:${s==='vencido'?'var(--rlt)':s==='hoje'?'var(--alt)':'var(--s3)'}">${item.vencimento}<br><span style="font-size:9px">${dStr}</span></td>
+      <td class="emono r" style="text-align:right;color:${s==='pago'?'var(--s5)':'var(--rlt)'}">${fmt(item.valor)}</td>
+      <td style="white-space:nowrap">
+        ${s!=='pago' ? `<button class="btn-sys" onclick="marcarPago('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--glt2);border-color:var(--grn)">✓ PAGO</button> ` : ''}
+        <button class="btn-sys" onclick="editCP('${item.id}')" style="font-size:9px;padding:3px 8px">✎</button>
+        <button class="btn-sys" onclick="deleteCP('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8"><div class="empty">Nenhum título encontrado</div></td></tr>';
+
+  // Summaries
+  const vencidos  = data.filter(i=>statusCP(i)==='vencido');
+  const prox7d    = data.filter(i=>['hoje','7d'].includes(statusCP(i)));
+  const pagos     = data.filter(i=>statusCP(i)==='pago');
+  const pendentes = data.filter(i=>statusCP(i)!=='pago');
+  const sum = arr => arr.reduce((s,i)=>s+i.valor,0);
+
+  document.getElementById('cp-s-venc').textContent    = fmt(sum(vencidos));
+  document.getElementById('cp-s-venc-n').textContent  = `${vencidos.length} TÍTULOS`;
+  document.getElementById('cp-s-7d').textContent      = fmt(sum(prox7d));
+  document.getElementById('cp-s-7d-n').textContent    = `${prox7d.length} TÍTULOS`;
+  document.getElementById('cp-s-pago').textContent    = fmt(sum(pagos));
+  document.getElementById('cp-s-pago-n').textContent  = `${pagos.length} TÍTULOS`;
+  document.getElementById('cp-s-total').textContent   = fmt(sum(pendentes));
+  document.getElementById('cp-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
+
+  // Painel KPIs
+  const hoje = data.filter(i=>['vencido','hoje'].includes(statusCP(i)));
+  document.getElementById('cp-hoje-val').textContent  = fmt(sum(hoje));
+  document.getElementById('cp-hoje-sub').textContent  = `${hoje.length} TÍTULOS`;
+  document.getElementById('cp-hoje-flag').textContent = hoje.length > 0 ? `${hoje.length}!` : '—';
+  document.getElementById('cp-7d-val').textContent    = fmt(sum(prox7d));
+  document.getElementById('cp-7d-sub').textContent    = `${prox7d.length} TÍTULOS`;
+
+  // Datalist fornecedores
+  const fns = [...new Set(data.map(i=>i.fornecedor))];
+  document.getElementById('forn-list').innerHTML = fns.map(f=>`<option value="${f}">`).join('');
+}
+
+// ── RENDER CR ──
+function renderCR() {
+  const data   = loadCR();
+  const search = (document.getElementById('cr-search')?.value||'').toLowerCase();
+
+  let filtered = data.filter(item => {
+    const s = statusCR(item);
+    const matchFilter = crFilter === 'todos' || s === crFilter;
+    const matchSearch = !search || item.cliente.toLowerCase().includes(search) || item.descricao.toLowerCase().includes(search);
+    return matchFilter && matchSearch;
+  });
+
+  filtered.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+  document.getElementById('cr-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
+
+  document.getElementById('cr-tbody').innerHTML = filtered.map(item => {
+    const s = statusCR(item);
+    const d = diffDays(item.vencimento);
+    const dStr = s==='recebido' ? '—' : d===0 ? 'HOJE' : d<0 ? `${Math.abs(d)}d atraso` : `${d}d`;
+    return `<tr>
+      <td>${statusBadge(s)}</td>
+      <td><div class="ename" style="font-size:13px">${item.cliente}</div><div class="ecode">${item.cnpj||'—'}</div></td>
+      <td style="font-size:12px;color:var(--s2)">${item.descricao}<br><span class="ecode">${item.tipo}</span></td>
+      <td class="ecode">${item.emissao}</td>
+      <td class="ecode" style="color:${s==='vencido'?'var(--rlt)':s==='hoje'?'var(--alt)':'var(--s3)'}">${item.vencimento}<br><span style="font-size:9px">${dStr}</span></td>
+      <td class="ecode" style="color:${d<0&&s!=='recebido'?'var(--rlt)':'var(--s5)'}">${dStr}</td>
+      <td class="emono r" style="text-align:right;color:${s==='recebido'?'var(--s5)':'var(--glt2)'}">${fmt(item.valor)}</td>
+      <td style="white-space:nowrap">
+        ${s!=='recebido' ? `<button class="btn-sys" onclick="marcarRecebido('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--glt2);border-color:var(--grn)">✓ REC.</button> ` : ''}
+        <button class="btn-sys" onclick="editCR('${item.id}')" style="font-size:9px;padding:3px 8px">✎</button>
+        <button class="btn-sys" onclick="deleteCR('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8"><div class="empty">Nenhum título encontrado</div></td></tr>';
+
+  // Summaries
+  const vencidos  = data.filter(i=>statusCR(i)==='vencido');
+  const prox7d    = data.filter(i=>['hoje','7d'].includes(statusCR(i)));
+  const recebidos = data.filter(i=>statusCR(i)==='recebido');
+  const pendentes = data.filter(i=>statusCR(i)!=='recebido');
+  const sum = arr => arr.reduce((s,i)=>s+i.valor,0);
+
+  document.getElementById('cr-s-venc').textContent    = fmt(sum(vencidos));
+  document.getElementById('cr-s-venc-n').textContent  = `${vencidos.length} CLIENTES`;
+  document.getElementById('cr-s-7d').textContent      = fmt(sum(prox7d));
+  document.getElementById('cr-s-7d-n').textContent    = `${prox7d.length} TÍTULOS`;
+  document.getElementById('cr-s-rec').textContent     = fmt(sum(recebidos));
+  document.getElementById('cr-s-rec-n').textContent   = `${recebidos.length} TÍTULOS`;
+  document.getElementById('cr-s-total').textContent   = fmt(sum(pendentes));
+  document.getElementById('cr-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
+
+  // Painel KPIs
+  const hoje = data.filter(i=>['vencido','hoje'].includes(statusCR(i)));
+  document.getElementById('cr-hoje-val').textContent  = fmt(sum(hoje));
+  document.getElementById('cr-hoje-sub').textContent  = `${hoje.length} TÍTULOS`;
+  document.getElementById('cr-7d-val').textContent    = fmt(sum(prox7d));
+  document.getElementById('cr-7d-sub').textContent    = `${prox7d.length} TÍTULOS`;
+
+  // Datalist clientes
+  const cls = [...new Set(data.map(i=>i.cliente))];
+  document.getElementById('cli-list').innerHTML = cls.map(c=>`<option value="${c}">`).join('');
+
+  // CPCR date
+  document.getElementById('cpcr-date').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// ── FORMS CP ──
+function openFormCP(id) {
+  document.getElementById('cp-edit-id').value = id||'';
+  if (id) {
+    const item = loadCP().find(i=>i.id===id);
+    if (!item) return;
+    document.getElementById('cp-forn').value  = item.fornecedor;
+    document.getElementById('cp-cat').value   = item.categoria;
+    document.getElementById('cp-desc').value  = item.descricao;
+    document.getElementById('cp-val').value   = item.valor;
+    document.getElementById('cp-emis').value  = item.emissao;
+    document.getElementById('cp-venc').value  = item.vencimento;
+    document.getElementById('cp-banco').value = item.banco;
+    document.getElementById('cp-doc').value   = item.doc||'';
+    document.getElementById('cp-obs').value   = item.obs||'';
+  } else {
+    ['cp-forn','cp-desc','cp-val','cp-doc','cp-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('cp-emis').value = today();
+    document.getElementById('cp-venc').value = offset(30);
+  }
+  document.getElementById('modal-cp').classList.add('open');
+}
+function closeFormCP() { document.getElementById('modal-cp').classList.remove('open'); }
+function editCP(id) { openFormCP(id); }
+
+function saveCP() {
+  const forn = document.getElementById('cp-forn').value.trim();
+  const desc = document.getElementById('cp-desc').value.trim();
+  const val  = parseFloat(document.getElementById('cp-val').value);
+  const venc = document.getElementById('cp-venc').value;
+  if (!forn||!desc||!val||!venc) { alert('Preencha os campos obrigatórios.'); return; }
+
+  const data  = loadCP();
+  const editId = document.getElementById('cp-edit-id').value;
+  const item = {
+    id:          editId || 'cp'+Date.now(),
+    fornecedor:  forn,
+    categoria:   document.getElementById('cp-cat').value,
+    descricao:   desc,
+    valor:       val,
+    emissao:     document.getElementById('cp-emis').value,
+    vencimento:  venc,
+    banco:       document.getElementById('cp-banco').value,
+    doc:         document.getElementById('cp-doc').value,
+    obs:         document.getElementById('cp-obs').value,
+    status:      editId ? (data.find(i=>i.id===editId)?.status||'pendente') : 'pendente',
+  };
+
+  if (editId) {
+    const idx = data.findIndex(i=>i.id===editId);
+    if (idx>=0) data[idx]=item; else data.push(item);
+  } else { data.push(item); }
+
+  saveCP_data(data);
+  closeFormCP();
+  renderCP();
+}
+
+function marcarPago(id) {
+  const data = loadCP();
+  const item = data.find(i=>i.id===id);
+  if (item) { item.status='pago'; saveCP_data(data); renderCP(); }
+}
+
+function deleteCP(id) {
+  if (!confirm('Excluir este título?')) return;
+  saveCP_data(loadCP().filter(i=>i.id!==id));
+  renderCP();
+}
+
+// ── FORMS CR ──
+function openFormCR(id) {
+  document.getElementById('cr-edit-id').value = id||'';
+  if (id) {
+    const item = loadCR().find(i=>i.id===id);
+    if (!item) return;
+    document.getElementById('cr-cli').value   = item.cliente;
+    document.getElementById('cr-tipo').value  = item.tipo;
+    document.getElementById('cr-desc').value  = item.descricao;
+    document.getElementById('cr-val').value   = item.valor;
+    document.getElementById('cr-emis').value  = item.emissao;
+    document.getElementById('cr-venc').value  = item.vencimento;
+    document.getElementById('cr-doc').value   = item.doc||'';
+    document.getElementById('cr-cnpj').value  = item.cnpj||'';
+    document.getElementById('cr-obs').value   = item.obs||'';
+  } else {
+    ['cr-cli','cr-desc','cr-val','cr-doc','cr-cnpj','cr-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('cr-emis').value = today();
+    document.getElementById('cr-venc').value = offset(30);
+  }
+  document.getElementById('modal-cr').classList.add('open');
+}
+function closeFormCR() { document.getElementById('modal-cr').classList.remove('open'); }
+function editCR(id) { openFormCR(id); }
+
+function saveCR() {
+  const cli  = document.getElementById('cr-cli').value.trim();
+  const desc = document.getElementById('cr-desc').value.trim();
+  const val  = parseFloat(document.getElementById('cr-val').value);
+  const venc = document.getElementById('cr-venc').value;
+  if (!cli||!desc||!val||!venc) { alert('Preencha os campos obrigatórios.'); return; }
+
+  const data   = loadCR();
+  const editId = document.getElementById('cr-edit-id').value;
+  const item = {
+    id:         editId || 'cr'+Date.now(),
+    cliente:    cli,
+    tipo:       document.getElementById('cr-tipo').value,
+    descricao:  desc,
+    valor:      val,
+    emissao:    document.getElementById('cr-emis').value,
+    vencimento: venc,
+    doc:        document.getElementById('cr-doc').value,
+    cnpj:       document.getElementById('cr-cnpj').value,
+    obs:        document.getElementById('cr-obs').value,
+    status:     editId ? (data.find(i=>i.id===editId)?.status||'pendente') : 'pendente',
+  };
+
+  if (editId) {
+    const idx = data.findIndex(i=>i.id===editId);
+    if (idx>=0) data[idx]=item; else data.push(item);
+  } else { data.push(item); }
+
+  saveCR_data(data);
+  closeFormCR();
+  renderCR();
+}
+
+function marcarRecebido(id) {
+  const data = loadCR();
+  const item = data.find(i=>i.id===id);
+  if (item) { item.status='recebido'; saveCR_data(data); renderCR(); }
+}
+
+function deleteCR(id) {
+  if (!confirm('Excluir este título?')) return;
+  saveCR_data(loadCR().filter(i=>i.id!==id));
+  renderCR();
+}
+
+// ── INIT CP/CR on boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  seedDemoData();
+  renderCP();
+  renderCR();
+});
+
+// ════════════════════════════════════════════════
+// MÓDULO V2 — CLIENTES E FORNECEDORES (F09/F10)
+// ════════════════════════════════════════════════
+
+const CLI_KEY = 'sfe_cli_v1';
+const FRN_KEY = 'sfe_frn_v1';
+
+function loadCLI() { try { return JSON.parse(localStorage.getItem(CLI_KEY)||'[]'); } catch(e){ return []; } }
+function saveCLI_data(d) { localStorage.setItem(CLI_KEY, JSON.stringify(d)); }
+function loadFRN() { try { return JSON.parse(localStorage.getItem(FRN_KEY)||'[]'); } catch(e){ return []; } }
+function saveFRN_data(d) { localStorage.setItem(FRN_KEY, JSON.stringify(d)); }
+
+// ── Seed demo clientes/fornecedores ──
+function seedCadastros() {
+  if (loadCLI().length > 0) return;
+
+  saveCLI_data([
+    {id:'cli001', razao:'Supermercado Bom Preço Ltda',  fantasia:'Bom Preço',  cnpj:'12.345.678/0001-90', ie:'123.456.789',  contato:'Carlos Menezes',   tel:'(47) 99123-4567', email:'compras@bompreco.com.br',    cidade:'Blumenau / SC',    limite:150000, prazo:30, status:'ativo',   obs:'Cliente desde 2019'},
+    {id:'cli002', razao:'Atacadão Sul Distribuidora',   fantasia:'Atacadão Sul',cnpj:'23.456.789/0001-01', ie:'234.567.890',  contato:'Ana Souza',        tel:'(47) 98234-5678', email:'financeiro@atacadaosul.com', cidade:'Joinville / SC',   limite:200000, prazo:28, status:'ativo',   obs:'Pagamento via TED'},
+    {id:'cli003', razao:'Rede Familiar Supermercados',  fantasia:'Familiar',   cnpj:'34.567.890/0001-12', ie:'345.678.901',  contato:'Pedro Lima',        tel:'(49) 97345-6789', email:'pedro@redefamiliar.com.br',  cidade:'Chapecó / SC',     limite:80000,  prazo:30, status:'ativo',   obs:''},
+    {id:'cli004', razao:'Mercado Central Ltda',         fantasia:'Mercado Central',cnpj:'45.678.901/0001-23',ie:'456.789.012',contato:'Joana Ferreira',    tel:'(48) 96456-7890', email:'joana@mercadocentral.com',   cidade:'Florianópolis / SC',limite:100000,prazo:21, status:'ativo',   obs:'Prefere boleto'},
+    {id:'cli005', razao:'GPA Comércio',                 fantasia:'GPA',        cnpj:'56.789.012/0001-34', ie:'567.890.123',  contato:'Roberto Alves',     tel:'(47) 95567-8901', email:'roberto@gpa.com.br',         cidade:'Itajaí / SC',      limite:250000, prazo:35, status:'ativo',   obs:'Grande conta'},
+    {id:'cli006', razao:'Cooperativa Agrícola Regional',fantasia:'CoopAgro',   cnpj:'67.890.123/0001-45', ie:'678.901.234',  contato:'Maria Costa',       tel:'(49) 94678-9012', email:'maria@coopagro.com.br',      cidade:'Xanxerê / SC',     limite:180000, prazo:45, status:'ativo',   obs:'Pagamento quinzenal'},
+    {id:'cli007', razao:'Rede Econômica Ltda',          fantasia:'Econômica',  cnpj:'78.901.234/0001-56', ie:'789.012.345',  contato:'Luiz Nunes',        tel:'(47) 93789-0123', email:'luiz@redeeconomica.com.br',  cidade:'Blumenau / SC',    limite:90000,  prazo:30, status:'inativo', obs:'Em análise de crédito'},
+    {id:'cli008', razao:'Comércio Sul',                 fantasia:'Com. Sul',   cnpj:'89.012.345/0001-67', ie:'890.123.456',  contato:'Sandra Ramos',      tel:'(48) 92890-1234', email:'sandra@comerciosul.com',     cidade:'Tubarão / SC',     limite:60000,  prazo:30, status:'ativo',   obs:''},
+    {id:'cli009', razao:'Supermercado Vale Verde',      fantasia:'Vale Verde', cnpj:'90.123.456/0001-78', ie:'901.234.567',  contato:'Fábio Oliveira',    tel:'(47) 91901-2345', email:'fabio@valeverde.com.br',     cidade:'Brusque / SC',     limite:75000,  prazo:28, status:'ativo',   obs:''},
+    {id:'cli010', razao:'Comércio União',               fantasia:'União',      cnpj:'01.234.567/0001-89', ie:'012.345.678',  contato:'Tânia Borges',      tel:'(49) 99012-3456', email:'tania@comerciouniao.com.br', cidade:'Lages / SC',       limite:50000,  prazo:30, status:'ativo',   obs:'Parceiro antigo'},
+  ]);
+
+  saveFRN_data([
+    {id:'frn001', razao:'Frigorífico Saudade Ltda',     fantasia:'Saudade',    cnpj:'11.222.333/0001-44', categoria:'Fornecedores',       contato:'Marcos Andrade',  tel:'(49) 99111-2222', email:'marcos@frigosaudade.com.br', cidade:'Chapecó / SC',    banco:'Sicredi',  conta:'0312 / 45678-9', pix:'11.222.333/0001-44', prazo:15, status:'ativo',   obs:'Entrega 3x semana'},
+    {id:'frn002', razao:'Laticínios Serrana S.A.',      fantasia:'Serrana',    cnpj:'22.333.444/0001-55', categoria:'Fornecedores',       contato:'Paula Silveira',   tel:'(54) 98222-3333', email:'paula@laticiniosserrana.com',cidade:'Caxias do Sul / RS',banco:'BB',    conta:'3421 / 56789-0', pix:'22.333.444/0001-55', prazo:21, status:'ativo',   obs:''},
+    {id:'frn003', razao:'Transportadora Rota Sul Ltda', fantasia:'Rota Sul',   cnpj:'33.444.555/0001-66', categoria:'Fretes e Logística', contato:'Gilson Pereira',   tel:'(47) 97333-4444', email:'gilson@rotasul.com.br',     cidade:'Joinville / SC',  banco:'Bradesco', conta:'1892 / 67890-1', pix:'gilson@rotasul.com.br', prazo:7, status:'ativo',  obs:'Frete CIF e FOB'},
+    {id:'frn004', razao:'Bebidas Rio Cotia S.A.',       fantasia:'Rio Cotia',  cnpj:'44.555.666/0001-77', categoria:'Fornecedores',       contato:'Renata Campos',    tel:'(11) 96444-5555', email:'renata@riocotia.com.br',     cidade:'São Paulo / SP',  banco:'Itaú',     conta:'0254 / 78901-2', pix:'44.555.666/0001-77', prazo:28, status:'ativo',   obs:'Entrega mensal'},
+    {id:'frn005', razao:'Imobiliária Progresso Ltda',   fantasia:'Progresso',  cnpj:'55.666.777/0001-88', categoria:'Aluguel',            contato:'Jorge Santos',     tel:'(47) 95555-6666', email:'jorge@progresso.com.br',     cidade:'Blumenau / SC',   banco:'Sicredi',  conta:'0256 / 89012-3', pix:'jorge@progresso.com.br', prazo:30, status:'ativo', obs:'Contrato anual'},
+    {id:'frn006', razao:'Grãos & Cereais do Sul Ltda',  fantasia:'Grãos Sul',  cnpj:'66.777.888/0001-99', categoria:'Fornecedores',       contato:'Vera Machado',     tel:'(54) 94666-7777', email:'vera@graossul.com.br',       cidade:'Passo Fundo / RS',banco:'BB',      conta:'3422 / 90123-4', pix:'66.777.888/0001-99', prazo:30, status:'ativo',   obs:''},
+    {id:'frn007', razao:'Escritório Santos & Assis',    fantasia:'Santos Assis',cnpj:'77.888.999/0002-00',categoria:'Serviços',           contato:'Dr. Santos',       tel:'(47) 93777-8888', email:'contato@santosassis.com.br', cidade:'Blumenau / SC',   banco:'Santander',conta:'0543 / 01234-5', pix:'contato@santosassis.com.br',prazo:30,status:'ativo',obs:'Honorários mensais'},
+    {id:'frn008', razao:'Embalagens Plásticas SC Ltda', fantasia:'EmbalaPlast',cnpj:'88.999.000/0001-11', categoria:'Fornecedores',       contato:'Carlos Embal',     tel:'(47) 92888-9999', email:'carlos@embalasc.com.br',     cidade:'Gaspar / SC',     banco:'Sicredi',  conta:'0312 / 12345-6', pix:'88.999.000/0001-11', prazo:21, status:'ativo',   obs:''},
+    {id:'frn009', razao:'Log Express Sul',              fantasia:'Log Express',cnpj:'99.000.111/0001-22', categoria:'Fretes e Logística', contato:'Eliane Freitas',   tel:'(47) 91999-0000', email:'eliane@logexpress.com.br',   cidade:'Itajaí / SC',     banco:'BB',       conta:'3421 / 23456-7', pix:'eliane@logexpress.com.br',prazo:7,  status:'ativo',   obs:''},
+    {id:'frn010', razao:'Importadora Global Foods',     fantasia:'Global Foods',cnpj:'10.111.222/0001-33',categoria:'Fornecedores',       contato:'Michael Torres',   tel:'(11) 90111-2222', email:'michael@globalfoods.com.br', cidade:'Santos / SP',     banco:'Bradesco', conta:'1892 / 34567-8', pix:'10.111.222/0001-33', prazo:45, status:'ativo',   obs:'Importação — prazo longo'},
+  ]);
+}
+
+// ── FILTERS ──
+let cliFilter = 'todos';
+let frnFilter = 'todos';
+
+function filterCLI(f) {
+  cliFilter = f;
+  document.querySelectorAll('[id^="clf-"]').forEach(b=>{b.style.color='';b.style.borderColor='';});
+  const btn = document.getElementById('clf-'+f);
+  if(btn){btn.style.color='var(--glt)';btn.style.borderColor='var(--gbd)';}
+  renderClientes();
+}
+function filterFRN(f) {
+  frnFilter = f;
+  document.querySelectorAll('[id^="frnf-"]').forEach(b=>{b.style.color='';b.style.borderColor='';});
+  const btn = document.getElementById('frnf-'+f);
+  if(btn){btn.style.color='var(--glt)';btn.style.borderColor='var(--gbd)';}
+  renderFornecedores();
+}
+
+// ── RENDER CLIENTES ──
+function renderClientes() {
+  const data   = loadCLI();
+  const search = (document.getElementById('cli-search')?.value||'').toLowerCase();
+  const cr     = loadCR();
+
+  let filtered = data.filter(c => {
+    const matchF = cliFilter==='todos' || c.status===cliFilter;
+    const matchS = !search || c.razao.toLowerCase().includes(search) || (c.cnpj||'').includes(search) || (c.fantasia||'').toLowerCase().includes(search);
+    return matchF && matchS;
+  });
+
+  filtered.sort((a,b) => a.razao.localeCompare(b.razao));
+  document.getElementById('cli-count').textContent = `${filtered.length} / ${data.length} CLIENTES`;
+
+  document.getElementById('cli-tbody').innerHTML = filtered.map(c => {
+    const crAberto = cr.filter(t=>t.cliente===c.razao && statusCR(t)!=='recebido').reduce((s,t)=>s+t.valor,0);
+    const statusBg = c.status==='ativo' ? 'var(--gbg2)' : 'var(--s8)';
+    const statusFc = c.status==='ativo' ? 'var(--glt2)' : 'var(--s5)';
+    const limiteUsado = c.limite > 0 ? (crAberto/c.limite*100).toFixed(0) : 0;
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:1px;background:${statusBg};color:${statusFc};border:1px solid ${statusFc}44">${c.status.toUpperCase()}</span></td>
+      <td><div class="ename" style="font-size:13px">${c.razao}</div><div class="ecode">${c.fantasia||''}</div></td>
+      <td class="ecode">${c.cnpj||'—'}<br><span style="color:var(--s6)">IE: ${c.ie||'—'}</span></td>
+      <td style="font-size:12px"><div style="color:var(--s2)">${c.contato||'—'}</div><div class="ecode">${c.tel||''}</div></td>
+      <td class="ecode">${c.cidade||'—'}</td>
+      <td class="emono r" style="text-align:right">
+        <div style="color:var(--s2)">${c.limite>0?fmt(c.limite):'Sem limite'}</div>
+        ${c.limite>0?`<div style="font-size:9px;color:${limiteUsado>80?'var(--rlt)':'var(--s5)'}">Usado: ${limiteUsado}%</div>`:''}
+      </td>
+      <td class="emono r" style="text-align:right;color:${crAberto>0?'var(--glt2)':'var(--s5)'}">${fmt(crAberto)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sys" onclick="editCliente('${c.id}')" style="font-size:9px;padding:3px 8px">✎ EDITAR</button>
+        <button class="btn-sys" onclick="deleteCliente('${c.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8"><div class="empty">Nenhum cliente encontrado</div></td></tr>';
+
+  // Update CR datalist
+  const names = [...new Set(data.map(c=>c.razao))];
+  const dl = document.getElementById('cli-list');
+  if(dl) dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+}
+
+// ── RENDER FORNECEDORES ──
+function renderFornecedores() {
+  const data   = loadFRN();
+  const search = (document.getElementById('frn-search')?.value||'').toLowerCase();
+  const cp     = loadCP();
+
+  let filtered = data.filter(f => {
+    const matchF = frnFilter==='todos' || f.status===frnFilter;
+    const matchS = !search || f.razao.toLowerCase().includes(search) || (f.cnpj||'').includes(search) || (f.fantasia||'').toLowerCase().includes(search);
+    return matchF && matchS;
+  });
+
+  filtered.sort((a,b) => a.razao.localeCompare(b.razao));
+  document.getElementById('frn-count').textContent = `${filtered.length} / ${data.length} FORNECEDORES`;
+
+  document.getElementById('frn-tbody').innerHTML = filtered.map(f => {
+    const cpAberto = cp.filter(t=>t.fornecedor===f.razao && statusCP(t)!=='pago').reduce((s,t)=>s+t.valor,0);
+    const statusBg = f.status==='ativo' ? 'var(--gbg2)' : 'var(--s8)';
+    const statusFc = f.status==='ativo' ? 'var(--glt2)' : 'var(--s5)';
+    const catColor = CAT_COLORS[f.categoria]||'#446688';
+    return `<tr>
+      <td><span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:1px;background:${statusBg};color:${statusFc};border:1px solid ${statusFc}44">${f.status.toUpperCase()}</span></td>
+      <td><div class="ename" style="font-size:13px">${f.razao}</div><div class="ecode">${f.fantasia||''}</div></td>
+      <td class="ecode">${f.cnpj||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:9px;color:${catColor}">${f.categoria}</span></td>
+      <td style="font-size:12px"><div style="color:var(--s2)">${f.contato||'—'}</div><div class="ecode">${f.tel||''}</div></td>
+      <td class="ecode">${f.cidade||'—'}</td>
+      <td class="emono r" style="text-align:right;color:${cpAberto>0?'var(--rlt)':'var(--s5)'}">${fmt(cpAberto)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-sys" onclick="editFornecedor('${f.id}')" style="font-size:9px;padding:3px 8px">✎ EDITAR</button>
+        <button class="btn-sys" onclick="deleteFornecedor('${f.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8"><div class="empty">Nenhum fornecedor encontrado</div></td></tr>';
+
+  // Update CP datalist
+  const names = [...new Set(data.map(f=>f.razao))];
+  const dl = document.getElementById('forn-list');
+  if(dl) dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+}
+
+// ── FORM CLIENTE ──
+function openFormCliente(id) {
+  document.getElementById('cli-edit-id').value = id||'';
+  const fields = ['razao','fantasia','cnpj','ie','contato','tel','email','cidade','limite','prazo','obs'];
+  if (id) {
+    const item = loadCLI().find(c=>c.id===id);
+    if (!item) return;
+    fields.forEach(f => { const el=document.getElementById('cli-'+f); if(el) el.value=item[f]||''; });
+    document.getElementById('cli-status').value = item.status||'ativo';
+  } else {
+    fields.forEach(f => { const el=document.getElementById('cli-'+f); if(el) el.value=''; });
+    document.getElementById('cli-status').value = 'ativo';
+  }
+  document.getElementById('modal-cli').classList.add('open');
+}
+function closeFormCliente() { document.getElementById('modal-cli').classList.remove('open'); }
+function editCliente(id) { openFormCliente(id); }
+
+function saveCliente() {
+  const razao = document.getElementById('cli-razao').value.trim();
+  const cnpj  = document.getElementById('cli-cnpj').value.trim();
+  if (!razao||!cnpj) { alert('Razão Social e CNPJ são obrigatórios.'); return; }
+  const data   = loadCLI();
+  const editId = document.getElementById('cli-edit-id').value;
+  const item = {
+    id:      editId || 'cli'+Date.now(),
+    razao, fantasia: document.getElementById('cli-fantasia').value,
+    cnpj,  ie:       document.getElementById('cli-ie').value,
+    contato:document.getElementById('cli-contato').value,
+    tel:    document.getElementById('cli-tel').value,
+    email:  document.getElementById('cli-email').value,
+    cidade: document.getElementById('cli-cidade').value,
+    limite: parseFloat(document.getElementById('cli-limite').value)||0,
+    prazo:  parseInt(document.getElementById('cli-prazo').value)||30,
+    obs:    document.getElementById('cli-obs').value,
+    status: document.getElementById('cli-status').value,
+  };
+  if (editId) { const i=data.findIndex(c=>c.id===editId); if(i>=0)data[i]=item; else data.push(item); }
+  else data.push(item);
+  saveCLI_data(data);
+  closeFormCliente();
+  renderClientes();
+}
+
+function deleteCliente(id) {
+  if (!confirm('Excluir este cliente?')) return;
+  saveCLI_data(loadCLI().filter(c=>c.id!==id));
+  renderClientes();
+}
+
+// ── FORM FORNECEDOR ──
+function openFormFornecedor(id) {
+  document.getElementById('frn-edit-id').value = id||'';
+  const fields = ['razao','fantasia','cnpj','contato','tel','email','cidade','banco','conta','pix','prazo','obs'];
+  if (id) {
+    const item = loadFRN().find(f=>f.id===id);
+    if (!item) return;
+    fields.forEach(f => { const el=document.getElementById('frn-'+f); if(el) el.value=item[f]||''; });
+    document.getElementById('frn-cat').value    = item.categoria||'Fornecedores';
+    document.getElementById('frn-status').value = item.status||'ativo';
+  } else {
+    fields.forEach(f => { const el=document.getElementById('frn-'+f); if(el) el.value=''; });
+    document.getElementById('frn-status').value = 'ativo';
+  }
+  document.getElementById('modal-frn').classList.add('open');
+}
+function closeFormFornecedor() { document.getElementById('modal-frn').classList.remove('open'); }
+function editFornecedor(id) { openFormFornecedor(id); }
+
+function saveFornecedor() {
+  const razao = document.getElementById('frn-razao').value.trim();
+  const cnpj  = document.getElementById('frn-cnpj').value.trim();
+  if (!razao||!cnpj) { alert('Razão Social e CNPJ são obrigatórios.'); return; }
+  const data   = loadFRN();
+  const editId = document.getElementById('frn-edit-id').value;
+  const item = {
+    id:        editId || 'frn'+Date.now(),
+    razao, fantasia: document.getElementById('frn-fantasia').value,
+    cnpj,
+    categoria: document.getElementById('frn-cat').value,
+    contato:   document.getElementById('frn-contato').value,
+    tel:       document.getElementById('frn-tel').value,
+    email:     document.getElementById('frn-email').value,
+    cidade:    document.getElementById('frn-cidade').value,
+    banco:     document.getElementById('frn-banco').value,
+    conta:     document.getElementById('frn-conta').value,
+    pix:       document.getElementById('frn-pix').value,
+    prazo:     parseInt(document.getElementById('frn-prazo').value)||30,
+    obs:       document.getElementById('frn-obs').value,
+    status:    document.getElementById('frn-status').value,
+  };
+  if (editId) { const i=data.findIndex(f=>f.id===editId); if(i>=0)data[i]=item; else data.push(item); }
+  else data.push(item);
+  saveFRN_data(data);
+  closeFormFornecedor();
+  renderFornecedores();
+}
+
+function deleteFornecedor(id) {
+  if (!confirm('Excluir este fornecedor?')) return;
+  saveFRN_data(loadFRN().filter(f=>f.id!==id));
+  renderFornecedores();
+}
+
+// ── INIT on boot ──
+document.addEventListener('DOMContentLoaded', () => {
+  seedCadastros();
+  renderClientes();
+  renderFornecedores();
+});
+
+</script>
+</body>
+</html>
