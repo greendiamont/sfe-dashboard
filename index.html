@@ -253,6 +253,7 @@ body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14
     </select>
     <button class="btn-sys" onclick="openModal()">⚙ PARÂM.</button>
     <button class="btn-sys pri" onclick="renderAll()">↻ ATUALIZAR</button>
+    <button class="btn-sys" onclick="navTo('saude',null,null)" style="background:linear-gradient(135deg,rgba(26,138,74,.3),rgba(10,112,144,.2));border-color:var(--glt2);color:var(--glt2);font-weight:700">♥ SAÚDE</button>
   </div>
 </nav>
 
@@ -269,6 +270,7 @@ body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14
     <div class="sb-item" onclick="navTo('categorias',null,this)"><span class="sb-code">CAT</span>Categorias</div>
     <div class="sb-item" onclick="navTo('alertas',null,this)"><span class="sb-code">ALT</span>Alertas<span class="sb-badge" id="sb-badge">0</span></div>
     <div class="sb-item" onclick="navTo('ia',null,this)"><span class="sb-code">AI</span>Análise IA</div>
+    <div class="sb-item" onclick="navTo('saude',null,this)" style="border-left:2px solid var(--glt2)"><span class="sb-code" style="color:var(--glt2)">♥</span>Saúde da Empresa</div>
     <div class="sb-item" onclick="navTo('pagar',null,this)"><span class="sb-code">CP</span>Contas a Pagar</div>
     <div class="sb-item" onclick="navTo('receber',null,this)"><span class="sb-code">CR</span>Contas a Receber</div>
     <div class="sb-item" onclick="navTo('clientes',null,this)"><span class="sb-code">CLI</span>Clientes</div>
@@ -687,6 +689,96 @@ body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14
           <button class="btn-sys" onclick="closeFormFornecedor()">CANCELAR</button>
           <input type="hidden" id="frn-edit-id">
           <span class="modal-hint">* campos obrigatórios</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SAÚDE DA EMPRESA ══ -->
+    <div id="page-saude" class="page">
+      <div class="ctx">
+        <div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Saúde da Empresa</span></div>
+        <div class="ctx-tools">
+          <span class="ctx-info" id="saude-ts">—</span>
+          <button class="btn-sys" onclick="exportSaude()">⬇ EXPORTAR PDF</button>
+          <button class="btn-sys pri" id="saude-btn" onclick="gerarSaude()" style="background:linear-gradient(135deg,rgba(26,138,74,.4),rgba(10,112,144,.3));border-color:var(--glt2);color:var(--glt2);font-weight:700;padding:4px 18px">♥ GERAR RELATÓRIO</button>
+        </div>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div id="saude-loading" style="display:none;padding:60px;text-align:center">
+        <div style="font-family:var(--mono);font-size:13px;color:var(--glt2);margin-bottom:16px">
+          <span id="saude-loading-msg">Analisando situação financeira...</span>
+        </div>
+        <div style="width:300px;height:4px;background:var(--s8);margin:0 auto;border-radius:2px;overflow:hidden">
+          <div id="saude-progress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--glt2),var(--clt));transition:width .5s;border-radius:2px"></div>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div id="saude-empty" style="padding:60px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">♥</div>
+        <div style="font-family:var(--mono);font-size:14px;color:var(--s3);margin-bottom:8px;font-weight:600">DIAGNÓSTICO FINANCEIRO INTELIGENTE</div>
+        <div style="font-size:13px;color:var(--s5);max-width:400px;margin:0 auto 24px;line-height:1.7">Clique em <strong style="color:var(--glt2)">♥ GERAR RELATÓRIO</strong> para obter uma análise completa da saúde financeira da empresa com IA.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:600px;margin:0 auto">
+          <div style="background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:12px 16px;font-size:12px;color:var(--s4);text-align:left;flex:1;min-width:160px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--glt);font-weight:600;margin-bottom:6px;text-transform:uppercase">INCLUI</div>
+            ✓ Score de saúde financeira<br>
+            ✓ Análise de liquidez<br>
+            ✓ Diagnóstico de CP/CR<br>
+            ✓ Alertas e riscos
+          </div>
+          <div style="background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:12px 16px;font-size:12px;color:var(--s4);text-align:left;flex:1;min-width:160px">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--glt);font-weight:600;margin-bottom:6px;text-transform:uppercase">GERADO POR</div>
+            ✓ Claude Sonnet 4<br>
+            ✓ Dados em tempo real<br>
+            ✓ Benchmarks do setor<br>
+            ✓ Recomendações práticas
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT CONTENT -->
+      <div id="saude-report" style="display:none">
+
+        <!-- SCORE -->
+        <div class="sband"><span class="sid">SAU-001</span><span class="sname">Score de Saúde Financeira</span><div class="sline"></div><span class="stag gold" id="saude-score-tag">—</span></div>
+        <div style="padding:20px 16px;display:grid;grid-template-columns:200px 1fr;gap:24px;border-bottom:1px solid var(--bor)">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--s9);border:1px solid var(--bor);border-radius:3px;padding:20px">
+            <canvas id="score-gauge" width="180" height="180"></canvas>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--s5);margin-top:8px;text-transform:uppercase;letter-spacing:1px">Score Geral</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="saude-indicators"></div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="sband"><span class="sid">SAU-002</span><span class="sname">Visão Gráfica</span><div class="sline"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bor)">
+          <div style="border-right:1px solid var(--bor);padding:14px">
+            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">Composição de Despesas</span></div>
+            <div style="height:200px"><canvas id="saude-pie"></canvas></div>
+          </div>
+          <div style="border-right:1px solid var(--bor);padding:14px">
+            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">Fluxo 30 Dias</span></div>
+            <div style="height:200px"><canvas id="saude-flow"></canvas></div>
+          </div>
+          <div style="padding:14px">
+            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">CP vs CR em Aberto</span></div>
+            <div style="height:200px"><canvas id="saude-cpcr"></canvas></div>
+          </div>
+        </div>
+
+        <!-- AI ANALYSIS -->
+        <div class="sband"><span class="sid">SAU-003</span><span class="sname">Análise Inteligente — Claude AI</span><div class="sline"></div><span class="stag gold">CLAUDE HAIKU</span></div>
+        <div id="saude-ai-content" style="padding:20px 16px;font-size:13px;line-height:1.9;color:var(--s2);white-space:pre-wrap;font-family:var(--font)"></div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="sband"><span class="sid">SAU-004</span><span class="sname">Plano de Ação Recomendado</span><div class="sline"></div></div>
+        <div id="saude-actions" style="padding:0"></div>
+
+        <!-- FOOTER -->
+        <div style="padding:16px;border-top:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;background:var(--navy2)">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--s6)">Relatório gerado em <span id="saude-footer-ts">—</span> · SFE Sistema Financeiro Empresarial v1.0</div>
+          <button class="btn-sys pri" onclick="gerarSaude()" style="font-size:10px">↻ ATUALIZAR RELATÓRIO</button>
         </div>
       </div>
     </div>
@@ -1871,6 +1963,275 @@ document.addEventListener('DOMContentLoaded', () => {
   renderClientes();
   renderFornecedores();
 });
+
+// ════════════════════════════════════════════════
+// MÓDULO SAÚDE DA EMPRESA
+// ════════════════════════════════════════════════
+
+let saudeCharts = {};
+
+async function gerarSaude() {
+  // Show loading
+  document.getElementById('saude-empty').style.display   = 'none';
+  document.getElementById('saude-report').style.display  = 'none';
+  document.getElementById('saude-loading').style.display = 'block';
+
+  const msgs = [
+    'Coletando dados financeiros...',
+    'Calculando indicadores...',
+    'Analisando CP/CR...',
+    'Consultando Claude AI...',
+    'Gerando diagnóstico...',
+  ];
+  let p = 0;
+  const prog = document.getElementById('saude-progress');
+  const msgEl = document.getElementById('saude-loading-msg');
+  const interval = setInterval(() => {
+    p = Math.min(p + 20, 90);
+    prog.style.width = p + '%';
+    msgEl.textContent = msgs[Math.floor(p/20)] || msgs[4];
+  }, 600);
+
+  try {
+    const days = 30;
+    const from = new Date(Date.now() - days*86400000);
+    const txs  = S.transactions.filter(t=>new Date(t.date)>=from);
+    const saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+    const ent   = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+    const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+    const res   = ent - sai;
+    const margem = ent>0 ? ((res/ent)*100) : 0;
+
+    // CP/CR
+    const cpData = loadCP();
+    const crData = loadCR();
+    const cpAberto  = cpData.filter(i=>statusCP(i)!=='pago').reduce((s,i)=>s+i.valor,0);
+    const cpVencido = cpData.filter(i=>statusCP(i)==='vencido').reduce((s,i)=>s+i.valor,0);
+    const crAberto  = crData.filter(i=>statusCR(i)!=='recebido').reduce((s,i)=>s+i.valor,0);
+    const crVencido = crData.filter(i=>statusCR(i)==='vencido').reduce((s,i)=>s+i.valor,0);
+
+    // Categories
+    const catMap = {};
+    txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';catMap[c]=(catMap[c]||0)+Math.abs(t.amount);});
+    const catEntries = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+
+    // Score calculation
+    const scores = {
+      liquidez:   Math.min(100, Math.max(0, (saldo / Math.max(sai,1)) * 30 * 10)),
+      margem:     Math.min(100, Math.max(0, margem * 5 + 50)),
+      inadimpl:   Math.min(100, Math.max(0, 100 - (crVencido/Math.max(crAberto,1)*100))),
+      cp_control: Math.min(100, Math.max(0, 100 - (cpVencido/Math.max(cpAberto,1)*100))),
+      fluxo:      Math.min(100, Math.max(0, res>=0 ? 70 + (res/ent*30) : 50 + (res/ent*50))),
+    };
+    const scoreGeral = Math.round(Object.values(scores).reduce((s,v)=>s+v,0) / Object.keys(scores).length);
+
+    // Score color
+    const scoreColor = scoreGeral >= 75 ? '#22aa5a' : scoreGeral >= 50 ? '#d89020' : '#e03020';
+    const scoreLabel = scoreGeral >= 75 ? 'BOA' : scoreGeral >= 50 ? 'ATENÇÃO' : 'CRÍTICO';
+
+    document.getElementById('saude-score-tag').textContent = `${scoreGeral}/100 — ${scoreLabel}`;
+    document.getElementById('saude-score-tag').style.color = scoreColor;
+    document.getElementById('saude-score-tag').style.borderColor = scoreColor + '44';
+
+    // Gauge chart
+    if (saudeCharts['gauge']) saudeCharts['gauge'].destroy();
+    saudeCharts['gauge'] = new Chart(document.getElementById('score-gauge'), {
+      type: 'doughnut',
+      data: {
+        datasets:[{
+          data: [scoreGeral, 100-scoreGeral],
+          backgroundColor: [scoreColor+'cc', 'rgba(255,255,255,.05)'],
+          borderWidth: 0,
+          circumference: 270,
+          rotation: 225,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false, cutout:'75%',
+        plugins:{legend:{display:false},tooltip:{enabled:false}},
+      },
+      plugins:[{
+        id:'gaugeText',
+        afterDraw(chart) {
+          const {ctx,width,height} = chart;
+          ctx.save();
+          ctx.font = 'bold 36px IBM Plex Mono';
+          ctx.fillStyle = scoreColor;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(scoreGeral, width/2, height/2-8);
+          ctx.font = '11px IBM Plex Mono';
+          ctx.fillStyle = '#6688aa';
+          ctx.fillText(scoreLabel, width/2, height/2+20);
+          ctx.restore();
+        }
+      }]
+    });
+
+    // Indicators
+    const indicators = [
+      {label:'Liquidez Imediata', val: fmt(saldo), score: scores.liquidez, desc:`${(saldo/Math.max(sai/30,1)).toFixed(1)} dias de cobertura`},
+      {label:'Margem Operacional', val: margem.toFixed(1)+'%', score: scores.margem, desc: res>=0?'Resultado positivo':'Resultado negativo'},
+      {label:'Inadimplência CR', val: fmt(crVencido), score: scores.inadimpl, desc:`${crData.filter(i=>statusCR(i)==='vencido').length} clientes`},
+      {label:'Controle CP', val: fmt(cpVencido), score: scores.cp_control, desc:`${cpData.filter(i=>statusCP(i)==='vencido').length} títulos vencidos`},
+    ];
+    document.getElementById('saude-indicators').innerHTML = indicators.map(ind=>{
+      const sc = ind.score;
+      const c = sc>=75?'var(--glt2)':sc>=50?'var(--alt)':'var(--rlt)';
+      const bg = sc>=75?'var(--gbg2)':sc>=50?'var(--abg)':'var(--rbg)';
+      return `<div style="background:${bg};border:1px solid ${c}33;border-radius:2px;padding:14px;border-left:3px solid ${c}">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">${ind.label}</div>
+        <div style="font-family:var(--mono);font-size:20px;font-weight:600;color:${c};margin-bottom:4px">${ind.val}</div>
+        <div style="font-size:11px;color:var(--s5)">${ind.desc}</div>
+        <div style="margin-top:8px;height:3px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:${sc}%;background:${c};border-radius:2px;transition:width .8s"></div></div>
+      </div>`;
+    }).join('');
+
+    // Pie chart
+    if (saudeCharts['pie']) saudeCharts['pie'].destroy();
+    saudeCharts['pie'] = new Chart(document.getElementById('saude-pie'),{
+      type:'doughnut',
+      data:{labels:catEntries.slice(0,6).map(e=>e[0]),datasets:[{
+        data:catEntries.slice(0,6).map(e=>e[1]),
+        backgroundColor:catEntries.slice(0,6).map(e=>(CAT_COLORS[e[0]]||'#445566')+'44'),
+        borderColor:catEntries.slice(0,6).map(e=>CAT_COLORS[e[0]]||'#445566'),
+        borderWidth:1.5
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.raw)}`}}}}
+    });
+
+    // Flow chart
+    const flowLabels=[], flowIns=[], flowOuts=[];
+    for(let i=6;i>=0;i--){
+      const end=new Date(Date.now()-i*5*86400000), start=new Date(Date.now()-(i+1)*5*86400000);
+      flowLabels.push(end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+      const sl=txs.filter(t=>{const d=new Date(t.date);return d>=start&&d<=end;});
+      flowIns.push(sl.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0));
+      flowOuts.push(Math.abs(sl.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)));
+    }
+    if (saudeCharts['flow']) saudeCharts['flow'].destroy();
+    saudeCharts['flow'] = new Chart(document.getElementById('saude-flow'),{
+      type:'bar',data:{labels:flowLabels,datasets:[
+        {label:'Entradas',data:flowIns,backgroundColor:'rgba(26,138,74,.3)',borderColor:'rgba(34,170,90,.8)',borderWidth:1,borderRadius:2},
+        {label:'Saídas',data:flowOuts,backgroundColor:'rgba(192,39,26,.2)',borderColor:'rgba(224,48,32,.7)',borderWidth:1,borderRadius:2},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:8},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}}}
+    });
+
+    // CP vs CR chart
+    if (saudeCharts['cpcr']) saudeCharts['cpcr'].destroy();
+    saudeCharts['cpcr'] = new Chart(document.getElementById('saude-cpcr'),{
+      type:'bar',
+      data:{
+        labels:['A Pagar','Vencido CP','A Receber','Vencido CR'],
+        datasets:[{
+          data:[cpAberto, cpVencido, crAberto, crVencido],
+          backgroundColor:['rgba(192,39,26,.3)','rgba(192,39,26,.6)','rgba(26,138,74,.3)','rgba(26,138,74,.2)'],
+          borderColor:['rgba(224,48,32,.8)','rgba(224,48,32,1)','rgba(34,170,90,.8)','rgba(34,170,90,.5)'],
+          borderWidth:1.5,borderRadius:2,
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${fmt(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}}}
+    });
+
+    // AI Analysis
+    const beUrl = S.cfg.be || 'https://sfe-backend-production.up.railway.app';
+    const prompt = `Você é um analista financeiro sênior especializado em PMEs brasileiras do setor de distribuição.
+
+DADOS FINANCEIROS — ${DEMO.co} | ${new Date().toLocaleDateString('pt-BR')}
+
+POSIÇÃO BANCÁRIA: ${fmt(saldo)} em ${S.accounts.length} contas
+RESULTADO 30 DIAS: Entradas ${fmt(ent)} | Saídas ${fmt(sai)} | Líquido ${fmt(res)} | Margem ${margem.toFixed(1)}%
+SCORE SAÚDE: ${scoreGeral}/100 (${scoreLabel})
+
+CONTAS A PAGAR: Total aberto ${fmt(cpAberto)} | Vencido ${fmt(cpVencido)} (${cpData.filter(i=>statusCP(i)==='vencido').length} títulos)
+CONTAS A RECEBER: Total aberto ${fmt(crAberto)} | Inadimplente ${fmt(crVencido)} (${crData.filter(i=>statusCR(i)==='vencido').length} clientes)
+
+TOP DESPESAS: ${catEntries.slice(0,5).map(([c,v])=>`${c}: ${fmt(v)}`).join(' | ')}
+
+Gere um relatório executivo de saúde financeira com:
+1. DIAGNÓSTICO GERAL (2-3 linhas diretas sobre a situação)
+2. PONTOS CRÍTICOS (máx 3 itens urgentes)
+3. PONTOS POSITIVOS (máx 3 itens)
+4. RECOMENDAÇÕES IMEDIATAS (próximos 7 dias, em formato de checklist)
+
+Seja direto, use números, fale como consultor sênior. Máximo 400 palavras.`;
+
+    msgEl.textContent = 'Consultando Claude AI...';
+    prog.style.width = '85%';
+
+    const r = await fetch(`${beUrl}/api/claude`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:prompt}], max_tokens:800,
+        system:'Analista financeiro sênior de PMEs brasileiras. Respostas em português, diretas e práticas.'})
+    });
+    const d = await r.json();
+    const aiText = d.content?.[0]?.text || 'Análise indisponível.';
+
+    // Format AI response
+    const formatted = aiText
+      .replace(/^# (.*?)$/gm, '<div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--glt);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;padding-top:16px;border-top:1px solid var(--bor)">$1</div>')
+      .replace(/^## (.*?)$/gm, '<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--s3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">$1</div>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--s0)">$1</strong>')
+      .replace(/^- \[ \] (.*?)$/gm, '<div style="padding:6px 0;display:flex;gap:8px;align-items:flex-start"><span style="color:var(--s6);flex-shrink:0;font-family:var(--mono)">□</span><span>$1</span></div>')
+      .replace(/^- (.*?)$/gm, '<div style="padding:4px 0;display:flex;gap:8px;align-items:flex-start"><span style="color:var(--glt2);flex-shrink:0">▸</span><span>$1</span></div>')
+      .replace(/
+
+/g, '<br>');
+
+    document.getElementById('saude-ai-content').innerHTML = formatted;
+
+    // Actions from AI (extract recommendations)
+    const actionLines = aiText.split('
+').filter(l => l.match(/^[-•*]|\[ \]/));
+    document.getElementById('saude-actions').innerHTML = actionLines.slice(0,6).map((line,i)=>{
+      const text = line.replace(/^[-•*\[\] ]/g,'').trim();
+      const priority = i<2?'URGENTE':i<4?'ESTA SEMANA':'MONITORAR';
+      const pColor = i<2?'var(--rlt)':i<4?'var(--alt)':'var(--clt)';
+      return `<div style="display:grid;grid-template-columns:80px 1fr 100px;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bor);align-items:center">
+        <span style="font-family:var(--mono);font-size:9px;font-weight:700;color:${pColor};text-transform:uppercase">${priority}</span>
+        <span style="font-size:13px;color:var(--s1)">${text}</span>
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn-sys" style="font-size:9px;padding:2px 8px">✓ FEITO</button>
+        </div>
+      </div>`;
+    }).join('') || '<div class="empty">Nenhuma ação gerada</div>';
+
+    // Timestamp
+    const ts = new Date().toLocaleString('pt-BR');
+    document.getElementById('saude-ts').textContent = `Gerado: ${ts}`;
+    document.getElementById('saude-footer-ts').textContent = ts;
+
+    prog.style.width = '100%';
+    clearInterval(interval);
+
+    setTimeout(() => {
+      document.getElementById('saude-loading').style.display = 'none';
+      document.getElementById('saude-report').style.display  = 'block';
+    }, 400);
+
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('saude-loading').style.display = 'none';
+    document.getElementById('saude-empty').style.display   = 'block';
+    document.getElementById('saude-empty').innerHTML = `<div style="padding:40px;text-align:center;color:var(--rlt)">Erro ao gerar relatório: ${e.message}<br><br><button class="btn-sys pri" onclick="gerarSaude()">Tentar novamente</button></div>`;
+  }
+}
+
+function exportSaude() {
+  window.print();
+}
+
+// Auto-gerar saúde quando navegar para a página
+const _origNavTo = navTo;
+function navTo(page, navEl, sbEl) {
+  _origNavTo(page, navEl, sbEl);
+  if (page === 'saude' && document.getElementById('saude-report').style.display === 'none' 
+      && document.getElementById('saude-loading').style.display === 'none') {
+    // Auto-trigger after short delay
+    // setTimeout(gerarSaude, 300);
+  }
+}
 
 </script>
 </body>
