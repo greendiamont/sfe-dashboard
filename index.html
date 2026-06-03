@@ -2231,7 +2231,176 @@ Seja direto, use números, fale como consultor sênior. Máximo 400 palavras.`;
 }
 
 function exportSaude() {
-  window.print();
+  const report = document.getElementById('saude-report');
+  if (!report || report.style.display === 'none') {
+    alert('Gere o relatório primeiro clicando em ♥ GERAR RELATÓRIO');
+    return;
+  }
+
+  const co       = document.getElementById('sys-co')?.textContent || 'Empresa';
+  const cnpj     = document.getElementById('sys-cnpj')?.textContent || '';
+  const ts       = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const scoreTag = document.getElementById('saude-score-tag')?.textContent || '—';
+  const scoreNum = scoreTag.split('/')[0]?.trim() || '—';
+  const scoreDesc= scoreTag.split('—')[1]?.trim() || '';
+  const scoreC   = parseInt(scoreNum) >= 75 ? '#1a7a3a' : parseInt(scoreNum) >= 50 ? '#a06010' : '#b02010';
+
+  // Collect indicators
+  const indEls = document.querySelectorAll('#saude-indicators > div');
+  let indRows = '';
+  indEls.forEach(el => {
+    const lbl  = el.querySelector('[style*="font-size:9px"]')?.textContent?.trim() || '';
+    const val  = el.querySelector('[style*="font-size:20px"]')?.textContent?.trim() || '';
+    const desc = el.querySelector('[style*="font-size:11px"]')?.textContent?.trim() || '';
+    const barEl= el.querySelector('[style*="transition"]');
+    const pct  = barEl ? parseInt(barEl.style.width)||0 : 0;
+    const c    = pct >= 75 ? '#1a7a3a' : pct >= 50 ? '#a06010' : '#b02010';
+    indRows += `<td style="border:1px solid #ddd;padding:10px 12px;vertical-align:top;width:25%">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px">${lbl}</div>
+      <div style="font-size:18px;font-weight:700;color:${c};margin-bottom:2px">${val}</div>
+      <div style="font-size:10px;color:#666;margin-bottom:6px">${desc}</div>
+      <div style="height:4px;background:#eee;border-radius:2px"><div style="height:4px;width:${pct}%;background:${c};border-radius:2px"></div></div>
+    </td>`;
+  });
+
+  // AI content - clean markdown
+  const aiRaw = document.getElementById('saude-ai-content')?.innerText || '';
+  const aiClean = aiRaw
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^#{1,3}\s+(.*?)$/gm, '<h3 style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#333;margin:14px 0 6px;padding-top:10px;border-top:1px solid #eee">$1</h3>')
+    .replace(/^[-•▸□]\s+(.*?)$/gm, '<div style="padding:4px 0 4px 16px;position:relative"><span style="position:absolute;left:0;color:#888">▸</span>$1</div>')
+    .replace(/\n\n/g, '<br>')
+    .replace(/\n/g, ' ');
+
+  // Build clean PDF HTML
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório de Saúde — ${co}</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-break { page-break-inside: avoid; }
+    .page-break { page-break-before: always; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #222; line-height: 1.6; background: #fff; }
+
+  .header { background: #060d1a; color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 18px; height: 18px; background: #e8b020; clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
+  .logo-text { font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+  .header-info { text-align: right; font-size: 10px; color: #aabbd0; }
+  .header-co { font-size: 12px; font-weight: 700; color: #fff; }
+
+  .gold-bar { height: 3px; background: linear-gradient(90deg, #e8b020, #c8940a); }
+
+  .body { padding: 16px 18px; }
+
+  .section { margin-bottom: 18px; }
+  .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #e8b020; background: #060d1a; padding: 5px 10px; margin-bottom: 10px; display: inline-block; }
+
+  .score-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+  .score-box { border: 2px solid ${scoreC}; border-radius: 6px; padding: 14px 20px; text-align: center; min-width: 120px; flex-shrink: 0; }
+  .score-num { font-size: 44px; font-weight: 700; color: ${scoreC}; line-height: 1; }
+  .score-100 { font-size: 14px; color: #999; }
+  .score-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: ${scoreC}; margin-top: 4px; }
+
+  table.ind { width: 100%; border-collapse: collapse; }
+
+  .ai-box { background: #f8f8f8; border-left: 3px solid #e8b020; padding: 14px 16px; font-size: 11px; line-height: 1.8; color: #222; }
+
+  .action-table { width: 100%; border-collapse: collapse; }
+  .action-table th { background: #060d1a; color: #e8b020; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; padding: 6px 10px; text-align: left; }
+  .action-table td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 11px; vertical-align: top; }
+  .action-table tr:nth-child(even) td { background: #fafafa; }
+  .pri-urg  { color: #b02010; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  .pri-sem  { color: #a06010; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  .pri-mon  { color: #1060a0; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+
+  .footer { border-top: 1px solid #ddd; padding: 10px 0 0; display: flex; justify-content: space-between; font-size: 9px; color: #aaa; margin-top: 20px; }
+
+  h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #333; margin: 12px 0 5px; padding-top: 8px; border-top: 1px solid #eee; }
+  strong { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-mark"></div>
+    <div>
+      <div class="logo-text">SFE</div>
+      <div style="font-size:9px;color:#6688aa;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</div>
+    </div>
+  </div>
+  <div class="header-info">
+    <div class="header-co">${co}</div>
+    <div>CNPJ ${cnpj}</div>
+    <div>Relatório de Saúde Financeira · ${ts}</div>
+  </div>
+</div>
+<div class="gold-bar"></div>
+
+<div class="body">
+
+  <!-- SCORE + INDICADORES -->
+  <div class="section no-break">
+    <div class="section-title">SAU-001 · Score de Saúde Financeira</div>
+    <div class="score-row">
+      <div class="score-box">
+        <div class="score-num">${scoreNum}</div>
+        <div class="score-100">/100</div>
+        <div class="score-lbl">${scoreDesc}</div>
+      </div>
+      <table class="ind"><tr>${indRows}</tr></table>
+    </div>
+  </div>
+
+  <!-- AI ANALYSIS -->
+  <div class="section no-break">
+    <div class="section-title">SAU-002 · Análise Inteligente — Claude AI</div>
+    <div class="ai-box">${aiClean}</div>
+  </div>
+
+  <!-- PLANO DE AÇÃO -->
+  ${(() => {
+    const actionRows = document.querySelectorAll('#saude-actions > div');
+    let rows = '';
+    actionRows.forEach(row => {
+      const pri  = row.querySelector('[style*="font-size:9px"]')?.textContent?.trim() || '';
+      const text = row.querySelector('[style*="font-size:13px"]')?.textContent?.trim() || '';
+      if (!text || text.length < 5) return;
+      const clean = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/^\*/, '').replace(/\*$/, '');
+      const cls   = pri.includes('URGENTE') ? 'pri-urg' : pri.includes('SEMANA') ? 'pri-sem' : 'pri-mon';
+      rows += `<tr><td width="90"><span class="${cls}">${pri}</span></td><td>${clean}</td></tr>`;
+    });
+    return rows ? `<div class="section no-break">
+      <div class="section-title">SAU-003 · Plano de Ação Recomendado</div>
+      <table class="action-table">
+        <thead><tr><th width="90">Prioridade</th><th>Ação Recomendada</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>` : '';
+  })()}
+
+  <div class="footer">
+    <span>SFE Sistema Financeiro Empresarial v1.0 · greendiamont.github.io/sfe-dashboard</span>
+    <span>Gerado em ${ts}</span>
+  </div>
+
+</div>
+
+<scr' + 'ipt>window.onload = () => setTimeout(() => window.print(), 600);</scr' + 'ipt>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=750,scrollbars=yes');
+  if (!win) { alert('Permita pop-ups para exportar o PDF'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 // navTo override removed - using original function
