@@ -281,6 +281,7 @@ body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14
 
     <div class="sb-head" style="margin-top:auto"><span>Sistema</span></div>
     <div class="sb-item" onclick="openModal()"><span class="sb-code">⚙</span>Configurações</div>
+    <div class="sb-item" onclick="buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();" style="border-left:2px solid var(--glt)"><span class="sb-code" style="color:var(--glt)">▷</span>Carregar Demo</div>
   </aside>
 
   <!-- CONTENT -->
@@ -846,13 +847,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('sfe_v4');
   if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
 
+  // Build demo data and render everything
   buildDemo();
   renderAll();
   buildQuickQueries();
 
-  // Init CP/CR/Clientes/Fornecedores
-  if (typeof seedDemoData === 'function') { seedDemoData(); renderCP(); renderCR(); }
-  if (typeof seedCadastros === 'function') { seedCadastros(); renderClientes(); renderFornecedores(); }
+  // Seed CP/CR/Clientes/Fornecedores with demo data
+  seedDemoData();
+  renderCP();
+  renderCR();
+  seedCadastros();
+  renderClientes();
+  renderFornecedores();
 });
 
 function applyConfig() {
@@ -935,14 +941,18 @@ const fmtK = v => v >= 1000000 ? `R$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `R
 
 // ══ NAVIGATION ══
 function navTo(page, navEl, sbEl) {
+  // Hide all pages
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
+  const pg = document.getElementById('page-'+page);
+  if (pg) pg.classList.add('active');
+
+  // Reset all nav and sidebar items
   document.querySelectorAll('.nav-mod').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(n => n.classList.remove('active'));
+
+  // Activate clicked elements
   if (navEl) navEl.classList.add('active');
   if (sbEl)  sbEl.classList.add('active');
-  // sync both nav and sidebar
-  if (!navEl && !sbEl) return;
 }
 
 // ══ RENDER ALL ══
