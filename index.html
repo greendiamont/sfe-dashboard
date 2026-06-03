@@ -281,7 +281,7 @@ body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14
 
     <div class="sb-head" style="margin-top:auto"><span>Sistema</span></div>
     <div class="sb-item" onclick="openModal()"><span class="sb-code">⚙</span>Configurações</div>
-    <div class="sb-item" onclick="buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();" style="border-left:2px solid var(--glt)"><span class="sb-code" style="color:var(--glt)">▷</span>Carregar Demo</div>
+    <div class="sb-item" onclick="localStorage.removeItem('sfe_cp_v1');localStorage.removeItem('sfe_cr_v1');localStorage.removeItem('sfe_cli_v1');localStorage.removeItem('sfe_frn_v1');localStorage.removeItem('sfe_demo_loaded');buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();" style="border-left:2px solid var(--glt)"><span class="sb-code" style="color:var(--glt)">▷</span>Carregar Demo</div>
   </aside>
 
   <!-- CONTENT -->
@@ -847,6 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('sfe_v4');
   if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
 
+  // Clear stale demo data on every fresh load
+  localStorage.removeItem('sfe_demo_v2');
+
   // Build demo data and render everything
   buildDemo();
   renderAll();
@@ -870,6 +873,14 @@ function applyConfig() {
 
 // ══ DEMO DATA ══
 function buildDemo() {
+  // Clear stale demo data from localStorage to force fresh seed
+  if (!localStorage.getItem('sfe_demo_v2')) {
+    localStorage.removeItem('sfe_cp_v1');
+    localStorage.removeItem('sfe_cr_v1');
+    localStorage.removeItem('sfe_cli_v1');
+    localStorage.removeItem('sfe_frn_v1');
+    localStorage.setItem('sfe_demo_v2', '1');
+  }
   S.accounts = DEMO.banks;
 
   const TXNS = [
@@ -1381,7 +1392,7 @@ function saveCR_data(data) { localStorage.setItem(CR_KEY, JSON.stringify(data));
 
 // ── Seed demo data on first load ──
 function seedDemoData() {
-  if (loadCP().length > 0) return;
+  if (loadCP().length > 0 && loadCR().length > 0) return;
 
   const demoCP = [
     {id:'cp001', fornecedor:'Frigorífico Saudade Ltda',    descricao:'NF-e 009812 — Carnes Bov.',       categoria:'Fornecedores',       emissao: offset(-5), vencimento: offset(-2), valor:42600, banco:'SC', doc:'NF009812', obs:'', status:'pendente'},
@@ -1729,7 +1740,7 @@ function saveFRN_data(d) { localStorage.setItem(FRN_KEY, JSON.stringify(d)); }
 
 // ── Seed demo clientes/fornecedores ──
 function seedCadastros() {
-  if (loadCLI().length > 0) return;
+  if (loadCLI().length > 0 && loadFRN().length > 0) return;
 
   saveCLI_data([
     {id:'cli001', razao:'Supermercado Bom Preço Ltda',  fantasia:'Bom Preço',  cnpj:'12.345.678/0001-90', ie:'123.456.789',  contato:'Carlos Menezes',   tel:'(47) 99123-4567', email:'compras@bompreco.com.br',    cidade:'Blumenau / SC',    limite:150000, prazo:30, status:'ativo',   obs:'Cliente desde 2019'},
