@@ -2190,15 +2190,12 @@ Seja direto, use números, fale como consultor sênior. Máximo 400 palavras.`;
       .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--s0)">$1</strong>')
       .replace(/^- \[ \] (.*?)$/gm, '<div style="padding:6px 0;display:flex;gap:8px;align-items:flex-start"><span style="color:var(--s6);flex-shrink:0;font-family:var(--mono)">□</span><span>$1</span></div>')
       .replace(/^- (.*?)$/gm, '<div style="padding:4px 0;display:flex;gap:8px;align-items:flex-start"><span style="color:var(--glt2);flex-shrink:0">▸</span><span>$1</span></div>')
-      .replace(/
-
-/g, '<br>');
+      .replace(/\n\n/g, '<br>');
 
     document.getElementById('saude-ai-content').innerHTML = formatted;
 
     // Actions from AI (extract recommendations)
-    const actionLines = aiText.split('
-').filter(l => l.match(/^[-•*]|\[ \]/));
+    const actionLines = aiText.split("\n").filter(l => l.match(/^[-•*]|\[ \]/));
     document.getElementById('saude-actions').innerHTML = actionLines.slice(0,6).map((line,i)=>{
       const text = line.replace(/^[-•*\[\] ]/g,'').trim();
       const priority = i<2?'URGENTE':i<4?'ESTA SEMANA':'MONITORAR';
