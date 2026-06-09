@@ -4,810 +4,2022 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SFE — Sistema Financeiro Empresarial</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --navy:#060d1a;--navy2:#0a1628;--navy3:#0f2040;
-  --s9:#111820;--s8:#1a2332;--s7:#243040;--s6:#334455;--s5:#445566;
-  --s4:#6688aa;--s3:#8899bb;--s2:#aabbd0;--s1:#ccd8e8;--s0:#e8eef8;
-  --gold:#c8940a;--glt:#e8b020;--gbg:#1a1400;--gbd:#3a2a00;
-  --grn:#1a8a4a;--glt2:#22aa5a;--gbg2:#001a0a;
-  --red:#c0271a;--rlt:#e03020;--rbg:#1a0500;--rbd:#3a0a00;
-  --amb:#b07010;--alt:#d89020;--abg:#1a1000;
-  --blu:#185fa5;--blt:#2888d8;--bbg:#001020;
-  --clt:#0a9abf;
-  --bor:rgba(255,255,255,0.07);--bhi:rgba(255,255,255,0.13);
-  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+/* ══════════════════════════════════════════════
+   SFE PREMIUM — DARK ULTRA PREMIUM
+   Font: Syne (display) + Space Grotesk (body) + JetBrains Mono (data)
+   Palette: Obsidian black + liquid gold + electric teal
+══════════════════════════════════════════════ */
+:root {
+  /* Core */
+  --ink:    #050508;
+  --ink2:   #09090f;
+  --ink3:   #0e0e18;
+  --ink4:   #141420;
+  --ink5:   #1a1a28;
+  --ink6:   #222236;
+
+  /* Gold spectrum */
+  --g0:     #fffbe6;
+  --g1:     #fde68a;
+  --g2:     #f59e0b;
+  --g3:     #d97706;
+  --g4:     #92400e;
+  --gold:   #e8a020;
+  --glow:   rgba(232,160,32,.18);
+  --glow2:  rgba(232,160,32,.08);
+
+  /* Teal neon */
+  --t1:     #5eead4;
+  --t2:     #2dd4bf;
+  --t3:     #0d9488;
+  --tglow:  rgba(45,212,191,.15);
+
+  /* Status */
+  --pos:    #34d399;
+  --posdim: rgba(52,211,153,.12);
+  --neg:    #f87171;
+  --negdim: rgba(248,113,113,.12);
+  --warn:   #fbbf24;
+  --warndim:rgba(251,191,36,.12);
+  --info:   #60a5fa;
+  --infodim:rgba(96,165,250,.12);
+
+  /* Text */
+  --tx0:    #ffffff;
+  --tx1:    #f0f0f8;
+  --tx2:    #b8b8d0;
+  --tx3:    #7070a0;
+  --tx4:    #404060;
+  --tx5:    #2a2a45;
+
+  /* Borders */
+  --b1:     rgba(255,255,255,.08);
+  --b2:     rgba(255,255,255,.14);
+  --b3:     rgba(232,160,32,.25);
+
+  /* Fonts */
+  --f-display: 'Syne', sans-serif;
+  --f-body:    'Space Grotesk', sans-serif;
+  --f-mono:    'JetBrains Mono', monospace;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --topbar-h:  60px;
+  --radius:    12px;
+  --radius-sm: 8px;
 }
-body{font-family:var(--font);background:var(--navy);color:var(--s0);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-/* SYS BAR */
-.sys-bar{height:36px;background:var(--navy2);border-bottom:2px solid var(--gold);display:flex;align-items:center;padding:0 16px;position:fixed;top:0;left:0;right:0;z-index:1000;gap:0}
-.sys-logo{display:flex;align-items:center;gap:10px;padding-right:18px;border-right:1px solid var(--bor);margin-right:16px;flex-shrink:0}
-.sys-logo-mark{width:20px;height:20px;background:var(--gold);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
-.sys-logo-text{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--s1);text-transform:uppercase}
-.sys-product{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s3);letter-spacing:.8px;text-transform:uppercase;flex:1}
-.sys-meta{display:flex;align-items:center;gap:16px;flex-shrink:0}
-.sys-field{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px}
-.sys-field-label{color:var(--s5);text-transform:uppercase;letter-spacing:.5px}
-.sys-field-val{color:var(--s2);font-weight:500}
-.sys-sep{width:1px;height:18px;background:var(--bor)}
-.sys-status{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;padding:3px 10px;border:1px solid var(--bor);border-radius:2px}
-.led{width:6px;height:6px;border-radius:50%;background:var(--s6)}
-.led.live{background:var(--glt2);box-shadow:0 0 6px var(--glt2);animation:blink 2.5s infinite}
-.led.demo{background:var(--glt);box-shadow:0 0 6px var(--glt)}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* NAV BAR */
-.nav-bar{height:40px;background:var(--s9);border-bottom:1px solid var(--border);display:flex;align-items:stretch;position:fixed;top:36px;left:0;right:0;z-index:999;border-bottom:1px solid var(--bor)}
-.nav-mod{display:flex;align-items:center;padding:0 16px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--s4);cursor:pointer;border-right:1px solid var(--bor);transition:all .15s;gap:6px;user-select:none;white-space:nowrap}
-.nav-mod:hover{background:var(--s8);color:var(--s1)}
-.nav-mod.active{background:var(--navy3);color:var(--glt);border-bottom:2px solid var(--glt);margin-bottom:-1px}
-.nav-mod-num{font-size:9px;color:var(--s6);font-weight:400}
-.nav-right{margin-left:auto;display:flex;align-items:center;padding:0 12px;gap:8px;border-left:1px solid var(--bor)}
-.btn-sys{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:4px 12px;border-radius:2px;cursor:pointer;border:1px solid var(--bhi);transition:all .12s;background:transparent;color:var(--s3)}
-.btn-sys:hover{background:var(--s8);color:var(--s0);border-color:var(--s4)}
-.btn-sys.pri{background:var(--navy3);border-color:var(--gbd);color:var(--glt)}
-.btn-sys.pri:hover{background:var(--navy2);border-color:var(--gold)}
-.sel-sys{font-family:var(--mono);font-size:10px;font-weight:500;background:var(--s8);border:1px solid var(--bhi);border-radius:2px;color:var(--s2);padding:4px 8px;outline:none;cursor:pointer}
+body {
+  font-family: var(--f-body);
+  background: var(--ink);
+  color: var(--tx1);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
 
-/* LAYOUT */
-.layout{margin-top:76px;display:flex;min-height:calc(100vh - 76px)}
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--tx5); border-radius: 2px; }
 
-/* SIDEBAR */
-.sidebar{width:220px;min-width:220px;background:var(--s9);border-right:1px solid var(--bor);display:flex;flex-direction:column;position:sticky;top:76px;height:calc(100vh - 76px);overflow-y:auto;flex-shrink:0}
-.sb-head{padding:7px 14px;font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--s4);background:var(--navy2);border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between}
-.sb-item{display:flex;align-items:center;padding:9px 14px;gap:9px;font-size:13px;font-weight:500;color:var(--s2);cursor:pointer;transition:background .12s;border-bottom:1px solid var(--bor);user-select:none;position:relative}
-.sb-item:hover{background:var(--s8);color:var(--s0)}
-.sb-item.active{background:var(--navy3);color:var(--glt)}
-.sb-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold)}
-.sb-code{font-family:var(--mono);font-size:9px;color:var(--s5);width:30px;flex-shrink:0;font-weight:400}
-.sb-badge{margin-left:auto;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:1px;background:var(--rbg);color:var(--rlt);border:1px solid var(--red)}
+/* ══ TOPBAR ══ */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--ink2);
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  padding: 0 24px 0 0;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+}
 
-/* CONTENT */
-.content{flex:1;overflow-y:auto;background:var(--navy)}
-.page{display:none}
-.page.active{display:block}
+.tb-logo {
+  width: var(--sidebar-w);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  border-right: 1px solid var(--b1);
+  height: 100%;
+  flex-shrink: 0;
+}
 
-/* CTX BAR */
-.ctx{height:32px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:10}
-.ctx-path{font-family:var(--mono);font-size:10px;color:var(--s5);display:flex;align-items:center;gap:5px;flex:1}
-.ctx-seg{color:var(--s4)}
-.ctx-seg.cur{color:var(--s1);font-weight:600}
-.ctx-sep{color:var(--s7)}
-.ctx-tools{display:flex;align-items:center;gap:6px}
-.ctx-info{font-family:var(--mono);font-size:9px;color:var(--s6)}
+.tb-logo-mark {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--gold), #b07010);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 12px rgba(232,160,32,.5));
+}
 
-/* SECTION BAND */
-.sband{display:flex;align-items:center;gap:12px;background:var(--navy2);border-bottom:1px solid var(--bor);padding:6px 16px}
-.sid{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--glt);letter-spacing:1.5px;text-transform:uppercase;flex-shrink:0}
-.sname{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--s3);text-transform:uppercase;letter-spacing:.8px}
-.sline{flex:1;height:1px;background:var(--bor)}
-.stag{font-family:var(--mono);font-size:9px;color:var(--s5);padding:2px 7px;border:1px solid var(--bor);border-radius:1px}
-.stag.gold{color:var(--glt);border-color:var(--gbd)}
+.tb-logo-text {
+  font-family: var(--f-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--tx0);
+  text-transform: uppercase;
+}
 
-/* KPI STRIP */
-.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--bor)}
-.kpi-cell{padding:16px 18px;border-right:1px solid var(--bor);position:relative}
-.kpi-cell:last-child{border-right:none}
-.kpi-cell::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--s6))}
-.kpi-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.kpi-code{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);letter-spacing:1px;text-transform:uppercase}
-.kpi-flag{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:1px}
-.kpi-amt{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:6px}
-.kpi-lbl{font-size:12px;color:var(--s4);font-weight:400;margin-bottom:8px}
-.kpi-sub{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s5)}
-.vpos{color:var(--glt2)}.vneg{color:var(--rlt)}.vgold{color:var(--glt)}
+.tb-logo-sub {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  color: var(--tx4);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
 
-/* GRID */
-.dgrid{display:grid;grid-template-columns:1.5fr 1fr;border-bottom:1px solid var(--bor)}
-.dgrid-3{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bor)}
-.dpanel{border-right:1px solid var(--bor);display:flex;flex-direction:column}
-.dpanel:last-child{border-right:none}
-.dp-head{background:var(--s9);border-bottom:1px solid var(--bor);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.dp-title{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--s2)}
-.dp-meta{font-family:var(--mono);font-size:9px;color:var(--s6);display:flex;align-items:center;gap:8px}
-.dp-body{padding:14px;flex:1}
+.tb-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+}
 
-/* TABLE */
-.etable{width:100%;border-collapse:collapse}
-.etable th{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5);text-align:left;padding:6px 10px;border-bottom:1px solid var(--bhi);white-space:nowrap}
-.etable th.r{text-align:right}
-.etable td{padding:9px 10px;font-size:13px;border-bottom:1px solid var(--bor);vertical-align:middle}
-.etable tr:last-child td{border-bottom:none}
-.etable tr:hover td{background:rgba(255,255,255,.02)}
-.ecode{font-family:var(--mono);font-size:10px;color:var(--s5);font-weight:500}
-.ename{font-weight:600;color:var(--s0)}
-.emono{font-family:var(--mono);font-size:12px;font-weight:500}
-.bar-mini{height:3px;background:var(--s8);margin-top:4px}
-.bar-fill{height:100%;background:var(--clt);transition:width .5s}
+.tb-breadcrumb {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--tx4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-/* TX LOG */
-.tx-hdr{display:grid;grid-template-columns:72px 1fr 80px 100px 110px;padding:6px 14px;background:var(--s9);border-bottom:1px solid var(--bhi)}
-.tx-hdr span{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5)}
-.tx-row{display:grid;grid-template-columns:72px 1fr 80px 100px 110px;padding:8px 14px;border-bottom:1px solid var(--bor);font-size:13px;transition:background .1s;cursor:default}
-.tx-row:hover{background:rgba(255,255,255,.02)}
-.tx-date{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--s4)}
-.tx-desc{color:var(--s1);font-weight:500;padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tx-bank{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--s5)}
-.cat-lbl{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 7px;border-radius:1px;text-transform:uppercase;letter-spacing:.5px;display:inline-block;white-space:nowrap}
-.tx-amt{font-family:var(--mono);font-size:13px;font-weight:600;text-align:right}
+.tb-breadcrumb span { color: var(--tx2); }
+.tb-breadcrumb .sep { color: var(--tx5); }
 
-/* ALERTS */
-.alert-entry{display:grid;grid-template-columns:22px 1fr auto;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bor);align-items:start}
-.alert-entry:hover{background:rgba(255,255,255,.02)}
-.asev{width:22px;height:22px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono);flex-shrink:0;margin-top:1px}
-.atitle{font-size:13px;font-weight:600;color:var(--s0);margin-bottom:3px}
-.adesc{font-size:12px;color:var(--s4);line-height:1.5}
-.ats{font-family:var(--mono);font-size:9px;color:var(--s6);white-space:nowrap;margin-top:2px}
+.tb-entity {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: 20px;
+  padding: 5px 14px 5px 10px;
+}
 
-/* CATS */
-.cat-row{display:grid;grid-template-columns:10px 1fr 110px 50px 120px;gap:10px;padding:9px 14px;border-bottom:1px solid var(--bor);align-items:center}
-.cat-row:hover{background:rgba(255,255,255,.02)}
-.cdot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-.cnm{font-size:13px;font-weight:500;color:var(--s1)}
-.cval{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--s0);text-align:right}
-.cpct{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--s4);text-align:right}
-.cbar{height:5px;background:var(--s8);border-radius:0;overflow:hidden}
-.cbar-fill{height:100%;transition:width .6s}
+.tb-entity-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--pos);
+  box-shadow: 0 0 8px var(--pos);
+  animation: pulse 2.5s infinite;
+  flex-shrink: 0;
+}
 
-/* BANK CARDS */
-.bank-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
-.bank-card{background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:16px;position:relative;overflow:hidden}
-.bank-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--bc,var(--s6))}
-.bank-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.bank-card-name{font-size:13px;font-weight:600;color:var(--s1)}
-.bank-card-code{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 8px;border-radius:1px}
-.bank-card-bal{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.5px;margin-bottom:4px}
-.bank-card-lbl{font-size:11px;color:var(--s5);font-weight:400}
-.bank-card-num{font-family:var(--mono);font-size:10px;color:var(--s6);margin-top:8px;padding-top:8px;border-top:1px solid var(--bor)}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* CASHFLOW PAGE */
-.cf-grid{display:grid;grid-template-columns:2fr 1fr;gap:0;border-bottom:1px solid var(--bor)}
-.summary-row{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--bor)}
-.sum-cell{padding:14px 18px;border-right:1px solid var(--bor)}
-.sum-cell:last-child{border-right:none}
-.sum-lbl{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.sum-val{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-.5px}
+.tb-entity-name {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--tx2);
+  font-weight: 500;
+}
 
-/* CONSOLE */
-.con-head{background:var(--navy2);border-bottom:1px solid var(--bor);padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
-.con-title{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s3);display:flex;align-items:center;gap:8px}
-.con-badge{font-size:9px;padding:2px 8px;border:1px solid var(--gbd);background:var(--gbg);color:var(--glt);border-radius:1px;font-family:var(--mono);font-weight:600}
-.con-body{padding:16px}
-.con-row{display:flex;gap:10px;align-items:center}
-.con-prompt{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--gold);flex-shrink:0}
-.con-input{flex:1;background:var(--s9);border:1px solid var(--bhi);border-radius:2px;color:var(--s0);font-family:var(--mono);font-size:13px;font-weight:500;padding:9px 14px;outline:none;caret-color:var(--glt)}
-.con-input:focus{border-color:var(--gbd);background:var(--navy2)}
-.con-input::placeholder{color:var(--s6)}
-.con-out{margin-top:14px;padding:14px 16px;background:var(--s9);border:1px solid var(--bor);border-left:3px solid var(--gold);font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--s2);display:none;white-space:pre-wrap}
-.con-out.show{display:block}
-.con-out-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block;font-weight:600}
+.tb-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 16px;
+}
 
-/* CONFIG MODAL */
-.modal{position:fixed;inset:0;background:rgba(6,13,26,.92);z-index:2000;display:none;align-items:center;justify-content:center}
-.modal.open{display:flex}
-.modal-box{background:var(--s9);border:1px solid var(--bhi);border-top:3px solid var(--gold);width:620px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
-.modal-hdr{padding:14px 18px;border-bottom:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between}
-.modal-title{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--s1)}
-.modal-close{font-family:var(--mono);font-size:16px;color:var(--s5);cursor:pointer;background:none;border:none;line-height:1;padding:0 4px}
-.modal-close:hover{color:var(--s0)}
-.modal-body{padding:20px 18px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.form-field{display:flex;flex-direction:column;gap:6px}
-.form-label{font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--s5)}
-.form-input{background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s0);font-family:var(--mono);font-size:13px;font-weight:500;padding:9px 12px;outline:none;width:100%}
-.form-input:focus{border-color:var(--gbd)}
-.form-input::placeholder{color:var(--s7)}
-.modal-foot{padding:12px 18px;border-top:1px solid var(--bor);display:flex;gap:8px;align-items:center}
-.modal-hint{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--s6)}
+.tb-time {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 1px;
+  background: var(--glow2);
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--b3);
+}
 
-/* MISC */
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:var(--navy)}
-::-webkit-scrollbar-thumb{background:var(--s7)}
-.empty{padding:32px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--s7);text-transform:uppercase;letter-spacing:1px}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.page.active{animation:fadeIn .2s ease}
+.tb-mode {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.tb-mode.demo { background: var(--warndim); color: var(--warn); border: 1px solid rgba(251,191,36,.3); }
+.tb-mode.live { background: var(--posdim);  color: var(--pos);  border: 1px solid rgba(52,211,153,.3); }
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  width: var(--sidebar-w);
+  height: calc(100vh - var(--topbar-h));
+  background: var(--ink2);
+  border-right: 1px solid var(--b1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sb-section {
+  padding: 20px 16px 8px;
+}
+
+.sb-section-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--tx4);
+  text-transform: uppercase;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 2px;
+  position: relative;
+  user-select: none;
+}
+
+.sb-item:hover { background: var(--ink4); }
+
+.sb-item.active {
+  background: linear-gradient(135deg, var(--glow), var(--glow2));
+  border: 1px solid var(--b3);
+}
+
+.sb-item.active .sb-label { color: var(--gold); font-weight: 600; }
+.sb-item.active .sb-code  { color: var(--gold); }
+
+.sb-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sb-label {
+  font-size: 13px;
+  color: var(--tx2);
+  font-weight: 400;
+  flex: 1;
+}
+
+.sb-code {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--tx4);
+  letter-spacing: .5px;
+}
+
+.sb-badge {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--negdim);
+  color: var(--neg);
+  border: 1px solid rgba(248,113,113,.3);
+}
+
+.sb-divider { height: 1px; background: var(--b1); margin: 10px 16px; }
+
+.sb-bank-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 1px 0;
+  border-radius: 6px;
+  cursor: default;
+}
+
+.sb-bank-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sb-bank-name { font-size: 12px; color: var(--tx2); flex: 1; }
+.sb-bank-bal  { font-family: var(--f-mono); font-size: 11px; font-weight: 600; }
+
+.sb-bottom {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--b1);
+}
+
+.sb-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--tx3);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  transition: all .15s;
+  margin-bottom: 6px;
+}
+
+.sb-btn:hover { background: var(--ink4); color: var(--tx1); }
+.sb-btn.gold  { border-color: var(--b3); color: var(--gold); background: var(--glow2); }
+.sb-btn.gold:hover { background: var(--glow); }
+
+/* ══ MAIN ══ */
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--topbar-h);
+  min-height: calc(100vh - var(--topbar-h));
+  background: var(--ink);
+}
+
+/* ══ PAGES ══ */
+.page { display: none; }
+.page.active { display: block; animation: fadeUp .25s ease; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+
+/* ══ PAGE HEADER ══ */
+.page-header {
+  padding: 32px 32px 24px;
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-header-left { flex: 1; }
+
+.page-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-eyebrow::before {
+  content: '';
+  width: 20px; height: 2px;
+  background: var(--gold);
+  border-radius: 1px;
+}
+
+.page-title {
+  font-family: var(--f-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--tx0);
+  letter-spacing: -.5px;
+  line-height: 1.2;
+}
+
+.page-sub {
+  font-size: 14px;
+  color: var(--tx3);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ══ BUTTONS ══ */
+.btn {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--b2);
+  background: var(--ink4);
+  color: var(--tx2);
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.btn:hover { background: var(--ink5); color: var(--tx0); border-color: var(--b2); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), #b07010);
+  color: #000;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(232,160,32,.3);
+}
+
+.btn-gold:hover { box-shadow: 0 6px 28px rgba(232,160,32,.5); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--b1);
+  color: var(--tx3);
+}
+
+.btn-ghost:hover { border-color: var(--b3); color: var(--gold); }
+
+.sel {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  color: var(--tx2);
+  padding: 9px 12px;
+  outline: none;
+  cursor: pointer;
+  letter-spacing: .5px;
+}
+
+/* ══ CONTENT AREA ══ */
+.content-pad { padding: 28px 32px; }
+
+/* ══ SECTION LABEL ══ */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.section-id {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  background: var(--glow2);
+  border: 1px solid var(--b3);
+  border-radius: 4px;
+}
+
+.section-name {
+  font-family: var(--f-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx3);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--b2), transparent); }
+
+.section-tag {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--tx4);
+  padding: 2px 8px;
+  border: 1px solid var(--b1);
+  border-radius: 4px;
+}
+
+/* ══ KPI GRID ══ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.kpi-card {
+  background: var(--ink3);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+}
+
+.kpi-card:hover { border-color: var(--b2); transform: translateY(-2px); }
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, var(--tx5));
+  opacity: .9;
+}
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at top left, var(--glow-bg, transparent) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.kpi-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--tx4);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-badge {
+  font-family: var(--f-mono);
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.kpi-value {
+  font-family: var(--f-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--tx3);
+  font-weight: 300;
+  margin-bottom: 12px;
+}
+
+.kpi-meta {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--tx4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kpi-meta-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent, var(--tx5)); }
+
+/* ══ TWO COL ══ */
+.two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; margin-bottom: 28px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+
+/* ══ PANEL ══ */
+.panel {
+  background: var(--ink3);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panel-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--ink4);
+}
+
+.panel-title {
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx1);
+  letter-spacing: .3px;
+}
+
+.panel-meta {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--tx4);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel-body { padding: 20px; }
+
+/* ══ TABLE ══ */
+.data-table { width: 100%; border-collapse: collapse; }
+
+.data-table th {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--tx4);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--b2);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table th.r { text-align: right; }
+
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--b1);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,.02); }
+
+.cell-primary { font-weight: 500; color: var(--tx1); }
+.cell-mono    { font-family: var(--f-mono); font-size: 12px; font-weight: 500; }
+.cell-dim     { color: var(--tx4); font-size: 12px; }
+.cell-r       { text-align: right; }
+
+.bar-pill { height: 3px; background: var(--ink5); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 2px; transition: width .6s ease; }
+
+/* ══ TX ROW ══ */
+.tx-header {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 100px 120px;
+  padding: 8px 20px;
+  background: var(--ink4);
+  border-bottom: 1px solid var(--b2);
+}
+
+.tx-header span {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--tx4);
+}
+
+.tx-header .r { text-align: right; }
+
+.tx-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 100px 120px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--b1);
+  align-items: center;
+  transition: background .1s;
+  cursor: default;
+}
+
+.tx-row:hover { background: rgba(255,255,255,.02); }
+.tx-row:last-child { border-bottom: none; }
+
+.tx-date  { font-family: var(--f-mono); font-size: 11px; color: var(--tx4); font-weight: 500; }
+.tx-desc  { font-size: 13px; font-weight: 500; color: var(--tx1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 12px; }
+.tx-bank  { font-family: var(--f-mono); font-size: 10px; font-weight: 600; }
+.tx-cat   { }
+.tx-amt   { font-family: var(--f-mono); font-size: 13px; font-weight: 700; text-align: right; }
+
+.cat-chip {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* ══ ALERT ══ */
+.alert-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--b1);
+  align-items: start;
+  transition: background .1s;
+}
+
+.alert-item:hover { background: rgba(255,255,255,.02); }
+.alert-item:last-child { border-bottom: none; }
+
+.alert-sev {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: var(--f-mono);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.alert-title { font-size: 13px; font-weight: 600; color: var(--tx0); margin-bottom: 3px; }
+.alert-desc  { font-size: 12px; color: var(--tx3); line-height: 1.5; font-weight: 300; }
+.alert-time  { font-family: var(--f-mono); font-size: 9px; color: var(--tx5); white-space: nowrap; margin-top: 2px; }
+
+/* ══ CAT ROW ══ */
+.cat-row {
+  display: grid;
+  grid-template-columns: 10px 1fr 120px 55px 130px;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--b1);
+  align-items: center;
+  transition: background .1s;
+}
+
+.cat-row:hover { background: rgba(255,255,255,.02); }
+.cat-row:last-child { border-bottom: none; }
+
+.cat-dot  { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.cat-name { font-size: 13px; font-weight: 500; color: var(--tx1); }
+.cat-val  { font-family: var(--f-mono); font-size: 13px; font-weight: 700; text-align: right; color: var(--tx0); }
+.cat-pct  { font-family: var(--f-mono); font-size: 11px; text-align: right; color: var(--tx4); }
+.cat-bar  { height: 4px; background: var(--ink5); border-radius: 2px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 2px; transition: width .7s ease; }
+
+/* ══ BANK CARDS ══ */
+.bank-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 20px; }
+
+.bank-card {
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all .2s;
+}
+
+.bank-card:hover { border-color: var(--b2); transform: translateY(-2px); }
+
+.bank-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--bc, var(--tx5));
+}
+
+.bank-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.bank-card-name { font-family: var(--f-display); font-size: 14px; font-weight: 600; color: var(--tx1); }
+.bank-card-code {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.bank-card-bal { font-family: var(--f-display); font-size: 24px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 4px; }
+.bank-card-lbl { font-size: 11px; color: var(--tx4); font-weight: 300; margin-bottom: 10px; }
+.bank-card-num {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--tx5);
+  padding-top: 10px;
+  border-top: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ══ AI CONSOLE ══ */
+.console-wrap {
+  background: var(--ink3);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.console-head {
+  background: var(--ink4);
+  border-bottom: 1px solid var(--b1);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.console-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.console-title {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tx2);
+  letter-spacing: .5px;
+  flex: 1;
+}
+
+.console-badge {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: var(--glow2);
+  color: var(--gold);
+  border: 1px solid var(--b3);
+  letter-spacing: .5px;
+}
+
+.console-body { padding: 20px; }
+
+.console-prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  padding: 4px 4px 4px 16px;
+  transition: border-color .15s;
+}
+
+.console-prompt-row:focus-within { border-color: var(--b3); }
+
+.console-prompt-sym {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.console-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--tx0);
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 400;
+  outline: none;
+  caret-color: var(--gold);
+}
+
+.console-input::placeholder { color: var(--tx5); }
+
+.console-output {
+  margin-top: 16px;
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 16px 18px;
+  font-family: var(--f-body);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--tx2);
+  white-space: pre-wrap;
+  display: none;
+}
+
+.console-output.show { display: block; animation: fadeUp .2s ease; }
+
+.console-output-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.console-output-label::after { content: ''; flex: 1; height: 1px; background: var(--b3); }
+
+.quick-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+.quick-btn {
+  font-family: var(--f-body);
+  font-size: 11px;
+  font-weight: 400;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--tx3);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.quick-btn:hover { border-color: var(--b3); color: var(--gold); background: var(--glow2); }
+
+/* ══ SAÚDE ══ */
+.saude-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 28px;
+  background: var(--ink3);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.saude-score-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center left, var(--glow) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.saude-gauge { position: relative; width: 160px; height: 160px; flex-shrink: 0; }
+.saude-gauge svg { transform: rotate(-90deg); }
+.saude-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.saude-score-num {
+  font-family: var(--f-display);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.saude-score-100 { font-family: var(--f-mono); font-size: 14px; color: var(--tx4); margin-top: 2px; }
+
+.saude-info { flex: 1; }
+.saude-info-title { font-family: var(--f-display); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.saude-info-sub   { font-size: 13px; color: var(--tx3); font-weight: 300; margin-bottom: 20px; }
+
+.saude-indicators { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.ind-cell {
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.ind-label { font-family: var(--f-mono); font-size: 9px; font-weight: 700; color: var(--tx4); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.ind-value { font-family: var(--f-display); font-size: 18px; font-weight: 700; margin-bottom: 3px; }
+.ind-sub   { font-size: 11px; color: var(--tx4); font-weight: 300; margin-bottom: 8px; }
+.ind-bar   { height: 3px; background: var(--ink5); border-radius: 2px; overflow: hidden; }
+.ind-bar-fill { height: 100%; border-radius: 2px; transition: width .8s ease; }
+
+/* ══ CP/CR TABLES ══ */
+.status-chip {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: var(--ink4);
+  border-bottom: 1px solid var(--b1);
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--b1);
+  background: transparent;
+  color: var(--tx4);
+  cursor: pointer;
+  transition: all .12s;
+}
+
+.filter-btn:hover, .filter-btn.active { border-color: var(--b3); color: var(--gold); background: var(--glow2); }
+.filter-search { margin-left: auto; }
+
+.search-input {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  background: var(--ink5);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  color: var(--tx1);
+  padding: 6px 12px;
+  outline: none;
+  width: 200px;
+}
+
+.search-input:focus { border-color: var(--b3); }
+
+/* ══ CLIENT/SUPPLIER TABLE ══ */
+.empty-state {
+  padding: 48px;
+  text-align: center;
+}
+
+.empty-icon  { font-size: 36px; margin-bottom: 12px; opacity: .3; }
+.empty-title { font-family: var(--f-display); font-size: 15px; font-weight: 600; color: var(--tx3); margin-bottom: 4px; }
+.empty-sub   { font-size: 12px; color: var(--tx5); }
+
+/* ══ FORMS/MODAL ══ */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.open { display: flex; }
+
+.modal-box {
+  background: var(--ink3);
+  border: 1px solid var(--b2);
+  border-top: 2px solid var(--gold);
+  border-radius: var(--radius);
+  width: 640px;
+  max-width: 100%;
+  box-shadow: 0 32px 80px rgba(0,0,0,.8), 0 0 0 1px var(--b1);
+  animation: modalIn .2s ease;
+}
+
+@keyframes modalIn { from { opacity:0; transform: scale(.96) translateY(-8px); } to { opacity:1; transform: none; } }
+
+.modal-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-family: var(--f-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx0);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--tx4);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all .12s;
+}
+
+.modal-close:hover { background: var(--ink4); color: var(--tx0); }
+
+.modal-body { padding: 22px; }
+
+.form-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-full  { grid-column: span 2; }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--tx4);
+}
+
+.form-input {
+  background: var(--ink4);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-sm);
+  color: var(--tx0);
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 400;
+  padding: 10px 13px;
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+
+.form-input:focus { border-color: var(--b3); background: var(--ink5); }
+.form-input::placeholder { color: var(--tx5); }
+
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-hint { margin-left: auto; font-family: var(--f-mono); font-size: 9px; color: var(--tx5); }
+
+/* ══ SAUDE LOADING ══ */
+.saude-loading {
+  padding: 48px;
+  text-align: center;
+  display: none;
+}
+
+.saude-loading.show { display: block; }
+
+.loading-title { font-family: var(--f-display); font-size: 16px; font-weight: 600; color: var(--tx1); margin-bottom: 6px; }
+.loading-sub   { font-size: 12px; color: var(--tx4); margin-bottom: 20px; }
+
+.progress-bar  { width: 280px; height: 3px; background: var(--ink5); margin: 0 auto; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--t1)); width: 0; transition: width .5s ease; border-radius: 2px; }
+
+.saude-empty {
+  padding: 64px 48px;
+  text-align: center;
+}
+
+.saude-empty-icon  { font-size: 52px; margin-bottom: 16px; opacity: .2; }
+.saude-empty-title { font-family: var(--f-display); font-size: 18px; font-weight: 700; color: var(--tx2); margin-bottom: 6px; }
+.saude-empty-sub   { font-size: 13px; color: var(--tx4); margin-bottom: 24px; max-width: 380px; margin-left: auto; margin-right: auto; }
+
+/* ══ SAUDE REPORT ══ */
+.saude-report { display: none; }
+
+.saude-action-row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--b1);
+  align-items: center;
+}
+
+.saude-action-row:last-child { border-bottom: none; }
+
+/* ══ UTILS ══ */
+.pos  { color: var(--pos); }
+.neg  { color: var(--neg); }
+.gold { color: var(--gold); }
+.info { color: var(--info); }
+.teal { color: var(--t1); }
+
+.text-mono { font-family: var(--f-mono); }
+.text-display { font-family: var(--f-display); }
+
+/* ══ RESPONSIVE ══ */
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 10px; background: none; border: none; z-index: 1001; }
+.hamburger span { display: block; width: 22px; height: 2px; background: var(--tx1); transition: all .2s; border-radius: 1px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 98; backdrop-filter: blur(4px); }
+
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .bank-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 800px) {
+  :root { --sidebar-w: 240px; }
+  .hamburger { display: flex; }
+  .sidebar { transform: translateX(-100%); transition: transform .25s ease; top: 0; height: 100vh; padding-top: calc(var(--topbar-h) + 8px); }
+  .sidebar.open { transform: none; }
+  .sidebar-overlay.open { display: block; }
+  .main { margin-left: 0; }
+  .tb-logo { display: none; }
+  .page-header { padding: 20px 16px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .content-pad { padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-value { font-size: 22px; }
+  .two-col { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .bank-grid { grid-template-columns: 1fr; }
+  .saude-score-wrap { flex-direction: column; align-items: center; text-align: center; }
+  .saude-indicators { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: span 1; }
+  .modal-box { width: 95vw; }
+  .tx-header, .tx-row { grid-template-columns: 60px 1fr 90px; }
+  .tx-header span:nth-child(3), .tx-header span:nth-child(4),
+  .tx-row > *:nth-child(3), .tx-row > *:nth-child(4) { display: none; }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-value { font-size: 18px; }
+  .page-title { font-size: 20px; }
+}
 </style>
 </head>
 <body>
 
-<!-- SYS BAR -->
-<div class="sys-bar">
-  <div class="sys-logo">
-    <div class="sys-logo-mark"></div>
-    <span class="sys-logo-text">SFE</span>
-  </div>
-  <div class="sys-product">Sistema Financeiro Empresarial &nbsp;·&nbsp; v1.0</div>
-  <div class="sys-meta">
-    <div class="sys-field"><span class="sys-field-label">Empresa</span><span class="sys-field-val" id="sys-co">—</span></div>
-    <div class="sys-sep"></div>
-    <div class="sys-field"><span class="sys-field-label">CNPJ</span><span class="sys-field-val" id="sys-cnpj">—</span></div>
-    <div class="sys-sep"></div>
-    <div class="sys-field"><span class="sys-field-label">Atualizado</span><span class="sys-field-val" id="sys-time">—</span></div>
-    <div class="sys-sep"></div>
-    <div class="sys-status"><div class="led demo" id="s-led"></div><span id="s-msg" style="font-family:var(--mono);font-size:10px;color:var(--glt);font-weight:600">DEMO</span></div>
-  </div>
-</div>
+<div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
 
-<!-- NAV BAR -->
-<nav class="nav-bar">
-  <div class="nav-mod active" onclick="navTo('painel',this)"><span class="nav-mod-num">F01</span>Painel Executivo</div>
-  <div class="nav-mod" onclick="navTo('bancos',this)"><span class="nav-mod-num">F02</span>Posição Bancária</div>
-  <div class="nav-mod" onclick="navTo('fluxo',this)"><span class="nav-mod-num">F03</span>Fluxo de Caixa</div>
-  <div class="nav-mod" onclick="navTo('lancamentos',this)"><span class="nav-mod-num">F04</span>Lançamentos</div>
-  <div class="nav-mod" onclick="navTo('categorias',this)"><span class="nav-mod-num">F05</span>Categorias</div>
-  <div class="nav-mod" onclick="navTo('alertas',this)"><span class="nav-mod-num">F06</span>Alertas <span class="sb-badge" id="nav-badge" style="margin-left:6px;display:none">0</span></div>
-  <div class="nav-mod" onclick="navTo('pagar',this)"><span class="nav-mod-num">F07</span>Contas a Pagar</div>
-  <div class="nav-mod" onclick="navTo('receber',this)"><span class="nav-mod-num">F08</span>Contas a Receber</div>
-  <div class="nav-mod" onclick="navTo('clientes',this)"><span class="nav-mod-num">F09</span>Clientes</div>
-  <div class="nav-mod" onclick="navTo('fornecedores',this)"><span class="nav-mod-num">F10</span>Fornecedores</div>
-  <div class="nav-right">
-    <select class="sel-sys" id="period-sel" onchange="renderAll()">
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
+  <div class="tb-logo">
+    <div class="tb-logo-mark"></div>
+    <div>
+      <div class="tb-logo-text">SFE</div>
+      <div class="tb-logo-sub">Sistema Financeiro</div>
+    </div>
+  </div>
+  <div class="tb-center">
+    <div class="tb-breadcrumb">
+      <span>SFE</span><span class="sep">/</span>
+      <span id="tb-module">Painel Executivo</span>
+    </div>
+    <div class="tb-entity">
+      <div class="tb-entity-dot" id="tb-dot"></div>
+      <span class="tb-entity-name" id="tb-company">—</span>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-time" id="tb-time">00:00:00</div>
+    <div class="tb-mode demo" id="tb-mode">DEMO</div>
+    <select class="sel" id="period-sel" onchange="renderAll()">
       <option value="30">30 DIAS</option>
       <option value="90">90 DIAS</option>
       <option value="180">180 DIAS</option>
     </select>
-    <button class="btn-sys" onclick="openModal()">⚙ PARÂM.</button>
-    <button class="btn-sys pri" onclick="renderAll()">↻ ATUALIZAR</button>
-    <button class="btn-sys" onclick="navTo('saude',null,null)" style="background:linear-gradient(135deg,rgba(26,138,74,.3),rgba(10,112,144,.2));border-color:var(--glt2);color:var(--glt2);font-weight:700">♥ SAÚDE</button>
+    <button class="btn btn-ghost" onclick="openModal()">⚙ Config</button>
+    <button class="btn btn-gold" id="sync-btn" onclick="doSync()">↻ Sincronizar</button>
+    <button class="btn btn-ghost" onclick="logout()" style="padding:9px 12px" title="Sair">⏏</button>
+  </div>
+</header>
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <div class="sb-section-label">Módulos</div>
+    <div class="sb-item active" onclick="navTo('painel',this)">
+      <span class="sb-icon">◈</span><span class="sb-label">Painel Executivo</span><span class="sb-code">F01</span>
+    </div>
+    <div class="sb-item" onclick="navTo('bancos',this)">
+      <span class="sb-icon">🏦</span><span class="sb-label">Posição Bancária</span><span class="sb-code">F02</span>
+    </div>
+    <div class="sb-item" onclick="navTo('fluxo',this)">
+      <span class="sb-icon">📈</span><span class="sb-label">Fluxo de Caixa</span><span class="sb-code">F03</span>
+    </div>
+    <div class="sb-item" onclick="navTo('lancamentos',this)">
+      <span class="sb-icon">📋</span><span class="sb-label">Lançamentos</span><span class="sb-code">F04</span>
+    </div>
+    <div class="sb-item" onclick="navTo('categorias',this)">
+      <span class="sb-icon">🗂</span><span class="sb-label">Categorias</span><span class="sb-code">F05</span>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Operacional</div>
+    <div class="sb-item" onclick="navTo('alertas',this)">
+      <span class="sb-icon">⚡</span><span class="sb-label">Alertas</span>
+      <span class="sb-badge" id="sb-alerts" style="display:none">0</span>
+      <span class="sb-code">F06</span>
+    </div>
+    <div class="sb-item" onclick="navTo('pagar',this)">
+      <span class="sb-icon">💸</span><span class="sb-label">Contas a Pagar</span><span class="sb-code">F07</span>
+    </div>
+    <div class="sb-item" onclick="navTo('receber',this)">
+      <span class="sb-icon">💰</span><span class="sb-label">Contas a Receber</span><span class="sb-code">F08</span>
+    </div>
+    <div class="sb-item" onclick="navTo('clientes',this)">
+      <span class="sb-icon">👥</span><span class="sb-label">Clientes</span><span class="sb-code">F09</span>
+    </div>
+    <div class="sb-item" onclick="navTo('fornecedores',this)">
+      <span class="sb-icon">🏭</span><span class="sb-label">Fornecedores</span><span class="sb-code">F10</span>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Inteligência</div>
+    <div class="sb-item" onclick="navTo('ia',this)">
+      <span class="sb-icon">🤖</span><span class="sb-label">Análise IA</span><span class="sb-code">AI</span>
+    </div>
+    <div class="sb-item" onclick="navTo('saude',this)" style="border:1px solid rgba(232,160,32,.2);background:var(--glow2)">
+      <span class="sb-icon">♥</span><span class="sb-label" style="color:var(--gold)">Saúde da Empresa</span>
+    </div>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Bancos Conectados</div>
+    <div id="sb-banks"><div style="padding:8px 8px;font-size:11px;color:var(--tx5)">Nenhum banco</div></div>
+  </div>
+
+  <div class="sb-bottom">
+    <button class="sb-btn gold" onclick="buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();localStorage.removeItem('sfe_cp_v1');localStorage.removeItem('sfe_cr_v1');localStorage.removeItem('sfe_cli_v1');localStorage.removeItem('sfe_frn_v1');localStorage.removeItem('sfe_demo_v2');buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();">
+      ▷ Carregar Demo
+    </button>
+    <button class="sb-btn" onclick="exportCSV()">⬇ Exportar CSV</button>
+    <button class="sb-btn" onclick="openModal()">⚙ Configurações</button>
   </div>
 </nav>
 
-<!-- LAYOUT -->
-<div class="layout">
+<!-- ══ MAIN ══ -->
+<main class="main">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sb-head"><span>Módulos</span><span style="color:var(--s7)">SFE</span></div>
-    <div class="sb-item active" onclick="navTo('painel',null,this)"><span class="sb-code">GCB</span>Painel Executivo</div>
-    <div class="sb-item" onclick="navTo('bancos',null,this)"><span class="sb-code">BNK</span>Posição Bancária</div>
-    <div class="sb-item" onclick="navTo('fluxo',null,this)"><span class="sb-code">FLX</span>Fluxo de Caixa</div>
-    <div class="sb-item" onclick="navTo('lancamentos',null,this)"><span class="sb-code">TRN</span>Lançamentos</div>
-    <div class="sb-item" onclick="navTo('categorias',null,this)"><span class="sb-code">CAT</span>Categorias</div>
-    <div class="sb-item" onclick="navTo('alertas',null,this)"><span class="sb-code">ALT</span>Alertas<span class="sb-badge" id="sb-badge">0</span></div>
-    <div class="sb-item" onclick="navTo('ia',null,this)"><span class="sb-code">AI</span>Análise IA</div>
-    <div class="sb-item" onclick="navTo('saude',null,this)" style="border-left:2px solid var(--glt2)"><span class="sb-code" style="color:var(--glt2)">♥</span>Saúde da Empresa</div>
-    <div class="sb-item" onclick="navTo('pagar',null,this)"><span class="sb-code">CP</span>Contas a Pagar</div>
-    <div class="sb-item" onclick="navTo('receber',null,this)"><span class="sb-code">CR</span>Contas a Receber</div>
-    <div class="sb-item" onclick="navTo('clientes',null,this)"><span class="sb-code">CLI</span>Clientes</div>
-    <div class="sb-item" onclick="navTo('fornecedores',null,this)"><span class="sb-code">FRN</span>Fornecedores</div>
+<!-- ▸ F01 PAINEL -->
+<div id="page-painel" class="page active">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F01 · Módulo Financeiro</div>
+      <div class="page-title">Painel Executivo</div>
+      <div class="page-sub">Visão consolidada da posição financeira em tempo real</div>
+    </div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="p-ts">—</span>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+  </div>
 
-    <div class="sb-head" style="margin-top:8px"><span>Bancos Conectados</span></div>
-    <div id="sb-banks"></div>
+  <div class="content-pad">
+    <!-- KPIs -->
+    <div class="section-label">
+      <span class="section-id">GCB-001</span>
+      <span class="section-name">Indicadores de Posição</span>
+      <div class="section-line"></div>
+      <span class="section-tag" id="kpi-date">—</span>
+    </div>
 
-    <div class="sb-head" style="margin-top:auto"><span>Sistema</span></div>
-    <div class="sb-item" onclick="openModal()"><span class="sb-code">⚙</span>Configurações</div>
-    <div class="sb-item" onclick="localStorage.removeItem('sfe_cp_v1');localStorage.removeItem('sfe_cr_v1');localStorage.removeItem('sfe_cli_v1');localStorage.removeItem('sfe_frn_v1');localStorage.removeItem('sfe_demo_loaded');buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();" style="border-left:2px solid var(--glt)"><span class="sb-code" style="color:var(--glt)">▷</span>Carregar Demo</div>
-  </aside>
-
-  <!-- CONTENT -->
-  <main class="content">
-
-    <!-- ══ F01: PAINEL ══ -->
-    <div id="page-painel" class="page active">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F01</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Painel Executivo</span></div><div class="ctx-tools"><span class="ctx-info" id="p-updated">—</span><button class="btn-sys" onclick="exportCSV()">⬇ CSV</button></div></div>
-
-      <div class="sband"><span class="sid">GCB-001</span><span class="sname">Indicadores de Posição</span><div class="sline"></div><span class="stag" id="kpi-date">—</span></div>
-      <div class="kpi-strip">
-        <div class="kpi-cell" style="--c:var(--clt)">
-          <div class="kpi-hdr"><span class="kpi-code">SALDO.CONS</span><span class="kpi-flag" id="f1" style="background:rgba(10,112,144,.2);color:var(--clt);border:1px solid var(--clt)44">—</span></div>
-          <div class="kpi-amt vpos" id="kv-saldo">—</div>
-          <div class="kpi-lbl">Saldo Consolidado</div>
-          <div class="kpi-sub" id="ks-saldo">—</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--glt2)">
-          <div class="kpi-hdr"><span class="kpi-code">CRED.TOT</span><span class="kpi-flag" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">▲ CRÉD</span></div>
-          <div class="kpi-amt vpos" id="kv-ent">—</div>
-          <div class="kpi-lbl">Total de Créditos</div>
-          <div class="kpi-sub" id="ks-ent">—</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--rlt)">
-          <div class="kpi-hdr"><span class="kpi-code">DEB.TOT</span><span class="kpi-flag" style="background:var(--rbg);color:var(--rlt);border:1px solid var(--red)">▼ DÉB</span></div>
-          <div class="kpi-amt vneg" id="kv-sai">—</div>
-          <div class="kpi-lbl">Total de Débitos</div>
-          <div class="kpi-sub" id="ks-sai">—</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--gold)">
-          <div class="kpi-hdr"><span class="kpi-code">RES.LIQ</span><span class="kpi-flag" id="f4" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">POS</span></div>
-          <div class="kpi-amt vgold" id="kv-res">—</div>
-          <div class="kpi-lbl">Resultado Líquido</div>
-          <div class="kpi-sub" id="ks-res">—</div>
-        </div>
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent:var(--t1);--glow-bg:var(--tglow)">
+        <div class="kpi-eyebrow">Saldo Consolidado<span class="kpi-badge" id="kpi-b1" style="background:var(--infodim);color:var(--info)">—</span></div>
+        <div class="kpi-value teal" id="kv-saldo">—</div>
+        <div class="kpi-label">Total em caixa</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--t1)"></div><span id="km-saldo">—</span></div>
       </div>
-
-      <div class="sband"><span class="sid">GCB-001B</span><span class="sname">Contas a Pagar / Receber</span><div class="sline"></div><span class="stag" id="cpcr-date">—</span></div>
-      <div class="kpi-strip">
-        <div class="kpi-cell" style="--c:var(--rlt)">
-          <div class="kpi-hdr"><span class="kpi-code">CP.VENC.HOJE</span><span class="kpi-flag" id="cp-hoje-flag" style="background:var(--rbg);color:var(--rlt);border:1px solid var(--red)">—</span></div>
-          <div class="kpi-amt vneg" id="cp-hoje-val">R$ 0,00</div>
-          <div class="kpi-lbl">Vence Hoje / Vencido</div>
-          <div class="kpi-sub" id="cp-hoje-sub">0 TÍTULOS</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--alt)">
-          <div class="kpi-hdr"><span class="kpi-code">CP.PROX7D</span><span class="kpi-flag" style="background:var(--abg);color:var(--alt);border:1px solid var(--amb)">7D</span></div>
-          <div class="kpi-amt" style="color:var(--alt)" id="cp-7d-val">R$ 0,00</div>
-          <div class="kpi-lbl">A Pagar — Próx. 7 Dias</div>
-          <div class="kpi-sub" id="cp-7d-sub">0 TÍTULOS</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--glt2)">
-          <div class="kpi-hdr"><span class="kpi-code">CR.VENC.HOJE</span><span class="kpi-flag" style="background:var(--gbg2);color:var(--glt2);border:1px solid var(--grn)">—</span></div>
-          <div class="kpi-amt vpos" id="cr-hoje-val">R$ 0,00</div>
-          <div class="kpi-lbl">A Receber Hoje / Vencido</div>
-          <div class="kpi-sub" id="cr-hoje-sub">0 TÍTULOS</div>
-        </div>
-        <div class="kpi-cell" style="--c:var(--clt)">
-          <div class="kpi-hdr"><span class="kpi-code">CR.PROX7D</span><span class="kpi-flag" style="background:rgba(10,112,144,.2);color:var(--clt);border:1px solid var(--clt)44">7D</span></div>
-          <div class="kpi-amt" style="color:var(--clt)" id="cr-7d-val">R$ 0,00</div>
-          <div class="kpi-lbl">A Receber — Próx. 7 Dias</div>
-          <div class="kpi-sub" id="cr-7d-sub">0 TÍTULOS</div>
-        </div>
+      <div class="kpi-card" style="--accent:var(--pos);--glow-bg:var(--posdim)">
+        <div class="kpi-eyebrow">Total Créditos<span class="kpi-badge" style="background:var(--posdim);color:var(--pos)">▲ CRÉD</span></div>
+        <div class="kpi-value pos" id="kv-ent">—</div>
+        <div class="kpi-label">Entradas no período</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--pos)"></div><span id="km-ent">—</span></div>
       </div>
+      <div class="kpi-card" style="--accent:var(--neg);--glow-bg:var(--negdim)">
+        <div class="kpi-eyebrow">Total Débitos<span class="kpi-badge" style="background:var(--negdim);color:var(--neg)">▼ DÉB</span></div>
+        <div class="kpi-value neg" id="kv-sai">—</div>
+        <div class="kpi-label">Saídas no período</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--neg)"></div><span id="km-sai">—</span></div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--gold);--glow-bg:var(--glow)">
+        <div class="kpi-eyebrow">Resultado Líquido<span class="kpi-badge" id="kpi-b4" style="background:var(--posdim);color:var(--pos)">POS</span></div>
+        <div class="kpi-value gold" id="kv-res">—</div>
+        <div class="kpi-label">Balanço do período</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--gold)"></div><span id="km-res">—</span></div>
+      </div>
+    </div>
 
-      <div class="sband"><span class="sid">GCB-002</span><span class="sname">Evolução do Fluxo</span><div class="sline"></div><span class="stag" id="cf-tag">30 DIAS</span></div>
-      <div style="padding:16px;height:260px"><canvas id="cf-chart-main"></canvas></div>
+    <!-- CP/CR mini -->
+    <div class="section-label">
+      <span class="section-id">GCB-001B</span>
+      <span class="section-name">Contas a Pagar / Receber</span>
+      <div class="section-line"></div>
+      <span class="section-tag" id="cpcr-date">—</span>
+    </div>
+    <div class="kpi-grid" style="margin-bottom:28px">
+      <div class="kpi-card" style="--accent:var(--neg)">
+        <div class="kpi-eyebrow">CP Vence Hoje<span class="kpi-badge" id="cp-hoje-flag" style="background:var(--negdim);color:var(--neg)">—</span></div>
+        <div class="kpi-value neg" id="cp-hoje-val">R$ 0,00</div>
+        <div class="kpi-label">Vence Hoje / Vencido</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--neg)"></div><span id="cp-hoje-sub">0 títulos</span></div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--warn)">
+        <div class="kpi-eyebrow">CP Próx. 7 Dias<span class="kpi-badge" style="background:var(--warndim);color:var(--warn)">7D</span></div>
+        <div class="kpi-value" style="color:var(--warn)" id="cp-7d-val">R$ 0,00</div>
+        <div class="kpi-label">A Pagar em 7 dias</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--warn)"></div><span id="cp-7d-sub">0 títulos</span></div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--pos)">
+        <div class="kpi-eyebrow">CR Vence Hoje<span class="kpi-badge" style="background:var(--posdim);color:var(--pos)">—</span></div>
+        <div class="kpi-value pos" id="cr-hoje-val">R$ 0,00</div>
+        <div class="kpi-label">A Receber Hoje / Vencido</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--pos)"></div><span id="cr-hoje-sub">0 títulos</span></div>
+      </div>
+      <div class="kpi-card" style="--accent:var(--t1)">
+        <div class="kpi-eyebrow">CR Próx. 7 Dias<span class="kpi-badge" style="background:var(--tglow);color:var(--t1)">7D</span></div>
+        <div class="kpi-value teal" id="cr-7d-val">R$ 0,00</div>
+        <div class="kpi-label">A Receber em 7 dias</div>
+        <div class="kpi-meta"><div class="kpi-meta-dot" style="background:var(--t1)"></div><span id="cr-7d-sub">0 títulos</span></div>
+      </div>
+    </div>
 
-      <div class="sband"><span class="sid">GCB-003</span><span class="sname">Últimos Lançamentos</span><div class="sline"></div><span class="stag" id="tx-tag">—</span></div>
-      <div class="tx-hdr"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span style="text-align:right">Valor (R$)</span></div>
+    <!-- Fluxo + TX -->
+    <div class="section-label">
+      <span class="section-id">GCB-002</span>
+      <span class="section-name">Evolução do Fluxo</span>
+      <div class="section-line"></div>
+      <span class="section-tag" id="cf-tag">30 DIAS</span>
+    </div>
+    <div class="panel" style="margin-bottom:28px">
+      <div class="panel-head">
+        <span class="panel-title">Créditos vs Débitos — Evolução do Período</span>
+        <span class="panel-meta" id="cf-meta">30 DIAS</span>
+      </div>
+      <div style="padding:20px;height:260px"><canvas id="cf-chart-main"></canvas></div>
+    </div>
+
+    <!-- TX recentes -->
+    <div class="section-label">
+      <span class="section-id">GCB-003</span>
+      <span class="section-name">Últimos Lançamentos</span>
+      <div class="section-line"></div>
+      <span class="section-tag" id="tx-tag">—</span>
+    </div>
+    <div class="panel" style="margin-bottom:0">
+      <div class="tx-header">
+        <span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span class="r">Valor (R$)</span>
+      </div>
       <div id="tx-log-main"></div>
     </div>
+  </div>
+</div>
 
-    <!-- ══ F02: BANCOS ══ -->
-    <div id="page-bancos" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F02</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Posição Bancária</span></div><div class="ctx-tools"><span class="ctx-info" id="bk-count">—</span></div></div>
+<!-- ▸ F02 BANCOS -->
+<div id="page-bancos" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F02 · Bancário</div>
+      <div class="page-title">Posição Bancária</div>
+      <div class="page-sub">Saldo consolidado por instituição financeira</div>
+    </div>
+    <div class="page-actions">
+      <span class="btn btn-ghost" id="bk-count">—</span>
+    </div>
+  </div>
+  <div class="content-pad">
+    <div class="section-label"><span class="section-id">BNK-001</span><span class="section-name">Saldo por Instituição</span><div class="section-line"></div><span class="section-tag" id="bk-total">—</span></div>
+    <div class="bank-grid" id="bank-cards" style="padding:0;margin-bottom:24px"></div>
+    <div class="section-label"><span class="section-id">BNK-002</span><span class="section-name">Tabela Consolidada</span><div class="section-line"></div></div>
+    <div class="panel">
+      <table class="data-table">
+        <thead><tr><th>Cód.</th><th>Instituição</th><th>Tipo</th><th>Agência / Conta</th><th class="r">Saldo</th><th class="r">Part. %</th><th>Composição</th></tr></thead>
+        <tbody id="bk-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-      <div class="sband"><span class="sid">BNK-001</span><span class="sname">Saldo por Instituição Financeira</span><div class="sline"></div><span class="stag" id="bk-total">—</span></div>
-      <div class="bank-cards" id="bank-cards"></div>
+<!-- ▸ F03 FLUXO -->
+<div id="page-fluxo" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F03 · Financeiro</div>
+      <div class="page-title">Fluxo de Caixa</div>
+      <div class="page-sub">Análise de entradas, saídas e projeção futura</div>
+    </div>
+  </div>
+  <div class="content-pad">
+    <div class="three-col" style="margin-bottom:24px">
+      <div class="panel"><div class="panel-body" style="text-align:center">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Total Entradas</div>
+        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--pos)" id="fl-ent">—</div>
+      </div></div>
+      <div class="panel"><div class="panel-body" style="text-align:center">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Total Saídas</div>
+        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--neg)" id="fl-sai">—</div>
+      </div></div>
+      <div class="panel"><div class="panel-body" style="text-align:center">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Resultado</div>
+        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--gold)" id="fl-res">—</div>
+      </div></div>
+    </div>
+    <div class="section-label"><span class="section-id">FLX-001</span><span class="section-name">Evolução Diária</span><div class="section-line"></div></div>
+    <div class="panel" style="margin-bottom:24px"><div style="padding:20px;height:280px"><canvas id="cf-chart-full"></canvas></div></div>
+    <div class="section-label"><span class="section-id">FLX-002</span><span class="section-name">Projeção 30 Dias</span><div class="section-line"></div><span class="section-tag" style="color:var(--gold);border-color:var(--b3)">IA PREDITIVA</span></div>
+    <div class="panel"><div style="padding:20px;height:220px"><canvas id="cf-proj"></canvas></div></div>
+  </div>
+</div>
 
-      <div class="sband"><span class="sid">BNK-002</span><span class="sname">Tabela Consolidada</span><div class="sline"></div></div>
-      <div class="dp-body" style="padding:0">
-        <table class="etable">
-          <thead><tr><th>Cód.</th><th>Instituição</th><th>Tipo</th><th>Agência/Conta</th><th class="r">Saldo</th><th class="r">Part.%</th><th>Participação</th></tr></thead>
-          <tbody id="bk-tbody"></tbody>
-        </table>
+<!-- ▸ F04 LANÇAMENTOS -->
+<div id="page-lancamentos" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F04 · Registro</div>
+      <div class="page-title">Lançamentos</div>
+      <div class="page-sub">Log completo de movimentações financeiras</div>
+    </div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ln-count">—</span>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+  </div>
+  <div class="panel" style="margin:0 32px 32px">
+    <div class="tx-header"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span class="r">Valor (R$)</span></div>
+    <div id="tx-log-full"></div>
+  </div>
+</div>
+
+<!-- ▸ F05 CATEGORIAS -->
+<div id="page-categorias" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F05 · Análise</div>
+      <div class="page-title">Categorias</div>
+      <div class="page-sub">Distribuição e evolução das despesas por categoria</div>
+    </div>
+    <div class="page-actions"><span class="section-tag" id="cat-total">—</span></div>
+  </div>
+  <div class="content-pad">
+    <div class="two-col" style="margin-bottom:24px">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Distribuição Gráfica</span><span class="panel-meta">DOUGHNUT</span></div>
+        <div style="padding:20px;height:280px"><canvas id="pie-chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Detalhe por Categoria</span><span class="panel-meta" id="cat-count">—</span></div>
+        <div id="cat-rows"></div>
       </div>
     </div>
-
-    <!-- ══ F03: FLUXO ══ -->
-    <div id="page-fluxo" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F03</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Fluxo de Caixa</span></div></div>
-
-      <div class="sband"><span class="sid">FLX-001</span><span class="sname">Resumo do Período</span><div class="sline"></div></div>
-      <div class="summary-row">
-        <div class="sum-cell"><div class="sum-lbl">Total Entradas</div><div class="sum-val vpos" id="fl-ent">—</div></div>
-        <div class="sum-cell"><div class="sum-lbl">Total Saídas</div><div class="sum-val vneg" id="fl-sai">—</div></div>
-        <div class="sum-cell"><div class="sum-lbl">Resultado</div><div class="sum-val vgold" id="fl-res">—</div></div>
-      </div>
-
-      <div class="sband"><span class="sid">FLX-002</span><span class="sname">Evolução Diária — Créditos vs Débitos</span><div class="sline"></div></div>
-      <div style="padding:20px;height:300px"><canvas id="cf-chart-full"></canvas></div>
-
-      <div class="sband"><span class="sid">FLX-003</span><span class="sname">Projeção de Caixa (30 dias)</span><div class="sline"></div><span class="stag gold">IA PREDITIVA</span></div>
-      <div style="padding:20px;height:220px"><canvas id="cf-proj"></canvas></div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Evolução Mensal</span></div>
+      <div style="padding:20px;height:240px"><canvas id="cat-bar"></canvas></div>
     </div>
+  </div>
+</div>
 
-    <!-- ══ F04: LANÇAMENTOS ══ -->
-    <div id="page-lancamentos" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F04</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Lançamentos</span></div><div class="ctx-tools"><span class="ctx-info" id="ln-count">—</span><button class="btn-sys" onclick="exportCSV()">⬇ CSV</button></div></div>
-      <div class="sband"><span class="sid">TRN-001</span><span class="sname">Log de Lançamentos</span><div class="sline"></div></div>
-      <div class="tx-hdr"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span style="text-align:right">Valor (R$)</span></div>
-      <div id="tx-log-full"></div>
+<!-- ▸ F06 ALERTAS -->
+<div id="page-alertas" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F06 · Monitoramento</div>
+      <div class="page-title">Alertas Operacionais</div>
+      <div class="page-sub">Ocorrências e indicadores fora dos parâmetros</div>
     </div>
+    <div class="page-actions"><span class="section-tag" id="alt-count">—</span></div>
+  </div>
+  <div class="panel" style="margin:0 32px 32px">
+    <div id="alt-log"></div>
+  </div>
+</div>
 
-    <!-- ══ F05: CATEGORIAS ══ -->
-    <div id="page-categorias" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F05</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Categorias</span></div><div class="ctx-tools"><span class="ctx-info" id="cat-total">—</span></div></div>
-
-      <div class="sband"><span class="sid">CAT-001</span><span class="sname">Distribuição de Despesas</span><div class="sline"></div></div>
-      <div class="dgrid">
-        <div class="dpanel">
-          <div class="dp-head"><span class="dp-title">Gráfico de Composição</span><span class="dp-meta">DOUGHNUT</span></div>
-          <div style="padding:16px;height:280px"><canvas id="pie-chart"></canvas></div>
-        </div>
-        <div class="dpanel">
-          <div class="dp-head"><span class="dp-title">Detalhe por Categoria</span><span class="dp-meta" id="cat-count">—</span></div>
-          <div id="cat-rows"></div>
-        </div>
-      </div>
-
-      <div class="sband"><span class="sid">CAT-002</span><span class="sname">Evolução Mensal por Categoria</span><div class="sline"></div></div>
-      <div style="padding:16px;height:240px"><canvas id="cat-bar"></canvas></div>
+<!-- ▸ F07 CP -->
+<div id="page-pagar" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F07 · Financeiro</div>
+      <div class="page-title">Contas a Pagar</div>
+      <div class="page-sub">Gestão de títulos e obrigações financeiras</div>
     </div>
-
-    <!-- ══ F06: ALERTAS ══ -->
-    <div id="page-alertas" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F06</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Alertas Operacionais</span></div><div class="ctx-tools"><span class="ctx-info" id="alt-count">—</span></div></div>
-      <div class="sband"><span class="sid">ALT-001</span><span class="sname">Ocorrências e Alertas Ativos</span><div class="sline"></div></div>
-      <div id="alt-log"></div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="cp-count">—</span>
+      <button class="btn btn-gold" onclick="openFormCP()">+ Novo Título</button>
     </div>
-
-    <!-- ══ IA ══ -->
-    <div id="page-ia" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Console de Análise IA</span></div></div>
-      <div class="sband"><span class="sid">AI-001</span><span class="sname">Consulta em Linguagem Natural</span><div class="sline"></div><span class="stag gold">CLAUDE SONNET 4</span></div>
-      <div class="con-head">
-        <div class="con-title"><span>▶</span>Analista Financeiro Virtual<span class="con-badge">claude-sonnet-4</span></div>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--s6)">NLP/FIN · v1.0</span>
-      </div>
-      <div class="con-body">
-        <div class="con-row">
-          <span class="con-prompt">SFE&gt;</span>
-          <input class="con-input" id="ai-input" type="text" placeholder="Ex: Tenho saldo para fechar a folha? / Quais os maiores custos do mês? / Há risco de ruptura de caixa?" onkeypress="if(event.key==='Enter')runQuery()">
-          <button class="btn-sys pri" id="ai-btn" onclick="runQuery()" style="padding:9px 18px">EXECUTAR</button>
-        </div>
-        <div class="con-out" id="ai-out"><span class="con-out-lbl">▶ RESPOSTA — Claude Sonnet 4</span><span id="ai-txt"></span></div>
-
-        <div style="margin-top:20px;border-top:1px solid var(--bor);padding-top:16px">
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Consultas Rápidas</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px" id="quick-queries"></div>
-        </div>
-      </div>
+  </div>
+  <div class="content-pad">
+    <div class="kpi-grid" style="margin-bottom:24px">
+      <div class="kpi-card" style="--accent:var(--neg)"><div class="kpi-eyebrow">Vencido</div><div class="kpi-value neg" id="cp-s-venc">R$ 0,00</div><div class="kpi-label">Total Vencido</div><div class="kpi-meta"><span id="cp-s-venc-n">0 títulos</span></div></div>
+      <div class="kpi-card" style="--accent:var(--warn)"><div class="kpi-eyebrow">Próx. 7 Dias</div><div class="kpi-value" style="color:var(--warn)" id="cp-s-7d">R$ 0,00</div><div class="kpi-label">Vence em 7 Dias</div><div class="kpi-meta"><span id="cp-s-7d-n">0 títulos</span></div></div>
+      <div class="kpi-card" style="--accent:var(--pos)"><div class="kpi-eyebrow">Pago Mês</div><div class="kpi-value pos" id="cp-s-pago">R$ 0,00</div><div class="kpi-label">Pago no Mês</div><div class="kpi-meta"><span id="cp-s-pago-n">0 títulos</span></div></div>
+      <div class="kpi-card" style="--accent:var(--t1)"><div class="kpi-eyebrow">Total Aberto</div><div class="kpi-value teal" id="cp-s-total">R$ 0,00</div><div class="kpi-label">Total em Aberto</div><div class="kpi-meta"><span id="cp-s-total-n">0 títulos</span></div></div>
     </div>
-
-    <div style="height:40px"></div>
-
-    <!-- ══ F07: CONTAS A PAGAR ══ -->
-    <div id="page-pagar" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F07</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Contas a Pagar</span></div><div class="ctx-tools"><span class="ctx-info" id="cp-count">—</span><button class="btn-sys pri" onclick="openFormCP()">+ NOVO TÍTULO</button></div></div>
-
-      <div class="sband"><span class="sid">CP-001</span><span class="sname">Resumo de Posição</span><div class="sline"></div></div>
-      <div class="kpi-strip">
-        <div class="kpi-cell" style="--c:var(--rlt)"><div class="kpi-hdr"><span class="kpi-code">VENCIDO</span></div><div class="kpi-amt vneg" id="cp-s-venc">R$ 0,00</div><div class="kpi-lbl">Total Vencido</div><div class="kpi-sub" id="cp-s-venc-n">0 títulos</div></div>
-        <div class="kpi-cell" style="--c:var(--alt)"><div class="kpi-hdr"><span class="kpi-code">HOJE/7 DIAS</span></div><div class="kpi-amt" style="color:var(--alt)" id="cp-s-7d">R$ 0,00</div><div class="kpi-lbl">Vence em 7 Dias</div><div class="kpi-sub" id="cp-s-7d-n">0 títulos</div></div>
-        <div class="kpi-cell" style="--c:var(--glt2)"><div class="kpi-hdr"><span class="kpi-code">PAGO MÊS</span></div><div class="kpi-amt vpos" id="cp-s-pago">R$ 0,00</div><div class="kpi-lbl">Pago no Mês</div><div class="kpi-sub" id="cp-s-pago-n">0 títulos</div></div>
-        <div class="kpi-cell" style="--c:var(--clt)"><div class="kpi-hdr"><span class="kpi-code">A PAGAR TOTAL</span></div><div class="kpi-amt" style="color:var(--clt)" id="cp-s-total">R$ 0,00</div><div class="kpi-lbl">Total em Aberto</div><div class="kpi-sub" id="cp-s-total-n">0 títulos</div></div>
-      </div>
-
-      <div class="sband"><span class="sid">CP-002</span><span class="sname">Títulos a Pagar</span><div class="sline"></div><span class="stag" id="cp-filter-tag">TODOS</span></div>
-      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
-        <button class="btn-sys active-filter" id="cpf-todos"   onclick="filterCP('todos')"   style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
-        <button class="btn-sys" id="cpf-vencido" onclick="filterCP('vencido')" >VENCIDOS</button>
-        <button class="btn-sys" id="cpf-hoje"    onclick="filterCP('hoje')"    >VENCE HOJE</button>
-        <button class="btn-sys" id="cpf-7d"      onclick="filterCP('7d')"      >PRÓX. 7 DIAS</button>
-        <button class="btn-sys" id="cpf-pendente"onclick="filterCP('pendente')">PENDENTES</button>
-        <button class="btn-sys" id="cpf-pago"    onclick="filterCP('pago')"    >PAGOS</button>
-        <div style="margin-left:auto"><input id="cp-search" type="text" placeholder="Buscar fornecedor..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:200px" oninput="renderCP()"></div>
+    <div class="panel">
+      <div class="filter-bar">
+        <button class="filter-btn active" id="cpf-todos"    onclick="filterCP('todos')">Todos</button>
+        <button class="filter-btn" id="cpf-vencido"  onclick="filterCP('vencido')">Vencidos</button>
+        <button class="filter-btn" id="cpf-hoje"     onclick="filterCP('hoje')">Hoje</button>
+        <button class="filter-btn" id="cpf-7d"       onclick="filterCP('7d')">7 Dias</button>
+        <button class="filter-btn" id="cpf-pendente" onclick="filterCP('pendente')">Pendentes</button>
+        <button class="filter-btn" id="cpf-pago"     onclick="filterCP('pago')">Pagos</button>
+        <div class="filter-search"><input class="search-input" id="cp-search" type="text" placeholder="Buscar fornecedor..." oninput="renderCP()"></div>
       </div>
       <div style="overflow-x:auto">
-        <table class="etable" style="min-width:800px">
+        <table class="data-table" style="min-width:800px">
           <thead><tr><th>Status</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Emissão</th><th>Vencimento</th><th class="r">Valor</th><th>Ações</th></tr></thead>
           <tbody id="cp-tbody"></tbody>
         </table>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- FORM CP -->
-    <div class="modal" id="modal-cp" onclick="if(event.target===this)closeFormCP()">
-      <div class="modal-box" style="width:680px">
-        <div class="modal-hdr"><span class="modal-title">Lançar Conta a Pagar — F07</span><button class="modal-close" onclick="closeFormCP()">✕</button></div>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Fornecedor *</label><input class="form-input" id="cp-forn" type="text" placeholder="Nome do fornecedor" list="forn-list"><datalist id="forn-list"></datalist></div>
-            <div class="form-field"><label class="form-label">Categoria</label>
-              <select class="form-input" id="cp-cat">
-                <option>Fornecedores</option><option>Folha de Pagamento</option><option>Impostos</option>
-                <option>Aluguel</option><option>Serviços</option><option>Fretes e Logística</option>
-                <option>Financeiro</option><option>Outros</option>
-              </select>
-            </div>
-            <div class="form-field"><label class="form-label">Descrição *</label><input class="form-input" id="cp-desc" type="text" placeholder="Ex: NF-e 004521 — Insumos"></div>
-            <div class="form-field"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cp-val" type="number" step="0.01" placeholder="0,00"></div>
-            <div class="form-field"><label class="form-label">Data de Emissão</label><input class="form-input" id="cp-emis" type="date"></div>
-            <div class="form-field"><label class="form-label">Data de Vencimento *</label><input class="form-input" id="cp-venc" type="date"></div>
-            <div class="form-field"><label class="form-label">Banco para Pagamento</label>
-              <select class="form-input" id="cp-banco">
-                <option value="SC">Sicredi</option><option value="BB">Banco do Brasil</option>
-                <option value="BD">Bradesco</option><option value="CX">Caixa Econômica</option><option value="ST">Santander</option>
-              </select>
-            </div>
-            <div class="form-field"><label class="form-label">Nº Documento</label><input class="form-input" id="cp-doc" type="text" placeholder="NF / Boleto / Contrato"></div>
-          </div>
-          <div class="form-field" style="margin-bottom:0"><label class="form-label">Observações</label><input class="form-input" id="cp-obs" type="text" placeholder="Observações adicionais"></div>
-        </div>
-        <div class="modal-foot">
-          <button class="btn-sys pri" onclick="saveCP()">SALVAR TÍTULO</button>
-          <button class="btn-sys" onclick="closeFormCP()">CANCELAR</button>
-          <input type="hidden" id="cp-edit-id">
-          <span class="modal-hint">* campos obrigatórios</span>
-        </div>
-      </div>
+<!-- ▸ F08 CR -->
+<div id="page-receber" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F08 · Financeiro</div>
+      <div class="page-title">Contas a Receber</div>
+      <div class="page-sub">Cobranças, duplicatas e inadimplência</div>
     </div>
-
-    <!-- ══ F08: CONTAS A RECEBER ══ -->
-    <div id="page-receber" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F08</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Contas a Receber</span></div><div class="ctx-tools"><span class="ctx-info" id="cr-count">—</span><button class="btn-sys pri" onclick="openFormCR()">+ NOVO TÍTULO</button></div></div>
-
-      <div class="sband"><span class="sid">CR-001</span><span class="sname">Resumo de Posição</span><div class="sline"></div></div>
-      <div class="kpi-strip">
-        <div class="kpi-cell" style="--c:var(--rlt)"><div class="kpi-hdr"><span class="kpi-code">INADIMPLENTE</span></div><div class="kpi-amt vneg" id="cr-s-venc">R$ 0,00</div><div class="kpi-lbl">Total Inadimplente</div><div class="kpi-sub" id="cr-s-venc-n">0 clientes</div></div>
-        <div class="kpi-cell" style="--c:var(--alt)"><div class="kpi-hdr"><span class="kpi-code">VENCE 7 DIAS</span></div><div class="kpi-amt" style="color:var(--alt)" id="cr-s-7d">R$ 0,00</div><div class="kpi-lbl">A Receber em 7 Dias</div><div class="kpi-sub" id="cr-s-7d-n">0 títulos</div></div>
-        <div class="kpi-cell" style="--c:var(--glt2)"><div class="kpi-hdr"><span class="kpi-code">RECEBIDO MÊS</span></div><div class="kpi-amt vpos" id="cr-s-rec">R$ 0,00</div><div class="kpi-lbl">Recebido no Mês</div><div class="kpi-sub" id="cr-s-rec-n">0 títulos</div></div>
-        <div class="kpi-cell" style="--c:var(--clt)"><div class="kpi-hdr"><span class="kpi-code">A RECEBER TOTAL</span></div><div class="kpi-amt" style="color:var(--clt)" id="cr-s-total">R$ 0,00</div><div class="kpi-lbl">Total em Aberto</div><div class="kpi-sub" id="cr-s-total-n">0 títulos</div></div>
-      </div>
-
-      <div class="sband"><span class="sid">CR-002</span><span class="sname">Títulos a Receber</span><div class="sline"></div></div>
-      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
-        <button class="btn-sys" id="crf-todos"    onclick="filterCR('todos')"    style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
-        <button class="btn-sys" id="crf-vencido"  onclick="filterCR('vencido')"  >VENCIDOS</button>
-        <button class="btn-sys" id="crf-hoje"     onclick="filterCR('hoje')"     >VENCE HOJE</button>
-        <button class="btn-sys" id="crf-7d"       onclick="filterCR('7d')"       >PRÓX. 7 DIAS</button>
-        <button class="btn-sys" id="crf-pendente" onclick="filterCR('pendente')" >PENDENTES</button>
-        <button class="btn-sys" id="crf-recebido" onclick="filterCR('recebido')" >RECEBIDOS</button>
-        <div style="margin-left:auto"><input id="cr-search" type="text" placeholder="Buscar cliente..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:200px" oninput="renderCR()"></div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="cr-count">—</span>
+      <button class="btn btn-gold" onclick="openFormCR()">+ Novo Título</button>
+    </div>
+  </div>
+  <div class="content-pad">
+    <div class="kpi-grid" style="margin-bottom:24px">
+      <div class="kpi-card" style="--accent:var(--neg)"><div class="kpi-eyebrow">Inadimplente</div><div class="kpi-value neg" id="cr-s-venc">R$ 0,00</div><div class="kpi-label">Total Inadimplente</div><div class="kpi-meta"><span id="cr-s-venc-n">0 clientes</span></div></div>
+      <div class="kpi-card" style="--accent:var(--warn)"><div class="kpi-eyebrow">Vence 7 Dias</div><div class="kpi-value" style="color:var(--warn)" id="cr-s-7d">R$ 0,00</div><div class="kpi-label">A Receber em 7 Dias</div><div class="kpi-meta"><span id="cr-s-7d-n">0 títulos</span></div></div>
+      <div class="kpi-card" style="--accent:var(--pos)"><div class="kpi-eyebrow">Recebido Mês</div><div class="kpi-value pos" id="cr-s-rec">R$ 0,00</div><div class="kpi-label">Recebido no Mês</div><div class="kpi-meta"><span id="cr-s-rec-n">0 títulos</span></div></div>
+      <div class="kpi-card" style="--accent:var(--t1)"><div class="kpi-eyebrow">Total Aberto</div><div class="kpi-value teal" id="cr-s-total">R$ 0,00</div><div class="kpi-label">Total em Aberto</div><div class="kpi-meta"><span id="cr-s-total-n">0 títulos</span></div></div>
+    </div>
+    <div class="panel">
+      <div class="filter-bar">
+        <button class="filter-btn active" id="crf-todos"    onclick="filterCR('todos')">Todos</button>
+        <button class="filter-btn" id="crf-vencido"  onclick="filterCR('vencido')">Vencidos</button>
+        <button class="filter-btn" id="crf-hoje"     onclick="filterCR('hoje')">Hoje</button>
+        <button class="filter-btn" id="crf-7d"       onclick="filterCR('7d')">7 Dias</button>
+        <button class="filter-btn" id="crf-pendente" onclick="filterCR('pendente')">Pendentes</button>
+        <button class="filter-btn" id="crf-recebido" onclick="filterCR('recebido')">Recebidos</button>
+        <div class="filter-search"><input class="search-input" id="cr-search" type="text" placeholder="Buscar cliente..." oninput="renderCR()"></div>
       </div>
       <div style="overflow-x:auto">
-        <table class="etable" style="min-width:800px">
+        <table class="data-table" style="min-width:800px">
           <thead><tr><th>Status</th><th>Cliente</th><th>Descrição</th><th>Emissão</th><th>Vencimento</th><th>Dias</th><th class="r">Valor</th><th>Ações</th></tr></thead>
           <tbody id="cr-tbody"></tbody>
         </table>
       </div>
     </div>
-
-    <!-- FORM CR -->
-    <div class="modal" id="modal-cr" onclick="if(event.target===this)closeFormCR()">
-      <div class="modal-box" style="width:680px">
-        <div class="modal-hdr"><span class="modal-title">Lançar Conta a Receber — F08</span><button class="modal-close" onclick="closeFormCR()">✕</button></div>
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Cliente *</label><input class="form-input" id="cr-cli" type="text" placeholder="Nome do cliente" list="cli-list"><datalist id="cli-list"></datalist></div>
-            <div class="form-field"><label class="form-label">Tipo</label>
-              <select class="form-input" id="cr-tipo">
-                <option>NF-e / Duplicata</option><option>Boleto</option><option>PIX</option>
-                <option>Cheque</option><option>Contrato</option><option>Outros</option>
-              </select>
-            </div>
-            <div class="form-field"><label class="form-label">Descrição *</label><input class="form-input" id="cr-desc" type="text" placeholder="Ex: NF-e 12045 — Pedido #3301"></div>
-            <div class="form-field"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cr-val" type="number" step="0.01" placeholder="0,00"></div>
-            <div class="form-field"><label class="form-label">Data de Emissão</label><input class="form-input" id="cr-emis" type="date"></div>
-            <div class="form-field"><label class="form-label">Data de Vencimento *</label><input class="form-input" id="cr-venc" type="date"></div>
-            <div class="form-field"><label class="form-label">Nº Documento / NF</label><input class="form-input" id="cr-doc" type="text" placeholder="Número da NF-e ou boleto"></div>
-            <div class="form-field"><label class="form-label">CNPJ/CPF Cliente</label><input class="form-input" id="cr-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
-          </div>
-          <div class="form-field" style="margin-bottom:0"><label class="form-label">Observações</label><input class="form-input" id="cr-obs" type="text" placeholder="Observações adicionais"></div>
-        </div>
-        <div class="modal-foot">
-          <button class="btn-sys pri" onclick="saveCR()">SALVAR TÍTULO</button>
-          <button class="btn-sys" onclick="closeFormCR()">CANCELAR</button>
-          <input type="hidden" id="cr-edit-id">
-          <span class="modal-hint">* campos obrigatórios</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ F09: CLIENTES ══ -->
-    <div id="page-clientes" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F09</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Cadastro de Clientes</span></div><div class="ctx-tools"><span class="ctx-info" id="cli-count">—</span><button class="btn-sys pri" onclick="openFormCliente()">+ NOVO CLIENTE</button></div></div>
-
-      <div class="sband"><span class="sid">CLI-001</span><span class="sname">Base de Clientes</span><div class="sline"></div></div>
-      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
-        <button class="btn-sys" id="clf-todos"  onclick="filterCLI('todos')"  style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
-        <button class="btn-sys" id="clf-ativo"  onclick="filterCLI('ativo')"  >ATIVOS</button>
-        <button class="btn-sys" id="clf-inativo"onclick="filterCLI('inativo')">INATIVOS</button>
-        <div style="margin-left:auto"><input id="cli-search" type="text" placeholder="Buscar cliente ou CNPJ..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:240px" oninput="renderClientes()"></div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="etable" style="min-width:900px">
-          <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ/CPF</th><th>Contato</th><th>Cidade/UF</th><th class="r">Limite Crédito</th><th class="r">Total CR Aberto</th><th>Ações</th></tr></thead>
-          <tbody id="cli-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- FORM CLIENTE -->
-    <div class="modal" id="modal-cli" onclick="if(event.target===this)closeFormCliente()">
-      <div class="modal-box" style="width:720px">
-        <div class="modal-hdr"><span class="modal-title">Cadastro de Cliente — F09</span><button class="modal-close" onclick="closeFormCliente()">✕</button></div>
-        <div class="modal-body">
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--bor)">DADOS CADASTRAIS</div>
-          <div class="form-grid">
-            <div class="form-field" style="grid-column:span 2"><label class="form-label">Razão Social *</label><input class="form-input" id="cli-razao" type="text" placeholder="Nome completo da empresa ou pessoa"></div>
-            <div class="form-field"><label class="form-label">CNPJ / CPF *</label><input class="form-input" id="cli-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
-            <div class="form-field"><label class="form-label">Nome Fantasia</label><input class="form-input" id="cli-fantasia" type="text" placeholder="Nome fantasia"></div>
-            <div class="form-field"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="cli-ie" type="text" placeholder="000.000.000.000"></div>
-            <div class="form-field"><label class="form-label">Status</label><select class="form-input" id="cli-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">CONTATO E ENDEREÇO</div>
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Responsável / Contato</label><input class="form-input" id="cli-contato" type="text" placeholder="Nome do responsável"></div>
-            <div class="form-field"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="cli-tel" type="text" placeholder="(47) 99999-9999"></div>
-            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="cli-email" type="email" placeholder="email@empresa.com.br"></div>
-            <div class="form-field"><label class="form-label">Cidade / UF</label><input class="form-input" id="cli-cidade" type="text" placeholder="Blumenau / SC"></div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">DADOS COMERCIAIS</div>
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Limite de Crédito (R$)</label><input class="form-input" id="cli-limite" type="number" step="0.01" placeholder="0,00"></div>
-            <div class="form-field"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="cli-prazo" type="number" placeholder="30"></div>
-            <div class="form-field" style="grid-column:span 2"><label class="form-label">Observações</label><input class="form-input" id="cli-obs" type="text" placeholder="Observações comerciais"></div>
-          </div>
-        </div>
-        <div class="modal-foot">
-          <button class="btn-sys pri" onclick="saveCliente()">SALVAR CLIENTE</button>
-          <button class="btn-sys" onclick="closeFormCliente()">CANCELAR</button>
-          <input type="hidden" id="cli-edit-id">
-          <span class="modal-hint">* campos obrigatórios</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ F10: FORNECEDORES ══ -->
-    <div id="page-fornecedores" class="page">
-      <div class="ctx"><div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg">F10</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Cadastro de Fornecedores</span></div><div class="ctx-tools"><span class="ctx-info" id="frn-count">—</span><button class="btn-sys pri" onclick="openFormFornecedor()">+ NOVO FORNECEDOR</button></div></div>
-
-      <div class="sband"><span class="sid">FRN-001</span><span class="sname">Base de Fornecedores</span><div class="sline"></div></div>
-      <div style="padding:8px 14px;background:var(--s9);border-bottom:1px solid var(--bor);display:flex;gap:8px;align-items:center">
-        <button class="btn-sys" id="frnf-todos"  onclick="filterFRN('todos')"  style="color:var(--glt);border-color:var(--gbd)">TODOS</button>
-        <button class="btn-sys" id="frnf-ativo"  onclick="filterFRN('ativo')"  >ATIVOS</button>
-        <button class="btn-sys" id="frnf-inativo"onclick="filterFRN('inativo')">INATIVOS</button>
-        <div style="margin-left:auto"><input id="frn-search" type="text" placeholder="Buscar fornecedor ou CNPJ..." style="background:var(--navy2);border:1px solid var(--bhi);border-radius:2px;color:var(--s1);font-family:var(--mono);font-size:11px;padding:5px 10px;outline:none;width:240px" oninput="renderFornecedores()"></div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="etable" style="min-width:900px">
-          <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ</th><th>Categoria</th><th>Contato</th><th>Cidade/UF</th><th class="r">Total CP Aberto</th><th>Ações</th></tr></thead>
-          <tbody id="frn-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- FORM FORNECEDOR -->
-    <div class="modal" id="modal-frn" onclick="if(event.target===this)closeFormFornecedor()">
-      <div class="modal-box" style="width:720px">
-        <div class="modal-hdr"><span class="modal-title">Cadastro de Fornecedor — F10</span><button class="modal-close" onclick="closeFormFornecedor()">✕</button></div>
-        <div class="modal-body">
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--bor)">DADOS CADASTRAIS</div>
-          <div class="form-grid">
-            <div class="form-field" style="grid-column:span 2"><label class="form-label">Razão Social *</label><input class="form-input" id="frn-razao" type="text" placeholder="Nome completo do fornecedor"></div>
-            <div class="form-field"><label class="form-label">CNPJ *</label><input class="form-input" id="frn-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
-            <div class="form-field"><label class="form-label">Nome Fantasia</label><input class="form-input" id="frn-fantasia" type="text" placeholder="Nome fantasia"></div>
-            <div class="form-field"><label class="form-label">Categoria Principal</label>
-              <select class="form-input" id="frn-cat">
-                <option>Fornecedores</option><option>Fretes e Logística</option><option>Serviços</option>
-                <option>Aluguel</option><option>Financeiro</option><option>Outros</option>
-              </select>
-            </div>
-            <div class="form-field"><label class="form-label">Status</label><select class="form-input" id="frn-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">CONTATO E ENDEREÇO</div>
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Responsável / Contato</label><input class="form-input" id="frn-contato" type="text" placeholder="Nome do responsável"></div>
-            <div class="form-field"><label class="form-label">Telefone / WhatsApp</label><input class="form-input" id="frn-tel" type="text" placeholder="(47) 99999-9999"></div>
-            <div class="form-field"><label class="form-label">E-mail</label><input class="form-input" id="frn-email" type="email" placeholder="email@fornecedor.com.br"></div>
-            <div class="form-field"><label class="form-label">Cidade / UF</label><input class="form-input" id="frn-cidade" type="text" placeholder="Blumenau / SC"></div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin:14px 0 12px;padding-top:12px;border-top:1px solid var(--bor)">DADOS BANCÁRIOS</div>
-          <div class="form-grid">
-            <div class="form-field"><label class="form-label">Banco</label><input class="form-input" id="frn-banco" type="text" placeholder="Ex: Sicredi / BB / Bradesco"></div>
-            <div class="form-field"><label class="form-label">Agência / Conta</label><input class="form-input" id="frn-conta" type="text" placeholder="0256 / 12345-6"></div>
-            <div class="form-field"><label class="form-label">Chave PIX</label><input class="form-input" id="frn-pix" type="text" placeholder="CNPJ, e-mail ou chave aleatória"></div>
-            <div class="form-field"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="frn-prazo" type="number" placeholder="30"></div>
-          </div>
-          <div class="form-field" style="margin-top:4px"><label class="form-label">Observações</label><input class="form-input" id="frn-obs" type="text" placeholder="Observações sobre o fornecedor"></div>
-        </div>
-        <div class="modal-foot">
-          <button class="btn-sys pri" onclick="saveFornecedor()">SALVAR FORNECEDOR</button>
-          <button class="btn-sys" onclick="closeFormFornecedor()">CANCELAR</button>
-          <input type="hidden" id="frn-edit-id">
-          <span class="modal-hint">* campos obrigatórios</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ SAÚDE DA EMPRESA ══ -->
-    <div id="page-saude" class="page">
-      <div class="ctx">
-        <div class="ctx-path"><span class="ctx-seg">SFE</span><span class="ctx-sep">/</span><span class="ctx-seg cur">Saúde da Empresa</span></div>
-        <div class="ctx-tools">
-          <span class="ctx-info" id="saude-ts">—</span>
-          <button class="btn-sys" onclick="exportSaude()">⬇ EXPORTAR PDF</button>
-          <button class="btn-sys pri" id="saude-btn" onclick="gerarSaude()" style="background:linear-gradient(135deg,rgba(26,138,74,.4),rgba(10,112,144,.3));border-color:var(--glt2);color:var(--glt2);font-weight:700;padding:4px 18px">♥ GERAR RELATÓRIO</button>
-        </div>
-      </div>
-
-      <!-- LOADING STATE -->
-      <div id="saude-loading" style="display:none;padding:60px;text-align:center">
-        <div style="font-family:var(--mono);font-size:13px;color:var(--glt2);margin-bottom:16px">
-          <span id="saude-loading-msg">Analisando situação financeira...</span>
-        </div>
-        <div style="width:300px;height:4px;background:var(--s8);margin:0 auto;border-radius:2px;overflow:hidden">
-          <div id="saude-progress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--glt2),var(--clt));transition:width .5s;border-radius:2px"></div>
-        </div>
-      </div>
-
-      <!-- EMPTY STATE -->
-      <div id="saude-empty" style="padding:60px;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">♥</div>
-        <div style="font-family:var(--mono);font-size:14px;color:var(--s3);margin-bottom:8px;font-weight:600">DIAGNÓSTICO FINANCEIRO INTELIGENTE</div>
-        <div style="font-size:13px;color:var(--s5);max-width:400px;margin:0 auto 24px;line-height:1.7">Clique em <strong style="color:var(--glt2)">♥ GERAR RELATÓRIO</strong> para obter uma análise completa da saúde financeira da empresa com IA.</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:600px;margin:0 auto">
-          <div style="background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:12px 16px;font-size:12px;color:var(--s4);text-align:left;flex:1;min-width:160px">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--glt);font-weight:600;margin-bottom:6px;text-transform:uppercase">INCLUI</div>
-            ✓ Score de saúde financeira<br>
-            ✓ Análise de liquidez<br>
-            ✓ Diagnóstico de CP/CR<br>
-            ✓ Alertas e riscos
-          </div>
-          <div style="background:var(--s9);border:1px solid var(--bor);border-radius:2px;padding:12px 16px;font-size:12px;color:var(--s4);text-align:left;flex:1;min-width:160px">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--glt);font-weight:600;margin-bottom:6px;text-transform:uppercase">GERADO POR</div>
-            ✓ Claude Sonnet 4<br>
-            ✓ Dados em tempo real<br>
-            ✓ Benchmarks do setor<br>
-            ✓ Recomendações práticas
-          </div>
-        </div>
-      </div>
-
-      <!-- REPORT CONTENT -->
-      <div id="saude-report" style="display:none">
-
-        <!-- SCORE -->
-        <div class="sband"><span class="sid">SAU-001</span><span class="sname">Score de Saúde Financeira</span><div class="sline"></div><span class="stag gold" id="saude-score-tag">—</span></div>
-        <div style="padding:20px 16px;display:grid;grid-template-columns:200px 1fr;gap:24px;border-bottom:1px solid var(--bor)">
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--s9);border:1px solid var(--bor);border-radius:3px;padding:20px">
-            <canvas id="score-gauge" width="180" height="180"></canvas>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--s5);margin-top:8px;text-transform:uppercase;letter-spacing:1px">Score Geral</div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="saude-indicators"></div>
-        </div>
-
-        <!-- CHARTS ROW -->
-        <div class="sband"><span class="sid">SAU-002</span><span class="sname">Visão Gráfica</span><div class="sline"></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--bor)">
-          <div style="border-right:1px solid var(--bor);padding:14px">
-            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">Composição de Despesas</span></div>
-            <div style="height:200px"><canvas id="saude-pie"></canvas></div>
-          </div>
-          <div style="border-right:1px solid var(--bor);padding:14px">
-            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">Fluxo 30 Dias</span></div>
-            <div style="height:200px"><canvas id="saude-flow"></canvas></div>
-          </div>
-          <div style="padding:14px">
-            <div class="dp-head" style="margin:-14px -14px 12px;padding:8px 14px"><span class="dp-title">CP vs CR em Aberto</span></div>
-            <div style="height:200px"><canvas id="saude-cpcr"></canvas></div>
-          </div>
-        </div>
-
-        <!-- AI ANALYSIS -->
-        <div class="sband"><span class="sid">SAU-003</span><span class="sname">Análise Inteligente — Claude AI</span><div class="sline"></div><span class="stag gold">CLAUDE HAIKU</span></div>
-        <div id="saude-ai-content" style="padding:20px 16px;font-size:13px;line-height:1.9;color:var(--s2);white-space:pre-wrap;font-family:var(--font)"></div>
-
-        <!-- RECOMMENDATIONS -->
-        <div class="sband"><span class="sid">SAU-004</span><span class="sname">Plano de Ação Recomendado</span><div class="sline"></div></div>
-        <div id="saude-actions" style="padding:0"></div>
-
-        <!-- FOOTER -->
-        <div style="padding:16px;border-top:1px solid var(--bor);display:flex;align-items:center;justify-content:space-between;background:var(--navy2)">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--s6)">Relatório gerado em <span id="saude-footer-ts">—</span> · SFE Sistema Financeiro Empresarial v1.0</div>
-          <button class="btn-sys pri" onclick="gerarSaude()" style="font-size:10px">↻ ATUALIZAR RELATÓRIO</button>
-        </div>
-      </div>
-    </div>
-
-  </main>
+  </div>
 </div>
 
-<!-- CONFIG MODAL -->
-<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="modal-box">
-    <div class="modal-hdr"><span class="modal-title">Parâmetros — SFE v1.0</span><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-field"><label class="form-label">URL Backend Railway</label><input class="form-input" id="f-be" type="text" placeholder="https://sfe-backend-production.up.railway.app"></div>
-        <div class="form-field"><label class="form-label">Claude API Key</label><input class="form-input" id="f-ckey" type="password" placeholder="sk-ant-api03-..."></div>
-        <div class="form-field"><label class="form-label">Razão Social</label><input class="form-input" id="f-co" type="text" placeholder="Nome da Empresa Ltda"></div>
-        <div class="form-field"><label class="form-label">CNPJ</label><input class="form-input" id="f-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
-      </div>
+<!-- ▸ F09 CLIENTES -->
+<div id="page-clientes" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F09 · Cadastro</div>
+      <div class="page-title">Clientes</div>
+      <div class="page-sub">Base cadastral e histórico de relacionamento</div>
     </div>
-    <div class="modal-foot">
-      <button class="btn-sys pri" onclick="saveParams()">SALVAR E CONECTAR</button>
-      <button class="btn-sys" onclick="closeModal()">CANCELAR</button>
-      <span class="modal-hint">Dados salvos localmente no navegador</span>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="cli-count">—</span>
+      <button class="btn btn-gold" onclick="openFormCliente()">+ Novo Cliente</button>
+    </div>
+  </div>
+  <div class="panel" style="margin:0 32px 32px">
+    <div class="filter-bar">
+      <button class="filter-btn active" id="clf-todos"   onclick="filterCLI('todos')">Todos</button>
+      <button class="filter-btn" id="clf-ativo"   onclick="filterCLI('ativo')">Ativos</button>
+      <button class="filter-btn" id="clf-inativo" onclick="filterCLI('inativo')">Inativos</button>
+      <div class="filter-search"><input class="search-input" id="cli-search" type="text" placeholder="Buscar cliente ou CNPJ..." oninput="renderClientes()"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table" style="min-width:900px">
+        <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ/CPF</th><th>Contato</th><th>Cidade/UF</th><th class="r">Limite Crédito</th><th class="r">CR Aberto</th><th>Ações</th></tr></thead>
+        <tbody id="cli-tbody"></tbody>
+      </table>
     </div>
   </div>
 </div>
 
+<!-- ▸ F10 FORNECEDORES -->
+<div id="page-fornecedores" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">F10 · Cadastro</div>
+      <div class="page-title">Fornecedores</div>
+      <div class="page-sub">Base de fornecedores com dados bancários e comerciais</div>
+    </div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="frn-count">—</span>
+      <button class="btn btn-gold" onclick="openFormFornecedor()">+ Novo Fornecedor</button>
+    </div>
+  </div>
+  <div class="panel" style="margin:0 32px 32px">
+    <div class="filter-bar">
+      <button class="filter-btn active" id="frnf-todos"   onclick="filterFRN('todos')">Todos</button>
+      <button class="filter-btn" id="frnf-ativo"   onclick="filterFRN('ativo')">Ativos</button>
+      <button class="filter-btn" id="frnf-inativo" onclick="filterFRN('inativo')">Inativos</button>
+      <div class="filter-search"><input class="search-input" id="frn-search" type="text" placeholder="Buscar fornecedor ou CNPJ..." oninput="renderFornecedores()"></div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table" style="min-width:900px">
+        <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ</th><th>Categoria</th><th>Contato</th><th>Cidade/UF</th><th class="r">CP Aberto</th><th>Ações</th></tr></thead>
+        <tbody id="frn-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ IA -->
+<div id="page-ia" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">AI · Inteligência</div>
+      <div class="page-title">Análise Inteligente</div>
+      <div class="page-sub">Consultas financeiras em linguagem natural com Claude AI</div>
+    </div>
+  </div>
+  <div class="content-pad">
+    <div class="console-wrap">
+      <div class="console-head">
+        <div class="console-dot" style="background:#ff5f56"></div>
+        <div class="console-dot" style="background:#ffbd2e;margin-left:6px"></div>
+        <div class="console-dot" style="background:#27c93f;margin-left:6px"></div>
+        <div class="console-title" style="margin-left:12px">ANALISTA FINANCEIRO VIRTUAL — SFE/AI</div>
+        <span class="console-badge">CLAUDE HAIKU · ATIVO</span>
+      </div>
+      <div class="console-body">
+        <div class="console-prompt-row">
+          <span class="console-prompt-sym">›</span>
+          <input class="console-input" id="ai-input" type="text" placeholder="Qual o maior custo operacional? Tenho saldo para fechar a folha? Há risco de ruptura de caixa?" onkeypress="if(event.key==='Enter')runQuery()">
+          <button class="btn btn-gold" id="ai-btn" onclick="runQuery()" style="border-radius:6px;padding:8px 16px">Executar</button>
+        </div>
+        <div class="console-output" id="ai-out">
+          <div class="console-output-label">▶ Resposta — Claude AI</div>
+          <span id="ai-txt"></span>
+        </div>
+        <div class="quick-btns" id="quick-queries"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ SAÚDE -->
+<div id="page-saude" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">SAU · Diagnóstico</div>
+      <div class="page-title">Saúde da Empresa</div>
+      <div class="page-sub">Diagnóstico financeiro inteligente com score e plano de ação</div>
+    </div>
+    <div class="page-actions">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="saude-ts">—</span>
+      <button class="btn btn-ghost" onclick="exportSaude()">⬇ PDF</button>
+      <button class="btn btn-gold" id="saude-btn" onclick="gerarSaude()">♥ Gerar Relatório</button>
+    </div>
+  </div>
+  <div class="content-pad">
+    <!-- Loading -->
+    <div class="saude-loading" id="saude-loading">
+      <div style="font-size:32px;margin-bottom:16px;animation:pulse 1.5s infinite">♥</div>
+      <div class="loading-title" id="saude-loading-msg">Analisando situação financeira...</div>
+      <div class="loading-sub">Isso leva apenas alguns segundos</div>
+      <div class="progress-bar"><div class="progress-fill" id="saude-progress"></div></div>
+    </div>
+
+    <!-- Empty -->
+    <div class="saude-empty" id="saude-empty">
+      <div class="saude-empty-icon">♥</div>
+      <div class="saude-empty-title">Diagnóstico Financeiro Inteligente</div>
+      <div class="saude-empty-sub">Clique em ♥ Gerar Relatório para obter uma análise completa da saúde financeira da empresa com inteligência artificial.</div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:600px;margin:0 auto">
+        <div style="background:var(--ink3);border:1px solid var(--b1);border-radius:var(--radius);padding:16px 20px;font-size:13px;color:var(--tx3);text-align:left;flex:1;min-width:180px">
+          <div style="font-family:var(--f-mono);font-size:9px;color:var(--gold);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Inclui</div>
+          ✓ Score de saúde 0–100<br>✓ Análise de liquidez<br>✓ Diagnóstico CP/CR<br>✓ Alertas e riscos
+        </div>
+        <div style="background:var(--ink3);border:1px solid var(--b1);border-radius:var(--radius);padding:16px 20px;font-size:13px;color:var(--tx3);text-align:left;flex:1;min-width:180px">
+          <div style="font-family:var(--f-mono);font-size:9px;color:var(--gold);font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Gerado por</div>
+          ✓ Claude Haiku AI<br>✓ Dados em tempo real<br>✓ Benchmarks do setor<br>✓ Plano de ação prático
+        </div>
+      </div>
+    </div>
+
+    <!-- Report -->
+    <div class="saude-report" id="saude-report">
+      <!-- Score -->
+      <div class="saude-score-wrap" style="margin-bottom:24px">
+        <div class="saude-gauge">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="66" fill="none" stroke="var(--ink5)" stroke-width="12"/>
+            <circle id="score-arc" cx="80" cy="80" r="66" fill="none" stroke="var(--gold)" stroke-width="12" stroke-dasharray="414" stroke-dashoffset="414" stroke-linecap="round" style="transition:stroke-dashoffset 1.2s ease"/>
+          </svg>
+          <div class="saude-gauge-center">
+            <div class="saude-score-num" id="sl-score-num" style="color:var(--gold)">—</div>
+            <div class="saude-score-100">/100</div>
+          </div>
+        </div>
+        <div class="saude-info">
+          <div class="saude-info-title" id="sl-score-lbl">—</div>
+          <div class="saude-info-sub" id="sl-score-sub">—</div>
+          <div class="saude-indicators" id="saude-indicators"></div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="three-col" style="margin-bottom:24px">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Composição Despesas</span></div>
+          <div style="padding:16px;height:200px"><canvas id="saude-pie"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Fluxo 30 Dias</span></div>
+          <div style="padding:16px;height:200px"><canvas id="saude-flow"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">CP vs CR</span></div>
+          <div style="padding:16px;height:200px"><canvas id="saude-cpcr"></canvas></div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head">
+          <span class="panel-title">Análise Inteligente — Claude AI</span>
+          <span class="console-badge">CLAUDE HAIKU</span>
+        </div>
+        <div class="panel-body">
+          <div id="saude-ai-content" style="font-size:13px;line-height:1.9;color:var(--tx2);white-space:pre-wrap;font-family:var(--f-body)"></div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="panel" style="margin-bottom:0">
+        <div class="panel-head"><span class="panel-title">Plano de Ação Recomendado</span></div>
+        <div id="saude-actions"></div>
+      </div>
+
+      <div style="padding:16px 0;display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx5)">SFE Sistema Financeiro Empresarial v1.0 · <span id="saude-footer-ts">—</span></div>
+        <button class="btn btn-ghost" onclick="gerarSaude()">↻ Atualizar Relatório</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+
+<!-- Config -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head"><span class="modal-title">Configurações — SFE v1.0</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">URL Backend Railway</label><input class="form-input" id="f-be" type="text" placeholder="https://sfe-backend-production.up.railway.app"></div>
+        <div class="form-group"><label class="form-label">Claude API Key</label><input class="form-input" id="f-ckey" type="password" placeholder="sk-ant-api03-..."></div>
+        <div class="form-group"><label class="form-label">Razão Social</label><input class="form-input" id="f-co" type="text" placeholder="Nome da Empresa Ltda"></div>
+        <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="f-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+        <div class="form-group form-full"><label class="form-label">Modo de Dados</label>
+          <select class="form-input" id="f-mode"><option value="demo">Demo (dados simulados)</option><option value="backend">Backend Railway (dados reais)</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveParams()">Salvar e Conectar</button>
+      <button class="btn btn-ghost" onclick="loadDemo();closeModal()">Carregar Demo</button>
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <span class="modal-hint">Dados salvos localmente</span>
+    </div>
+  </div>
+</div>
+
+<!-- Form CP -->
+<div class="modal" id="modal-cp" onclick="if(event.target===this)closeFormCP()">
+  <div class="modal-box" style="width:680px">
+    <div class="modal-head"><span class="modal-title">Lançar Conta a Pagar — F07</span><button class="modal-close" onclick="closeFormCP()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Fornecedor *</label><input class="form-input" id="cp-forn" type="text" placeholder="Nome do fornecedor" list="forn-list"><datalist id="forn-list"></datalist></div>
+        <div class="form-group"><label class="form-label">Categoria</label><select class="form-input" id="cp-cat"><option>Fornecedores</option><option>Folha de Pagamento</option><option>Impostos</option><option>Aluguel</option><option>Serviços</option><option>Fretes e Logística</option><option>Financeiro</option><option>Outros</option></select></div>
+        <div class="form-group form-full"><label class="form-label">Descrição *</label><input class="form-input" id="cp-desc" type="text" placeholder="Ex: NF-e 004521 — Insumos"></div>
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cp-val" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Vencimento *</label><input class="form-input" id="cp-venc" type="date"></div>
+        <div class="form-group"><label class="form-label">Emissão</label><input class="form-input" id="cp-emis" type="date"></div>
+        <div class="form-group"><label class="form-label">Banco</label><select class="form-input" id="cp-banco"><option value="SC">Sicredi</option><option value="BB">Banco do Brasil</option><option value="BD">Bradesco</option><option value="CX">Caixa Econômica</option><option value="ST">Santander</option></select></div>
+        <div class="form-group"><label class="form-label">Nº Documento</label><input class="form-input" id="cp-doc" type="text" placeholder="NF / Boleto / Contrato"></div>
+        <div class="form-group form-full"><label class="form-label">Observações</label><input class="form-input" id="cp-obs" type="text" placeholder="Observações adicionais"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-gold" onclick="saveCP()">Salvar Título</button><button class="btn btn-ghost" onclick="closeFormCP()">Cancelar</button><input type="hidden" id="cp-edit-id"><span class="modal-hint">* obrigatórios</span></div>
+  </div>
+</div>
+
+<!-- Form CR -->
+<div class="modal" id="modal-cr" onclick="if(event.target===this)closeFormCR()">
+  <div class="modal-box" style="width:680px">
+    <div class="modal-head"><span class="modal-title">Lançar Conta a Receber — F08</span><button class="modal-close" onclick="closeFormCR()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Cliente *</label><input class="form-input" id="cr-cli" type="text" placeholder="Nome do cliente" list="cli-list"><datalist id="cli-list"></datalist></div>
+        <div class="form-group"><label class="form-label">Tipo</label><select class="form-input" id="cr-tipo"><option>NF-e / Duplicata</option><option>Boleto</option><option>PIX</option><option>Cheque</option><option>Contrato</option><option>Outros</option></select></div>
+        <div class="form-group form-full"><label class="form-label">Descrição *</label><input class="form-input" id="cr-desc" type="text" placeholder="Ex: NF-e 12045 — Pedido #3301"></div>
+        <div class="form-group"><label class="form-label">Valor (R$) *</label><input class="form-input" id="cr-val" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Vencimento *</label><input class="form-input" id="cr-venc" type="date"></div>
+        <div class="form-group"><label class="form-label">Emissão</label><input class="form-input" id="cr-emis" type="date"></div>
+        <div class="form-group"><label class="form-label">Nº Documento / NF</label><input class="form-input" id="cr-doc" type="text" placeholder="Número da NF-e ou boleto"></div>
+        <div class="form-group"><label class="form-label">CNPJ/CPF Cliente</label><input class="form-input" id="cr-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+        <div class="form-group form-full"><label class="form-label">Observações</label><input class="form-input" id="cr-obs" type="text" placeholder="Observações adicionais"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-gold" onclick="saveCR()">Salvar Título</button><button class="btn btn-ghost" onclick="closeFormCR()">Cancelar</button><input type="hidden" id="cr-edit-id"><span class="modal-hint">* obrigatórios</span></div>
+  </div>
+</div>
+
+<!-- Form Cliente -->
+<div class="modal" id="modal-cli" onclick="if(event.target===this)closeFormCliente()">
+  <div class="modal-box" style="width:720px">
+    <div class="modal-head"><span class="modal-title">Cadastro de Cliente — F09</span><button class="modal-close" onclick="closeFormCliente()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full"><label class="form-label">Razão Social *</label><input class="form-input" id="cli-razao" type="text" placeholder="Nome completo da empresa ou pessoa"></div>
+        <div class="form-group"><label class="form-label">CNPJ / CPF *</label><input class="form-input" id="cli-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+        <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-input" id="cli-fantasia" type="text" placeholder="Nome fantasia"></div>
+        <div class="form-group"><label class="form-label">Inscrição Estadual</label><input class="form-input" id="cli-ie" type="text" placeholder="000.000.000.000"></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="cli-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+        <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="cli-contato" type="text" placeholder="Nome do responsável"></div>
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="cli-tel" type="text" placeholder="(47) 99999-9999"></div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="cli-email" type="email" placeholder="email@empresa.com.br"></div>
+        <div class="form-group"><label class="form-label">Cidade / UF</label><input class="form-input" id="cli-cidade" type="text" placeholder="Blumenau / SC"></div>
+        <div class="form-group"><label class="form-label">Limite de Crédito (R$)</label><input class="form-input" id="cli-limite" type="number" step="0.01" placeholder="0,00"></div>
+        <div class="form-group"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="cli-prazo" type="number" placeholder="30"></div>
+        <div class="form-group form-full"><label class="form-label">Observações</label><input class="form-input" id="cli-obs" type="text" placeholder="Observações comerciais"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-gold" onclick="saveCliente()">Salvar Cliente</button><button class="btn btn-ghost" onclick="closeFormCliente()">Cancelar</button><input type="hidden" id="cli-edit-id"><span class="modal-hint">* obrigatórios</span></div>
+  </div>
+</div>
+
+<!-- Form Fornecedor -->
+<div class="modal" id="modal-frn" onclick="if(event.target===this)closeFormFornecedor()">
+  <div class="modal-box" style="width:720px">
+    <div class="modal-head"><span class="modal-title">Cadastro de Fornecedor — F10</span><button class="modal-close" onclick="closeFormFornecedor()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group form-full"><label class="form-label">Razão Social *</label><input class="form-input" id="frn-razao" type="text" placeholder="Nome completo do fornecedor"></div>
+        <div class="form-group"><label class="form-label">CNPJ *</label><input class="form-input" id="frn-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
+        <div class="form-group"><label class="form-label">Nome Fantasia</label><input class="form-input" id="frn-fantasia" type="text" placeholder="Nome fantasia"></div>
+        <div class="form-group"><label class="form-label">Categoria</label><select class="form-input" id="frn-cat"><option>Fornecedores</option><option>Fretes e Logística</option><option>Serviços</option><option>Aluguel</option><option>Financeiro</option><option>Outros</option></select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-input" id="frn-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></div>
+        <div class="form-group"><label class="form-label">Responsável</label><input class="form-input" id="frn-contato" type="text" placeholder="Nome do responsável"></div>
+        <div class="form-group"><label class="form-label">Telefone</label><input class="form-input" id="frn-tel" type="text" placeholder="(47) 99999-9999"></div>
+        <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="frn-email" type="email" placeholder="email@fornecedor.com.br"></div>
+        <div class="form-group"><label class="form-label">Cidade / UF</label><input class="form-input" id="frn-cidade" type="text" placeholder="Blumenau / SC"></div>
+        <div class="form-group"><label class="form-label">Banco</label><input class="form-input" id="frn-banco" type="text" placeholder="Ex: Sicredi / BB"></div>
+        <div class="form-group"><label class="form-label">Agência / Conta</label><input class="form-input" id="frn-conta" type="text" placeholder="0256 / 12345-6"></div>
+        <div class="form-group"><label class="form-label">Chave PIX</label><input class="form-input" id="frn-pix" type="text" placeholder="CNPJ, e-mail ou chave aleatória"></div>
+        <div class="form-group"><label class="form-label">Prazo Padrão (dias)</label><input class="form-input" id="frn-prazo" type="number" placeholder="30"></div>
+        <div class="form-group form-full"><label class="form-label">Observações</label><input class="form-input" id="frn-obs" type="text" placeholder="Observações sobre o fornecedor"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-gold" onclick="saveFornecedor()">Salvar Fornecedor</button><button class="btn btn-ghost" onclick="closeFormFornecedor()">Cancelar</button><input type="hidden" id="frn-edit-id"><span class="modal-hint">* obrigatórios</span></div>
+  </div>
+</div>
+
+</main>
+
+
+
+
 <script>
+
 // ══ EMPRESA DEMO ══
 const DEMO = {
   co:   'Distribuidora Sul Catarinense Ltda',
@@ -2404,6 +3616,133 @@ function exportSaude() {
 }
 
 // navTo override removed - using original function
+
+
+
+// ══ MOBILE ══
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
+function loadDemo(){buildDemo();renderAll();}
+</script>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="login-screen" style="position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-body)">
+  <div style="width:100%;max-width:420px;padding:20px">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="display:inline-flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#b07010);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);filter:drop-shadow(0 0 16px rgba(232,160,32,.5))"></div>
+        <div>
+          <div style="font-family:var(--f-display);font-size:28px;font-weight:800;letter-spacing:3px;color:var(--tx0)">SFE</div>
+          <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);letter-spacing:2px;text-transform:uppercase">Sistema Financeiro Empresarial</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--tx4)">Acesse sua conta empresarial</div>
+    </div>
+    <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--gold);border-radius:var(--radius);padding:32px;box-shadow:0 32px 80px rgba(0,0,0,.6)">
+      <div id="login-error" style="display:none;background:var(--negdim);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--neg);margin-bottom:16px;text-align:center"></div>
+      <div style="margin-bottom:16px">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx4);display:block;margin-bottom:6px">CNPJ</label>
+        <input id="login-cnpj" type="text" placeholder="00.000.000/0001-00" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 14px;outline:none" onkeypress="if(event.key==='Enter')document.getElementById('login-senha').focus()">
+      </div>
+      <div style="margin-bottom:24px">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx4);display:block;margin-bottom:6px">SENHA</label>
+        <input id="login-senha" type="password" placeholder="••••••••" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 14px;outline:none" onkeypress="if(event.key==='Enter')doLogin()">
+      </div>
+      <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#b07010);color:#000;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;box-shadow:0 4px 20px rgba(232,160,32,.3)">Entrar no Sistema</button>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--b1);text-align:center">
+        <div style="font-size:11px;color:var(--tx5);margin-bottom:8px">Acesso de demonstração</div>
+        <button onclick="loginDemo()" style="font-family:var(--f-mono);font-size:10px;font-weight:600;padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--b1);background:transparent;color:var(--tx3);cursor:pointer">▷ Entrar como Demo</button>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--tx5)">SFE v2.0 · Sistema Financeiro Empresarial<br><span style="color:var(--tx4)">Dados protegidos · LGPD compliant</span></div>
+  </div>
+</div>
+
+<script>
+
+// ══ LOGIN & SESSION ══
+const BE_URL = 'https://sfe-backend-production.up.railway.app';
+let SFE_SESSION = null;
+
+async function doLogin() {
+  const cnpj  = document.getElementById('login-cnpj').value.trim();
+  const senha = document.getElementById('login-senha').value.trim();
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-error');
+  if (!cnpj || !senha) { if(err){err.textContent='Preencha CNPJ e senha';err.style.display='block';} return; }
+  btn.textContent='Autenticando...'; btn.disabled=true;
+  if(err) err.style.display='none';
+  try {
+    const r = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpj.replace(/\D/g,''),senha})});
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error||'Credenciais inválidas');
+    SFE_SESSION = data;
+    localStorage.setItem('sfe_session',JSON.stringify({token:data.token,ts:Date.now(),empresa:data.empresa}));
+    const co=document.getElementById('tb-company'); if(co) co.textContent=data.empresa.razao.slice(0,28);
+    document.getElementById('login-screen').style.display='none';
+    buildDemo(); renderAll();
+    seedDemoData(); renderCP(); renderCR();
+    seedCadastros(); renderClientes(); renderFornecedores();
+    if(data.empresa.pluggy_user) setTimeout(doSync,1200);
+  } catch(e) {
+    if(err){err.textContent=e.message;err.style.display='block';}
+    btn.textContent='Entrar no Sistema'; btn.disabled=false;
+  }
+}
+
+function loginDemo() {
+  SFE_SESSION={demo:true,empresa:{razao:'Distribuidora Sul Catarinense Ltda',cnpj:'12348756000109',plano:'pro'}};
+  const co=document.getElementById('tb-company'); if(co) co.textContent='Distribuidora Sul Catarinens...';
+  document.getElementById('login-screen').style.display='none';
+  buildDemo(); renderAll();
+  seedDemoData(); renderCP(); renderCR();
+  seedCadastros(); renderClientes(); renderFornecedores();
+}
+
+async function doSync() {
+  const session=SFE_SESSION||JSON.parse(localStorage.getItem('sfe_session')||'null');
+  if(!session||session.demo||!session.empresa?.pluggy_user) return;
+  const btn=document.getElementById('sync-btn');
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  try {
+    const days=parseInt(document.getElementById('period-sel')?.value||30);
+    const r=await fetch(BE_URL+'/api/sync?days='+days+'&clientUserId='+session.empresa.pluggy_user);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(data.data?.accounts?.length>0){
+      S.accounts=data.data.accounts.map(a=>({...a,name:a._bankName||a.name,_bank:a._bankName||'Banco',_code:(a._bankName||'BK').slice(0,2).toUpperCase(),balance:a.balance||0}));
+      S.transactions=data.data.transactions.map(t=>({...t,amount:t.amount||0,_bank:(t._bankName||'BK').slice(0,2).toUpperCase(),_bankFull:t._bankName||'Banco',_category:t.category||'Outros',description:t.description||'—'}));
+      S.isDemo=false;
+      const mode=document.getElementById('tb-mode'); const dot=document.getElementById('tb-dot');
+      if(mode){mode.textContent='AO VIVO';mode.className='tb-mode live';}
+      if(dot) dot.style.background='var(--pos)';
+      renderAll();
+    }
+  } catch(e){console.warn('Sync:',e.message);}
+  finally{if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}}
+}
+
+function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const ls=document.getElementById('login-screen');
+  if(!ls) return;
+  const saved=localStorage.getItem('sfe_session');
+  if(saved){
+    try{
+      const s=JSON.parse(saved);
+      if(s.ts&&Date.now()-s.ts<86400000){
+        SFE_SESSION=s;
+        ls.style.display='none';
+        const co=document.getElementById('tb-company');
+        if(co) co.textContent=s.empresa.razao.slice(0,28);
+        return;
+      }
+    }catch(e){}
+    localStorage.removeItem('sfe_session');
+  }
+  ls.style.display='flex';
+});
 
 </script>
 </body>
