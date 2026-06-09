@@ -2019,6 +2019,17 @@ body {
 
 
 <script>
+// ══ SAFE DOM HELPER ══
+function _set(id, prop, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (prop === 'text') el.textContent = val;
+  else if (prop === 'html') el.innerHTML = val;
+  else if (prop === 'class') el.className = val;
+  else el.style[prop] = val;
+}
+function _get(id) { return document.getElementById(id); }
+
 
 // ══ EMPRESA DEMO ══
 const DEMO = {
@@ -2179,6 +2190,10 @@ function navTo(page, navEl, sbEl) {
 }
 
 // ══ RENDER ALL ══
+function safeSet(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
 function renderAll() {
   const now = new Date();
   const days = parseInt(document.getElementById('period-sel').value);
@@ -2186,7 +2201,7 @@ function renderAll() {
   const txs  = S.transactions.filter(t => new Date(t.date) >= from);
 
   document.getElementById('kpi-date').textContent  = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('p-ts').textContent = `${txs.length} REGISTROS · ${days} DIAS`;
+  safeSet('p-ts', `${txs.length} REGISTROS · ${days} DIAS`);
   document.getElementById('cf-tag').textContent    = `${days} DIAS`;
   document.getElementById('tx-tag').textContent    = `${Math.min(txs.length,10)} / ${txs.length} REG.`;
 
@@ -2207,12 +2222,12 @@ function renderKPIs(txs) {
   const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
   const res   = ent - sai;
 
-  document.getElementById('kv-saldo').textContent = fmt(saldo);
+  safeSet('kv-saldo', fmt(saldo));
   document.getElementById('kv-ent').textContent   = fmt(ent);
   document.getElementById('kv-sai').textContent   = fmt(sai);
   document.getElementById('kv-res').textContent   = fmt(res);
 
-  document.getElementById('kv-saldo').textContent = `${S.accounts.length} CONTAS ATIVAS`;
+  safeSet('kv-saldo', `${S.accounts.length} CONTAS ATIVAS`);
   document.getElementById('kv-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
   document.getElementById('kv-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
   document.getElementById('kv-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
@@ -2226,16 +2241,16 @@ function renderKPIs(txs) {
   document.getElementById('kv-res').className = 'kpi-amt ' + (res>=0?'vgold':'vneg');
 
   // Fluxo page summary
-  document.getElementById('fl-ent').textContent = fmt(ent);
-  document.getElementById('fl-sai').textContent = fmt(sai);
-  document.getElementById('fl-res').textContent = fmt(res);
+  if(document.getElementById('fl-ent')) document.getElementById('fl-ent').textContent = fmt(ent);
+  if(document.getElementById('fl-sai')) document.getElementById('fl-sai').textContent = fmt(sai);
+  if(document.getElementById('fl-res')) document.getElementById('fl-res').textContent = fmt(res);
 }
 
 // ══ BANKS ══
 function renderBanks() {
   const total = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
-  document.getElementById('bk-count').textContent = `${S.accounts.length} INSTITUIÇÕES`;
-  document.getElementById('bk-total').textContent = `TOTAL: ${fmt(total)}`;
+  if(document.getElementById('bk-count')) document.getElementById('bk-count').textContent = `${S.accounts.length} INSTITUIÇÕES`;
+  if(document.getElementById('bk-total')) document.getElementById('bk-total').textContent = `TOTAL: ${fmt(total)}`;
 
   // Cards
   document.getElementById('bank-cards').innerHTML = S.accounts.map(a => {
@@ -2373,7 +2388,7 @@ function renderAlerts(txs) {
     if (crit>0) {el.textContent=crit;el.style.display='';}
     else el.style.display='none';
   });
-  document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
+  if(document.getElementById('alt-count')) document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
   document.getElementById('alt-log').innerHTML = alerts.map(a=>`
     <div class="alert-entry">
       <div class="asev" style="background:${a.bg};color:${a.fc}">${a.s}</div>
@@ -2388,8 +2403,8 @@ function renderCats(txs) {
   txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
   const total=entries.reduce((s,e)=>s+e[1],0);
-  document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
-  document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
+  if(document.getElementById('cat-total')) document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
+  if(document.getElementById('cat-count')) document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
 
   document.getElementById('cat-rows').innerHTML = entries.map(([c,v])=>{
     const pct=(v/total*100).toFixed(1),col=CAT_COLORS[c]||'#445566';
@@ -2679,7 +2694,7 @@ function renderCP() {
   });
 
   filtered.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
-  document.getElementById('cp-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
+  if(document.getElementById('cp-count')) document.getElementById('cp-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
 
   document.getElementById('cp-tbody').innerHTML = filtered.map(item => {
     const s = statusCP(item);
@@ -2715,7 +2730,7 @@ function renderCP() {
   document.getElementById('cp-s-pago').textContent    = fmt(sum(pagos));
   document.getElementById('cp-s-pago-n').textContent  = `${pagos.length} TÍTULOS`;
   document.getElementById('cp-s-total').textContent   = fmt(sum(pendentes));
-  document.getElementById('cp-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
+  if(document.getElementById('cp-s-total-n')) document.getElementById('cp-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
 
   // Painel KPIs
   const hoje = data.filter(i=>['vencido','hoje'].includes(statusCP(i)));
@@ -2743,7 +2758,7 @@ function renderCR() {
   });
 
   filtered.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
-  document.getElementById('cr-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
+  if(document.getElementById('cr-count')) document.getElementById('cr-count').textContent = `${filtered.length} / ${data.length} TÍTULOS`;
 
   document.getElementById('cr-tbody').innerHTML = filtered.map(item => {
     const s = statusCR(item);
@@ -2779,7 +2794,7 @@ function renderCR() {
   document.getElementById('cr-s-rec').textContent     = fmt(sum(recebidos));
   document.getElementById('cr-s-rec-n').textContent   = `${recebidos.length} TÍTULOS`;
   document.getElementById('cr-s-total').textContent   = fmt(sum(pendentes));
-  document.getElementById('cr-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
+  if(document.getElementById('cr-s-total-n')) document.getElementById('cr-s-total-n').textContent = `${pendentes.length} TÍTULOS`;
 
   // Painel KPIs
   const hoje = data.filter(i=>['vencido','hoje'].includes(statusCR(i)));
@@ -2793,7 +2808,7 @@ function renderCR() {
   document.getElementById('cli-list').innerHTML = cls.map(c=>`<option value="${c}">`).join('');
 
   // CPCR date
-  document.getElementById('cpcr-date').textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  safeSet('cpcr-date', new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}));
 }
 
 // ── FORMS CP ──
@@ -3013,7 +3028,7 @@ function renderClientes() {
   });
 
   filtered.sort((a,b) => a.razao.localeCompare(b.razao));
-  document.getElementById('cli-count').textContent = `${filtered.length} / ${data.length} CLIENTES`;
+  if(document.getElementById('cli-count')) document.getElementById('cli-count').textContent = `${filtered.length} / ${data.length} CLIENTES`;
 
   document.getElementById('cli-tbody').innerHTML = filtered.map(c => {
     const crAberto = cr.filter(t=>t.cliente===c.razao && statusCR(t)!=='recebido').reduce((s,t)=>s+t.valor,0);
@@ -3057,7 +3072,7 @@ function renderFornecedores() {
   });
 
   filtered.sort((a,b) => a.razao.localeCompare(b.razao));
-  document.getElementById('frn-count').textContent = `${filtered.length} / ${data.length} FORNECEDORES`;
+  if(document.getElementById('frn-count')) document.getElementById('frn-count').textContent = `${filtered.length} / ${data.length} FORNECEDORES`;
 
   document.getElementById('frn-tbody').innerHTML = filtered.map(f => {
     const cpAberto = cp.filter(t=>t.fornecedor===f.razao && statusCP(t)!=='pago').reduce((s,t)=>s+t.valor,0);
