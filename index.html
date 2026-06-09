@@ -2074,9 +2074,9 @@ document.addEventListener('DOMContentLoaded', () => {
   localStorage.removeItem('sfe_demo_v2');
 
   // Build demo data and render everything
-  buildDemo();
-  renderAll();
-  buildQuickQueries();
+  try { buildDemo(); } catch(e) { console.warn('buildDemo:', e.message); }
+  try { renderAll(); } catch(e) { console.warn('renderAll:', e.message); }
+  try { buildQuickQueries(); } catch(e) {}
 
   // Seed CP/CR/Clientes/Fornecedores with demo data
   seedDemoData();
@@ -2200,10 +2200,10 @@ function renderAll() {
   const from = new Date(Date.now() - days*86400000);
   const txs  = S.transactions.filter(t => new Date(t.date) >= from);
 
-  document.getElementById('kpi-date').textContent  = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  if(document.getElementById('kpi-date')) document.getElementById('kpi-date').textContent  = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   safeSet('p-ts', `${txs.length} REGISTROS · ${days} DIAS`);
-  document.getElementById('cf-tag').textContent    = `${days} DIAS`;
-  document.getElementById('tx-tag').textContent    = `${Math.min(txs.length,10)} / ${txs.length} REG.`;
+  if(document.getElementById('cf-tag')) document.getElementById('cf-tag').textContent    = `${days} DIAS`;
+  if(document.getElementById('tx-tag')) document.getElementById('tx-tag').textContent    = `${Math.min(txs.length,10)} / ${txs.length} REG.`;
 
   renderKPIs(txs);
   renderBanks();
@@ -2216,34 +2216,35 @@ function renderAll() {
 }
 
 // ══ KPIs ══
-function renderKPIs(txs) {
+function renderKPIs(txs) { try {
   const saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
   const ent   = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
   const res   = ent - sai;
 
   safeSet('kv-saldo', fmt(saldo));
-  document.getElementById('kv-ent').textContent   = fmt(ent);
-  document.getElementById('kv-sai').textContent   = fmt(sai);
-  document.getElementById('kv-res').textContent   = fmt(res);
+  if(document.getElementById('kv-ent')) document.getElementById('kv-ent').textContent   = fmt(ent);
+  if(document.getElementById('kv-sai')) document.getElementById('kv-sai').textContent   = fmt(sai);
+  if(document.getElementById('kv-res')) document.getElementById('kv-res').textContent   = fmt(res);
 
   safeSet('kv-saldo', `${S.accounts.length} CONTAS ATIVAS`);
-  document.getElementById('kv-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
-  document.getElementById('kv-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
-  document.getElementById('kv-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
+  if(document.getElementById('kv-ent')) document.getElementById('kv-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
+  if(document.getElementById('kv-sai')) document.getElementById('kv-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
+  if(document.getElementById('kv-res')) document.getElementById('kv-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
 
-  document.getElementById('f1').textContent = `${S.accounts.length}B`;
-  const f4 = document.getElementById('f4');
+  if(document.getElementById('kpi-b1')) document.getElementById('kpi-b1').textContent = `${S.accounts.length}B`;
+  const f4 = document.getElementById('kpi-b4');
   f4.textContent = res >= 0 ? 'POSITIVO' : 'NEGATIVO';
   f4.style.background = res >= 0 ? 'var(--gbg2)' : 'var(--rbg)';
   f4.style.color = res >= 0 ? 'var(--glt2)' : 'var(--rlt)';
   f4.style.border = `1px solid ${res >= 0 ? 'var(--grn)' : 'var(--red)'}`;
-  document.getElementById('kv-res').className = 'kpi-amt ' + (res>=0?'vgold':'vneg');
+  const _kvr=document.getElementById('kv-res'); if(_kvr) _kvr.className='kpi-value '+(res>=0?'gold':'neg');
 
   // Fluxo page summary
   if(document.getElementById('fl-ent')) document.getElementById('fl-ent').textContent = fmt(ent);
   if(document.getElementById('fl-sai')) document.getElementById('fl-sai').textContent = fmt(sai);
   if(document.getElementById('fl-res')) document.getElementById('fl-res').textContent = fmt(res);
+} catch(e) { console.warn("renderKPIs:", e.message); }
 }
 
 // ══ BANKS ══
@@ -2388,7 +2389,7 @@ function renderAlerts(txs) {
     if (crit>0) {el.textContent=crit;el.style.display='';}
     else el.style.display='none';
   });
-  if(document.getElementById('alt-count')) document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
+  if(document.getElementById('alt-count')) if(document.getElementById('alt-count')) document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
   document.getElementById('alt-log').innerHTML = alerts.map(a=>`
     <div class="alert-entry">
       <div class="asev" style="background:${a.bg};color:${a.fc}">${a.s}</div>
@@ -2403,8 +2404,8 @@ function renderCats(txs) {
   txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
   const total=entries.reduce((s,e)=>s+e[1],0);
-  if(document.getElementById('cat-total')) document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
-  if(document.getElementById('cat-count')) document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
+  if(document.getElementById('cat-total')) if(document.getElementById('cat-total')) document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
+  if(document.getElementById('cat-count')) if(document.getElementById('cat-count')) document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
 
   document.getElementById('cat-rows').innerHTML = entries.map(([c,v])=>{
     const pct=(v/total*100).toFixed(1),col=CAT_COLORS[c]||'#445566';
