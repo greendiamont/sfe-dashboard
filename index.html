@@ -2164,8 +2164,8 @@ function buildDemo() {
     };
   }).sort((a,b) => new Date(b.date)-new Date(a.date));
 
-  (function(){var _e=document.getElementById('tb-company');if(_e)_e.textContent=DEMO.co.length > 28 ? DEMO.co.slice(0,28)+'…' : DEMO.co;})()
-  (function(){var _e=document.getElementById('tb-company');if(_e)_e.textContent=DEMO.cnpj;})()
+  const _tbco = document.getElementById('tb-company'); if(_tbco) _tbco.textContent = DEMO.co.length > 28 ? DEMO.co.slice(0,28)+'...' : DEMO.co;
+  // cnpj display skipped (element handles it)
 }
 
 // ══ FORMAT ══
