@@ -2053,7 +2053,7 @@ let charts = {};
 // ══ BOOT ══
 document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
-    document.getElementById('sys-time').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const _t=document.getElementById('tb-time'); if(_t) _t.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   }, 1000);
 
   const saved = localStorage.getItem('sfe_v4');
@@ -2153,8 +2153,8 @@ function buildDemo() {
     };
   }).sort((a,b) => new Date(b.date)-new Date(a.date));
 
-  document.getElementById('sys-co').textContent   = DEMO.co.length > 28 ? DEMO.co.slice(0,28)+'…' : DEMO.co;
-  document.getElementById('sys-cnpj').textContent = DEMO.cnpj;
+  (function(){var _e=document.getElementById('tb-company');if(_e)_e.textContent=DEMO.co.length > 28 ? DEMO.co.slice(0,28)+'…' : DEMO.co;})()
+  (function(){var _e=document.getElementById('tb-company');if(_e)_e.textContent=DEMO.cnpj;})()
 }
 
 // ══ FORMAT ══
@@ -2186,7 +2186,7 @@ function renderAll() {
   const txs  = S.transactions.filter(t => new Date(t.date) >= from);
 
   document.getElementById('kpi-date').textContent  = now.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('p-updated').textContent = `${txs.length} REGISTROS · ${days} DIAS`;
+  document.getElementById('p-ts').textContent = `${txs.length} REGISTROS · ${days} DIAS`;
   document.getElementById('cf-tag').textContent    = `${days} DIAS`;
   document.getElementById('tx-tag').textContent    = `${Math.min(txs.length,10)} / ${txs.length} REG.`;
 
@@ -2212,10 +2212,10 @@ function renderKPIs(txs) {
   document.getElementById('kv-sai').textContent   = fmt(sai);
   document.getElementById('kv-res').textContent   = fmt(res);
 
-  document.getElementById('ks-saldo').textContent = `${S.accounts.length} CONTAS ATIVAS`;
-  document.getElementById('ks-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
-  document.getElementById('ks-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
-  document.getElementById('ks-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
+  document.getElementById('kv-saldo').textContent = `${S.accounts.length} CONTAS ATIVAS`;
+  document.getElementById('kv-ent').textContent   = `${txs.filter(t=>t.amount>0).length} CRÉDITOS NO PERÍODO`;
+  document.getElementById('kv-sai').textContent   = `${txs.filter(t=>t.amount<0).length} DÉBITOS NO PERÍODO`;
+  document.getElementById('kv-res').textContent   = res >= 0 ? 'SUPERÁVIT OPERACIONAL' : 'DÉFICIT OPERACIONAL';
 
   document.getElementById('f1').textContent = `${S.accounts.length}B`;
   const f4 = document.getElementById('f4');
@@ -3256,13 +3256,13 @@ async function gerarSaude() {
     const scoreColor = scoreGeral >= 75 ? '#22aa5a' : scoreGeral >= 50 ? '#d89020' : '#e03020';
     const scoreLabel = scoreGeral >= 75 ? 'BOA' : scoreGeral >= 50 ? 'ATENÇÃO' : 'CRÍTICO';
 
-    document.getElementById('saude-score-tag').textContent = `${scoreGeral}/100 — ${scoreLabel}`;
-    document.getElementById('saude-score-tag').style.color = scoreColor;
-    document.getElementById('saude-score-tag').style.borderColor = scoreColor + '44';
+    document.getElementById('sl-score-lbl').textContent = `${scoreGeral}/100 — ${scoreLabel}`;
+    document.getElementById('sl-score-lbl').style.color = scoreColor;
+    document.getElementById('sl-score-lbl').style.borderColor = scoreColor + '44';
 
     // Gauge chart
     if (saudeCharts['gauge']) saudeCharts['gauge'].destroy();
-    saudeCharts['gauge'] = new Chart(document.getElementById('score-gauge'), {
+    saudeCharts['gauge'] = new Chart(document.getElementById('score-arc'), {
       type: 'doughnut',
       data: {
         datasets:[{
@@ -3449,10 +3449,10 @@ function exportSaude() {
     return;
   }
 
-  const co       = document.getElementById('sys-co')?.textContent || 'Empresa';
-  const cnpj     = document.getElementById('sys-cnpj')?.textContent || '';
+  const co       = document.getElementById('tb-company')?.textContent || 'Empresa';
+  const cnpj     = document.getElementById('tb-company')?.textContent || '';
   const ts       = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const scoreTag = document.getElementById('saude-score-tag')?.textContent || '—';
+  const scoreTag = document.getElementById('sl-score-lbl')?.textContent || '—';
   const scoreNum = scoreTag.split('/')[0]?.trim() || '—';
   const scoreDesc= scoreTag.split('—')[1]?.trim() || '';
   const scoreC   = parseInt(scoreNum) >= 75 ? '#1a7a3a' : parseInt(scoreNum) >= 50 ? '#a06010' : '#b02010';
