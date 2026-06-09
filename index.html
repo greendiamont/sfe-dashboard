@@ -14,51 +14,52 @@
 ══════════════════════════════════════════════ */
 :root {
   /* Core */
-  --ink:    #050508;
-  --ink2:   #09090f;
-  --ink3:   #0e0e18;
-  --ink4:   #141420;
-  --ink5:   #1a1a28;
-  --ink6:   #222236;
+  /* ── Base backgrounds — navy-charcoal, not pure black ── */
+  --ink:    #0f1117;
+  --ink2:   #161920;
+  --ink3:   #1c1f28;
+  --ink4:   #222530;
+  --ink5:   #2a2e3a;
+  --ink6:   #323644;
 
-  /* Gold spectrum */
-  --g0:     #fffbe6;
+  /* ── Gold — warm amber, not harsh yellow ── */
+  --g0:     #fff8e6;
   --g1:     #fde68a;
   --g2:     #f59e0b;
   --g3:     #d97706;
   --g4:     #92400e;
-  --gold:   #e8a020;
-  --glow:   rgba(232,160,32,.18);
-  --glow2:  rgba(232,160,32,.08);
+  --gold:   #d4a017;
+  --glow:   rgba(212,160,23,.15);
+  --glow2:  rgba(212,160,23,.06);
 
-  /* Teal neon */
-  --t1:     #5eead4;
-  --t2:     #2dd4bf;
-  --t3:     #0d9488;
-  --tglow:  rgba(45,212,191,.15);
+  /* ── Teal — softer cyan ── */
+  --t1:     #4ecdc4;
+  --t2:     #26b5ac;
+  --t3:     #0e9488;
+  --tglow:  rgba(78,205,196,.12);
 
-  /* Status */
-  --pos:    #34d399;
-  --posdim: rgba(52,211,153,.12);
+  /* ── Status — desaturated, easier on eyes ── */
+  --pos:    #4ade80;
+  --posdim: rgba(74,222,128,.10);
   --neg:    #f87171;
-  --negdim: rgba(248,113,113,.12);
+  --negdim: rgba(248,113,113,.10);
   --warn:   #fbbf24;
-  --warndim:rgba(251,191,36,.12);
+  --warndim:rgba(251,191,36,.10);
   --info:   #60a5fa;
-  --infodim:rgba(96,165,250,.12);
+  --infodim:rgba(96,165,250,.10);
 
-  /* Text */
-  --tx0:    #ffffff;
-  --tx1:    #f0f0f8;
-  --tx2:    #b8b8d0;
-  --tx3:    #7070a0;
-  --tx4:    #404060;
-  --tx5:    #2a2a45;
+  /* ── Text — off-white hierarchy ── */
+  --tx0:    #f1f2f6;
+  --tx1:    #dde1ec;
+  --tx2:    #9aa0b4;
+  --tx3:    #606680;
+  --tx4:    #3e4358;
+  --tx5:    #282d3e;
 
-  /* Borders */
-  --b1:     rgba(255,255,255,.08);
-  --b2:     rgba(255,255,255,.14);
-  --b3:     rgba(232,160,32,.25);
+  /* ── Borders — subtle, not harsh ── */
+  --b1:     rgba(255,255,255,.07);
+  --b2:     rgba(255,255,255,.12);
+  --b3:     rgba(212,160,23,.22);
 
   /* Fonts */
   --f-display: 'Syne', sans-serif;
@@ -88,6 +89,35 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--tx5); border-radius: 2px; }
+
+/* ── Legacy variable aliases for JS compatibility ── */
+:root {
+  --rlt:   var(--neg);
+  --rbg:   var(--negdim);
+  --glt2:  var(--pos);
+  --gbg2:  var(--posdim);
+  --glt:   var(--gold);
+  --alt:   var(--warn);
+  --abg:   var(--warndim);
+  --clt:   var(--t1);
+  --mono:  var(--f-mono);
+  --font:  var(--f-body);
+  --navy2: var(--ink4);
+  --grn:   var(--pos);
+  --red:   var(--neg);
+  --bor:   var(--b1);
+  --s0:    var(--tx0);
+  --s1:    var(--tx1);
+  --s2:    var(--tx2);
+  --s3:    var(--tx3);
+  --s4:    var(--tx4);
+  --s5:    var(--tx5);
+  --s6:    var(--tx3);
+  --s7:    var(--tx4);
+  --s8:    var(--ink5);
+  --s9:    var(--ink4);
+  --CAT_COLORS_JS: 1; /* flag for JS */
+}
 
 /* ══ TOPBAR ══ */
 .topbar {
@@ -1102,13 +1132,13 @@ body {
 .modal.open { display: flex; }
 
 .modal-box {
-  background: var(--ink3);
-  border: 1px solid var(--b2);
+  background: #1e2230;
+  border: 1px solid rgba(255,255,255,.12);
   border-top: 2px solid var(--gold);
   border-radius: var(--radius);
   width: 640px;
   max-width: 100%;
-  box-shadow: 0 32px 80px rgba(0,0,0,.8), 0 0 0 1px var(--b1);
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
   animation: modalIn .2s ease;
 }
 
@@ -1159,8 +1189,8 @@ body {
 }
 
 .form-input {
-  background: var(--ink4);
-  border: 1px solid var(--b1);
+  background: #252938;
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: var(--radius-sm);
   color: var(--tx0);
   font-family: var(--f-mono);
@@ -2464,7 +2494,7 @@ function buildQuickQueries() {
     'O custo logístico está adequado para o setor?',
   ];
   document.getElementById('quick-queries').innerHTML = qs.map(q=>
-    `<button class="btn-sys" onclick="document.getElementById('ai-input').value='${q}';runQuery()" style="font-size:10px;padding:5px 10px;text-transform:none;letter-spacing:0;font-family:var(--font)">${q}</button>`
+    `<button class="quick-btn" onclick="document.getElementById('ai-input').value='${q}';runQuery()" style="font-size:10px;padding:5px 10px;text-transform:none;letter-spacing:0;font-family:var(--font)">${q}</button>`
   ).join('');
 }
 
@@ -2506,7 +2536,7 @@ ${txs.slice(0,6).map(t=>`  ${fmtD(t.date)} | ${t.description} | ${fmt(t.amount)}
   // Tenta backend Railway primeiro (resolve CORS e protege a key)
   const beUrl = S.cfg.be || 'https://sfe-backend-production.up.railway.app';
   try {
-    const r = await fetch(`${beUrl}/api/claude`, {
+    const r = await await fetch(`${beUrl}/api/claude`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system, messages, max_tokens:1200})
@@ -2539,7 +2569,7 @@ ${txs.slice(0,6).map(t=>`  ${fmtD(t.date)} | ${t.description} | ${fmt(t.amount)}
 
 function showAI(text) {
   document.getElementById('ai-txt').textContent = text;
-  document.getElementById('ai-out').className = 'con-out show';
+  document.getElementById('ai-out').className = 'console-output show';
 }
 
 // ══ EXPORT ══
@@ -3634,6 +3664,106 @@ function exportSaude() {
 // navTo override removed - using original function
 
 
+
+// ── Edit functions ──
+function editarCP(id) {
+  const cp = loadCP();
+  const item = cp.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('cp-edit-id').value = id;
+  document.getElementById('cp-forn').value  = item.fornecedor || '';
+  document.getElementById('cp-desc').value  = item.descricao  || '';
+  document.getElementById('cp-val').value   = item.valor      || '';
+  document.getElementById('cp-venc').value  = item.vencimento || '';
+  document.getElementById('cp-emis').value  = item.emissao    || '';
+  document.getElementById('cp-cat').value   = item.categoria  || 'Fornecedores';
+  document.getElementById('cp-banco').value = item.banco      || 'SC';
+  document.getElementById('cp-doc').value   = item.doc        || '';
+  document.getElementById('cp-obs').value   = item.obs        || '';
+  document.getElementById('modal-cp').classList.add('open');
+}
+
+function editarCR(id) {
+  const cr = loadCR();
+  const item = cr.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('cr-edit-id').value = id;
+  document.getElementById('cr-cli').value  = item.cliente    || '';
+  document.getElementById('cr-desc').value = item.descricao  || '';
+  document.getElementById('cr-val').value  = item.valor      || '';
+  document.getElementById('cr-venc').value = item.vencimento || '';
+  document.getElementById('cr-emis').value = item.emissao    || '';
+  document.getElementById('cr-tipo').value = item.tipo       || 'NF-e / Duplicata';
+  document.getElementById('cr-doc').value  = item.doc        || '';
+  document.getElementById('cr-cnpj').value = item.cnpj       || '';
+  document.getElementById('cr-obs').value  = item.obs        || '';
+  document.getElementById('modal-cr').classList.add('open');
+}
+
+function editarCliente(id) {
+  const cli = loadCLI();
+  const item = cli.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('cli-edit-id').value    = id;
+  document.getElementById('cli-razao').value      = item.razao    || '';
+  document.getElementById('cli-cnpj').value       = item.cnpj     || '';
+  document.getElementById('cli-fantasia').value   = item.fantasia  || '';
+  document.getElementById('cli-ie').value         = item.ie        || '';
+  document.getElementById('cli-status').value     = item.status    || 'ativo';
+  document.getElementById('cli-contato').value    = item.contato   || '';
+  document.getElementById('cli-tel').value        = item.tel       || '';
+  document.getElementById('cli-email').value      = item.email     || '';
+  document.getElementById('cli-cidade').value     = item.cidade    || '';
+  document.getElementById('cli-limite').value     = item.limite    || '';
+  document.getElementById('cli-prazo').value      = item.prazo     || '';
+  document.getElementById('cli-obs').value        = item.obs       || '';
+  document.getElementById('modal-cli').classList.add('open');
+}
+
+function editarFornecedor(id) {
+  const frn = loadFRN();
+  const item = frn.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('frn-edit-id').value    = id;
+  document.getElementById('frn-razao').value      = item.razao    || '';
+  document.getElementById('frn-cnpj').value       = item.cnpj     || '';
+  document.getElementById('frn-fantasia').value   = item.fantasia  || '';
+  document.getElementById('frn-cat').value        = item.categoria || 'Fornecedores';
+  document.getElementById('frn-status').value     = item.status    || 'ativo';
+  document.getElementById('frn-contato').value    = item.contato   || '';
+  document.getElementById('frn-tel').value        = item.tel       || '';
+  document.getElementById('frn-email').value      = item.email     || '';
+  document.getElementById('frn-cidade').value     = item.cidade    || '';
+  document.getElementById('frn-banco').value      = item.banco     || '';
+  document.getElementById('frn-conta').value      = item.conta     || '';
+  document.getElementById('frn-pix').value        = item.pix       || '';
+  document.getElementById('frn-prazo').value      = item.prazo     || '';
+  document.getElementById('frn-obs').value        = item.obs       || '';
+  document.getElementById('modal-frn').classList.add('open');
+}
+
+// ── Close modals ──
+function closeFormCP()         { document.getElementById('modal-cp').classList.remove('open'); }
+function closeFormCR()         { document.getElementById('modal-cr').classList.remove('open'); }
+function closeFormCliente()    { document.getElementById('modal-cli').classList.remove('open'); }
+function closeFormFornecedor() { document.getElementById('modal-frn').classList.remove('open'); }
+
+function deletarCP(id) {
+  if (!confirm('Excluir este título?')) return;
+  const cp = loadCP().filter(i => i.id !== id); saveCP(cp); renderCP();
+}
+function deletarCR(id) {
+  if (!confirm('Excluir este título?')) return;
+  const cr = loadCR().filter(i => i.id !== id); saveCR(cr); renderCR();
+}
+function deletarCLI(id) {
+  if (!confirm('Excluir este cliente?')) return;
+  const cli = loadCLI().filter(i => i.id !== id); saveCLI(cli); renderClientes();
+}
+function deletarFRN(id) {
+  if (!confirm('Excluir este fornecedor?')) return;
+  const frn = loadFRN().filter(i => i.id !== id); saveFRN(frn); renderFornecedores();
+}
 
 // ══ MOBILE ══
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
