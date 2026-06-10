@@ -4033,6 +4033,137 @@ function renderPainel(txs) {
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
 function loadDemo(){buildDemo();renderAll();}
+// ══ EXTRATO BANCÁRIO ══
+let _extBankCode = null;
+let _extTab = 'all';
+let _extTxs = [];
+
+function abrirExtrato(code, name) {
+  _extBankCode = code;
+  _extTab = 'all';
+  const acc = S.accounts.find(a => a.code === code) || {};
+  const color = acc.color || '#d4a017';
+
+  const badge = document.getElementById('ext-bank-badge');
+  if(badge){badge.textContent=code;badge.style.background=color+'22';badge.style.color=color;badge.style.border='1px solid '+color+'44';}
+  const nameEl=document.getElementById('ext-bank-name'); if(nameEl) nameEl.textContent=name;
+
+  const days = parseInt(document.getElementById('period-sel')?.value||30);
+  const from = new Date(Date.now()-days*86400000);
+  _extTxs = S.transactions.filter(t=>
+    (t._bank===code||t._bankFull===name||t._bankCode===code||t._bank===code)&&new Date(t.date)>=from
+  );
+
+  const ent  = _extTxs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai  = Math.abs(_extTxs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const res  = ent-sai;
+  const saldo= acc.balance||0;
+
+  const se=document.getElementById('ext-saldo'); if(se){se.textContent=fmt(saldo);se.style.color=saldo>=0?'var(--t1)':'var(--neg)';}
+  const ee=document.getElementById('ext-ent'); if(ee) ee.textContent=fmt(ent);
+  const en=document.getElementById('ext-ent-n'); if(en) en.textContent=_extTxs.filter(t=>t.amount>0).length+' créditos';
+  const se2=document.getElementById('ext-sai'); if(se2) se2.textContent=fmt(sai);
+  const sn=document.getElementById('ext-sai-n'); if(sn) sn.textContent=_extTxs.filter(t=>t.amount<0).length+' débitos';
+  const re=document.getElementById('ext-res'); if(re){re.textContent=fmt(res);re.style.color=res>=0?'var(--pos)':'var(--neg)';}
+  const rl=document.getElementById('ext-res-lbl'); if(rl) rl.textContent=res>=0?'Superávit':'Déficit';
+
+  const cardTxs=_extTxs.filter(t=>(t._category||'').includes('Cartão')||(t.description||'').toLowerCase().includes('cart'));
+  const tabCard=document.getElementById('ext-tab-card'); if(tabCard) tabCard.textContent=cardTxs.length>0?'CARTÃO ('+cardTxs.length+')':'CARTÃO';
+
+  const sub=document.getElementById('ext-bank-sub'); if(sub) sub.textContent=days+'dias · '+_extTxs.length+' lançamentos';
+
+  extRenderCats();
+  extSetTab('all');
+  const modal=document.getElementById('modal-extrato'); if(modal) modal.classList.add('open');
+}
+
+function extRenderCats() {
+  const catMap={};
+  _extTxs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';catMap[c]=(catMap[c]||0)+Math.abs(t.amount);});
+  const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const el=document.getElementById('ext-cats'); if(!el) return;
+  if(!cats.length){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=cats.map(([c,v])=>{
+    const col=(typeof CAT_COLORS!=='undefined'&&CAT_COLORS[c])||'#6688aa';
+    return `<div style="display:flex;align-items:center;gap:5px;background:${col}18;border:1px solid ${col}33;border-radius:4px;padding:3px 8px;cursor:pointer" onclick="extFilterCat(this.dataset.cat)" data-cat="${c}"><div style="width:6px;height:6px;border-radius:50%;background:${col}"></div><span style="font-size:10px;color:var(--tx2)">${c}</span><span style="font-family:var(--f-mono);font-size:10px;font-weight:600;color:${col}">${fmtK(v)}</span></div>`;
+  }).join('');
+}
+
+function extSetTab(tab) {
+  _extTab=tab;
+  ['all','credit','debit','card'].forEach(t=>{
+    const btn=document.getElementById('ext-tab-'+t); if(!btn) return;
+    const active=t===tab;
+    btn.style.borderBottomColor=active?'var(--gold)':'transparent';
+    btn.style.color=active?'var(--gold)':'var(--tx4)';
+    btn.style.fontWeight=active?'700':'600';
+  });
+  extFilter();
+}
+
+function extFilterCat(catOrEl){const cat=typeof catOrEl==='string'?catOrEl:(catOrEl.dataset?.cat||catOrEl);const s=document.getElementById('ext-search');if(s)s.value=cat;extSetTab('all');}
+
+function extFilter() {
+  const q=(document.getElementById('ext-search')?.value||'').toLowerCase();
+  let filtered=_extTxs;
+  if(_extTab==='credit') filtered=filtered.filter(t=>t.amount>0);
+  else if(_extTab==='debit') filtered=filtered.filter(t=>t.amount<0);
+  else if(_extTab==='card') filtered=filtered.filter(t=>(t._category||'').includes('Cart')||(t.description||'').toLowerCase().includes('cart'));
+  if(q) filtered=filtered.filter(t=>(t.description||t.desc||'').toLowerCase().includes(q)||(t._category||'').toLowerCase().includes(q));
+  extRenderTx(filtered);
+}
+
+function extRenderTx(txs) {
+  const el=document.getElementById('ext-tx-list'); if(!el) return;
+  const cnt=document.getElementById('ext-footer-count');
+  if(cnt) cnt.textContent=txs.length+' lançamento'+(txs.length!==1?'s':'');
+  if(!txs.length){
+    el.innerHTML='<div style="padding:32px;text-align:center;color:var(--tx4);font-size:13px">Nenhum lançamento encontrado</div>';
+    return;
+  }
+  const rows=[];
+  txs.forEach(function(t){
+    const pos=t.amount>0;
+    const cat=t._category||'Outros';
+    const col=(window.CAT_COLORS&&CAT_COLORS[cat])||'#6688aa';
+    const isCard=(cat||'').indexOf('Cart')>=0||(t.description||'').toLowerCase().indexOf('cart')>=0;
+    const tipo=isCard?'Cartao':pos?'Credito':'Debito';
+    const tipoLabel=isCard?'💳 Cartão':pos?'↑ Crédito':'↓ Débito';
+    const tipoC=isCard?'var(--info)':pos?'var(--pos)':'var(--neg)';
+    const desc=(t.description||t.desc||'—').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const amtColor=pos?'var(--pos)':'var(--neg)';
+    const amtPrefix=pos?'+':'';
+    rows.push(
+      '<div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:10px 16px;border-bottom:1px solid var(--b1);align-items:center">'
+      +'<span style="font-family:var(--f-mono);font-size:11px;color:var(--tx4)">'+fmtD(t.date)+'</span>'
+      +'<span style="font-size:13px;font-weight:500;color:var(--tx1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:12px" title="'+desc+'">'+desc+'</span>'
+      +'<span style="font-size:11px;font-weight:600;color:'+tipoC+'">'+tipoLabel+'</span>'
+      +'<span style="display:inline-flex;align-items:center;gap:5px">'
+        +'<span style="width:6px;height:6px;border-radius:50%;background:'+col+';flex-shrink:0"></span>'
+        +'<span style="font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+cat+'</span>'
+      +'</span>'
+      +'<span style="font-family:var(--f-mono);font-size:13px;font-weight:700;color:'+amtColor+';text-align:right">'+amtPrefix+fmt(t.amount)+'</span>'
+      +'</div>'
+    );
+  });
+  el.innerHTML=rows.join('');
+}
+
+function fecharExtrato(){const m=document.getElementById('modal-extrato');if(m)m.classList.remove('open');_extBankCode=null;}
+
+function extExportCSV(){
+  if(!_extTxs.length) return;
+  const rows=[['Data','Histórico','Categoria','Tipo','Valor']];
+  _extTxs.forEach(t=>rows.push([fmtD(t.date),(t.description||t.desc||'').replace(/,/g,' '),t._category||'Outros',t.amount>0?'Crédito':'Débito',fmt(t.amount)]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='extrato_'+(_extBankCode||'banco')+'_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();URL.revokeObjectURL(url);
+}
+
 </script>
 
 <!-- ══ LOGIN SCREEN ══ -->
