@@ -2045,7 +2045,7 @@ body {
     <div class="modal-head"><span class="modal-title">Configurações — SFE v1.0</span><button class="modal-close" onclick="closeModal()">✕</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label class="form-label">URL Backend Railway</label><input class="form-input" id="f-be" type="text" placeholder="https://sfe-backend-production.up.railway.app"></div>
+        <div class="form-group"><label class="form-label">URL Backend Railway</label><input class="form-input" id="f-be" type="text" placeholder="https://sfe-backend-production.up.railway.app" value="https://sfe-backend-production.up.railway.app"></div>
         <div class="form-group"><label class="form-label">Claude API Key</label><input class="form-input" id="f-ckey" type="password" placeholder="sk-ant-api03-..."></div>
         <div class="form-group"><label class="form-label">Razão Social</label><input class="form-input" id="f-co" type="text" placeholder="Nome da Empresa Ltda"></div>
         <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" id="f-cnpj" type="text" placeholder="00.000.000/0001-00"></div>
@@ -2211,6 +2211,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const saved = localStorage.getItem('sfe_v4');
   if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
+  // Always ensure backend URL is set
+  if (!S.cfg.be) S.cfg.be = 'https://sfe-backend-production.up.railway.app';
 
   // Clear stale demo data on every fresh load
   localStorage.removeItem('sfe_demo_v2');
@@ -2230,6 +2232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function applyConfig() {
+  S.cfg.be = S.cfg.be || 'https://sfe-backend-production.up.railway.app';
   if (S.cfg.be)    document.getElementById('f-be').value    = S.cfg.be;
   if (S.cfg.ckey)  document.getElementById('f-ckey').value  = S.cfg.ckey;
   if (S.cfg.co)    document.getElementById('f-co').value    = S.cfg.co;
@@ -2634,21 +2637,19 @@ async function runQuery() {
   const map  = {};
   txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
 
-  const ctx = `EMPRESA: ${DEMO.co} | CNPJ: ${DEMO.cnpj} | SETOR: Distribuidora de alimentos e bebidas, SC
-PERÍODO ANALISADO: ${days} dias | FONTE: ${S.cfg.be?'PLUGGY/REAL':'DEMO'}
-SALDO CONSOLIDADO: ${fmt(saldo)} (${S.accounts.length} contas)
-TOTAL CRÉDITOS: ${fmt(ent)} (${txs.filter(t=>t.amount>0).length} lançamentos)
-TOTAL DÉBITOS: ${fmt(sai)} (${txs.filter(t=>t.amount<0).length} lançamentos)
-RESULTADO LÍQUIDO: ${fmt(ent-sai)} | MARGEM: ${ent>0?((ent-sai)/ent*100).toFixed(1):'0'}%
-
-SALDO POR BANCO:
-${S.accounts.map(a=>`  ${a.name} (${a.code}): ${fmt(a.balance)}`).join('\n')}
-
-DESPESAS POR CATEGORIA:
-${Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`  ${c}: ${fmt(v)} (${(v/sai*100).toFixed(1)}%)`).join('\n')}
-
-ÚLTIMOS LANÇAMENTOS:
-${txs.slice(0,6).map(t=>`  ${fmtD(t.date)} | ${t.description} | ${fmt(t.amount)}`).join('\n')}`;
+  const beLabel = S.cfg.be ? 'PLUGGY/REAL' : 'DEMO';
+  const bankLines = S.accounts.map(a => '  ' + a.name + ' (' + a.code + '): ' + fmt(a.balance)).join('\n');
+  const catLines  = Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([c,v]) => '  ' + c + ': ' + fmt(v) + ' (' + (v/sai*100).toFixed(1) + '%)').join('\n');
+  const txLines   = txs.slice(0,6).map(t => '  ' + fmtD(t.date) + ' | ' + (t.description||t.desc||'-') + ' | ' + fmt(t.amount)).join('\n');
+  const ctx = 'EMPRESA: ' + DEMO.co + ' | CNPJ: ' + DEMO.cnpj + ' | SETOR: Distribuidora de alimentos e bebidas, SC'
+    + '\nPERÍODO ANALISADO: ' + days + ' dias | FONTE: ' + beLabel
+    + '\nSALDO CONSOLIDADO: ' + fmt(saldo) + ' (' + S.accounts.length + ' contas)'
+    + '\nTOTAL CRÉDITOS: ' + fmt(ent) + ' (' + txs.filter(t=>t.amount>0).length + ' lançamentos)'
+    + '\nTOTAL DÉBITOS: ' + fmt(sai) + ' (' + txs.filter(t=>t.amount<0).length + ' lançamentos)'
+    + '\nRESULTADO LÍQUIDO: ' + fmt(ent-sai) + ' | MARGEM: ' + (ent>0?((ent-sai)/ent*100).toFixed(1):'0') + '%'
+    + '\n\nSALDO POR BANCO:\n' + bankLines
+    + '\n\nDESPESAS POR CATEGORIA:\n' + catLines
+    + '\n\nÚLTIMOS LANÇAMENTOS:\n' + txLines;
 
   const system = 'Você é um analista financeiro sênior especializado em distribuidoras e PMEs brasileiras. Responda em português, de forma objetiva e direta. Use R$ para valores. Seja específico com números e dê recomendações práticas e acionáveis.';
   const messages = [{role:'user',content:`DADOS FINANCEIROS DA EMPRESA:\n${ctx}\n\nCONSULTA DO GESTOR: ${q}`}];
@@ -2656,7 +2657,7 @@ ${txs.slice(0,6).map(t=>`  ${fmtD(t.date)} | ${t.description} | ${fmt(t.amount)}
   // Tenta backend Railway primeiro (resolve CORS e protege a key)
   const beUrl = S.cfg.be || 'https://sfe-backend-production.up.railway.app';
   try {
-    const r = await await fetch(`${beUrl}/api/claude`, {
+    const r = await fetch(`${beUrl}/api/claude`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({system, messages, max_tokens:1200})
