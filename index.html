@@ -90,6 +90,83 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--tx5); border-radius: 2px; }
 
+/* ══ RESPONSIVE BREAKPOINTS ══ */
+
+/* Tablet */
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .bank-grid { grid-template-columns: 1fr 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+  .kpi-value { font-size: 20px; }
+}
+
+/* Mobile large */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 240px; }
+  .main { margin-left: 0; }
+  .sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    top: 0; height: 100vh;
+    padding-top: calc(var(--topbar-h) + 8px);
+    z-index: 200;
+  }
+  .sidebar.open { transform: none; }
+  .sidebar-overlay.open { display: block; }
+  .hamburger { display: flex; }
+  .tb-logo { display: none; }
+  .page-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .page-title { font-size: 22px; }
+  .content-pad { padding: 14px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .kpi-value { font-size: 18px; }
+  .kpi-card { padding: 14px; }
+  .two-col { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr; }
+  .bank-grid { grid-template-columns: 1fr; }
+  .tx-header { grid-template-columns: 60px 1fr 100px; }
+  .tx-row    { grid-template-columns: 60px 1fr 100px; }
+  .tx-header span:nth-child(3),
+  .tx-header span:nth-child(4),
+  .tx-row > *:nth-child(3),
+  .tx-row > *:nth-child(4) { display: none; }
+  .saude-score-wrap { flex-direction: column; align-items: center; text-align: center; }
+  .saude-indicators { grid-template-columns: 1fr 1fr; }
+  .modal-box { width: 95vw !important; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: span 1; }
+  /* Painel B layout */
+  #page-painel .content-pad > div:first-child {
+    grid-template-columns: 1fr !important;
+  }
+  #page-painel .content-pad > div:nth-child(2) {
+    grid-template-columns: 1fr !important;
+  }
+  #page-painel .content-pad > div:nth-child(3) {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile small */
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-value { font-size: 16px; letter-spacing: 0; }
+  .kpi-eyebrow { font-size: 8px; }
+  .kpi-label { font-size: 11px; }
+  .page-title { font-size: 18px; }
+  .panel-title { font-size: 12px; }
+  .tb-time { font-size: 11px; padding: 4px 8px; }
+  .btn { font-size: 10px; padding: 7px 12px; }
+  .section-name { font-size: 10px; }
+  .bank-card-bal { font-size: 18px; }
+}
+
 /* ── Legacy variable aliases for JS compatibility ── */
 :root {
   --rlt:   var(--neg);
@@ -565,7 +642,7 @@ body {
   background: var(--ink3);
   border: 1px solid var(--b1);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 18px 20px;
   position: relative;
   overflow: hidden;
   transition: border-color .2s, transform .2s;
@@ -613,11 +690,14 @@ body {
 
 .kpi-value {
   font-family: var(--f-display);
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: -1px;
-  line-height: 1;
-  margin-bottom: 8px;
+  letter-spacing: -.5px;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kpi-label {
@@ -828,6 +908,9 @@ body {
   position: relative;
   overflow: hidden;
   transition: all .2s;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
 }
 
 .bank-card:hover { border-color: var(--b2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
@@ -851,7 +934,7 @@ body {
   border-radius: 4px;
 }
 
-.bank-card-bal { font-family: var(--f-display); font-size: 24px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 4px; }
+.bank-card-bal { font-family: var(--f-display); font-size: 22px; font-weight: 700; letter-spacing: -.5px; margin-bottom: 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .bank-card-lbl { font-size: 11px; color: var(--tx4); font-weight: 300; margin-bottom: 10px; }
 .bank-card-num {
   font-family: var(--f-mono);
@@ -1025,10 +1108,10 @@ body {
 
 .saude-score-num {
   font-family: var(--f-display);
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -2px;
+  letter-spacing: -1.5px;
 }
 
 .saude-score-100 { font-family: var(--f-mono); font-size: 14px; color: var(--tx4); margin-top: 2px; }
@@ -1265,7 +1348,7 @@ body {
 .text-display { font-family: var(--f-display); }
 
 /* ══ RESPONSIVE ══ */
-.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 10px; background: none; border: none; z-index: 1001; }
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px 10px; background: none; border: none; z-index: 1001; flex-shrink: 0; }
 .hamburger span { display: block; width: 22px; height: 2px; background: var(--tx1); transition: all .2s; border-radius: 1px; }
 .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 98; backdrop-filter: blur(4px); }
 
@@ -1436,7 +1519,7 @@ body {
   <div class="content-pad">
 
     <!-- ── LINHA 1: Score + 4 KPIs ── -->
-    <div style="display:grid;grid-template-columns:160px 1fr;gap:16px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:140px 1fr;gap:14px;margin-bottom:16px;align-items:start">
 
       <!-- Score de Saúde -->
       <div class="panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;border-color:rgba(212,160,23,.25);background:rgba(212,160,23,.04)">
@@ -1476,7 +1559,7 @@ body {
     </div>
 
     <!-- ── LINHA 2: Alertas + Vencimentos + Ações do Dia ── -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
 
       <!-- Alertas -->
       <div class="panel">
@@ -1507,7 +1590,7 @@ body {
     </div>
 
     <!-- ── LINHA 3: Diagnóstico IA + Fluxo ── -->
-    <div style="display:grid;grid-template-columns:1fr 1.8fr;gap:16px;margin-bottom:20px">
+    <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:14px;margin-bottom:16px">
 
       <!-- Diagnóstico IA -->
       <div class="panel" style="border-color:rgba(212,160,23,.18);background:rgba(212,160,23,.03)">
@@ -1600,15 +1683,15 @@ body {
     <div class="three-col" style="margin-bottom:24px">
       <div class="panel"><div class="panel-body" style="text-align:center">
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Total Entradas</div>
-        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--pos)" id="fl-ent">—</div>
+        <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--pos)" id="fl-ent">—</div>
       </div></div>
       <div class="panel"><div class="panel-body" style="text-align:center">
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Total Saídas</div>
-        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--neg)" id="fl-sai">—</div>
+        <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--neg)" id="fl-sai">—</div>
       </div></div>
       <div class="panel"><div class="panel-body" style="text-align:center">
         <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Resultado</div>
-        <div style="font-family:var(--f-display);font-size:28px;font-weight:700;color:var(--gold)" id="fl-res">—</div>
+        <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--gold)" id="fl-res">—</div>
       </div></div>
     </div>
     <div class="section-label"><span class="section-id">FLX-001</span><span class="section-name">Evolução Diária</span><div class="section-line"></div></div>
@@ -2231,6 +2314,13 @@ function buildDemo() {
 const fmt  = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
 const fmtD = s => new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
 const fmtK = v => v >= 1000000 ? `R$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `R$${(v/1000).toFixed(0)}k` : `R$${v}`;
+const fmtC = v => { // Compact with sign for KPI cards
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1000000) return sign + 'R$ ' + (abs/1000000).toFixed(1) + 'M';
+  if (abs >= 1000)    return sign + 'R$ ' + (abs/1000).toFixed(0) + 'k';
+  return fmt(v);
+};
 
 // ══ NAVIGATION ══
 function navTo(page, navEl, sbEl) {
@@ -2282,7 +2372,7 @@ function renderKPIs(txs) { try {
   const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
   const res   = ent - sai;
 
-  safeSet('kv-saldo', fmt(saldo));
+  safeSet('kv-saldo', fmtC(saldo));
   if(document.getElementById('kv-ent')) document.getElementById('kv-ent').textContent   = fmt(ent);
   if(document.getElementById('kv-sai')) document.getElementById('kv-sai').textContent   = fmt(sai);
   if(document.getElementById('kv-res')) document.getElementById('kv-res').textContent   = fmt(res);
@@ -3873,7 +3963,7 @@ function renderPainel(txs) {
   if(slbl){slbl.textContent=scoreLbl;slbl.style.color=scoreC;}
 
   // KPIs
-  if(document.getElementById('kv-saldo')) document.getElementById('kv-saldo').textContent=fmt(saldo);
+  if(document.getElementById('kv-saldo')) document.getElementById('kv-saldo').textContent=fmtC(saldo);
   if(document.getElementById('km-saldo')) document.getElementById('km-saldo').textContent=S.accounts.length+' contas ativas';
   if(document.getElementById('kpi-b1'))  document.getElementById('kpi-b1').textContent=S.accounts.length+'B';
 
@@ -3887,7 +3977,7 @@ function renderPainel(txs) {
     b4.style.color=res>=0?'var(--pos)':'var(--neg)';
   }
 
-  if(document.getElementById('cp-hoje-val')) document.getElementById('cp-hoje-val').textContent=fmt(cpVencV);
+  if(document.getElementById('cp-hoje-val')) document.getElementById('cp-hoje-val').textContent=fmtC(cpVencV);
   if(document.getElementById('cp-hoje-sub')) document.getElementById('cp-hoje-sub').textContent=cpVenc.length+' título'+(cpVenc.length!==1?'s':'');
   if(document.getElementById('cp-hoje-flag')){
     const f=document.getElementById('cp-hoje-flag');
@@ -3895,7 +3985,7 @@ function renderPainel(txs) {
     f.style.background=cpVenc.length>0?'var(--negdim)':'var(--posdim)';
     f.style.color=cpVenc.length>0?'var(--neg)':'var(--pos)';
   }
-  if(document.getElementById('cr-hoje-val')) document.getElementById('cr-hoje-val').textContent=fmt(crVencV);
+  if(document.getElementById('cr-hoje-val')) document.getElementById('cr-hoje-val').textContent=fmtC(crVencV);
   if(document.getElementById('cr-hoje-sub')) document.getElementById('cr-hoje-sub').textContent=crVenc.length+' cliente'+(crVenc.length!==1?'s':'');
 
   // ── ALERTAS ──
