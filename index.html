@@ -2536,9 +2536,10 @@ function renderAlerts(txs) {
   if (!alerts.length)
     alerts.push({s:'I',bg:'var(--gbg2)',fc:'var(--glt2)',title:'SEM OCORRÊNCIAS CRÍTICAS',desc:'Todos os indicadores dentro dos parâmetros configurados para o período.'});
 
-  const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
+const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
   ['sb-badge','nav-badge'].forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
     if (crit>0) {el.textContent=crit;el.style.display='';}
     else el.style.display='none';
   });
