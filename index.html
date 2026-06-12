@@ -4370,7 +4370,10 @@ async function doSync() {
       renderAll();
     }
   } catch(e){console.warn('Sync:',e.message);}
-  finally{if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}}
+  finally{
+    if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}
+    renderAll();
+  }
 }
 
 function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
