@@ -3462,6 +3462,56 @@ async function gerarSaude() {
     document.getElementById('saude-ts').textContent = `Gerado: ${ts}`;
     document.getElementById('saude-footer-ts').textContent = ts;
 
+   // Chamar IA para análise + plano de ação
+    const beUrl = (S.cfg && S.cfg.be) || 'https://sfe-backend-production.up.railway.app';
+    const aiSystem = 'Você é um analista financeiro sênior especializado em PMEs brasileiras. Responda em português, de forma objetiva. Use R$ para valores.';
+    const aiPrompt = 'DADOS DA EMPRESA:\n'
+      + 'Saldo consolidado: ' + fmt(saldo) + '\n'
+      + 'Entradas (30d): ' + fmt(ent) + '\n'
+      + 'Saídas (30d): ' + fmt(sai) + '\n'
+      + 'Resultado: ' + fmt(res) + ' (margem ' + margem.toFixed(1) + '%)\n'
+      + 'Score de saúde: ' + scoreGeral + '/100 (' + scoreLabel + ')\n'
+      + 'CP em aberto: ' + fmt(cpAberto) + ' | CP vencido: ' + fmt(cpVencido) + '\n'
+      + 'CR em aberto: ' + fmt(crAberto) + ' | CR inadimplente: ' + fmt(crVencido) + '\n'
+      + 'Principais despesas: ' + catEntries.slice(0,5).map(e=>e[0]+': '+fmt(e[1])).join(', ') + '\n\n'
+      + 'Gere: 1) Diagnóstico geral (2-3 frases). 2) Pontos críticos. 3) Pontos positivos. '
+      + '4) Plano de ação com 3-5 itens, cada um marcado como [URGENTE], [ESTA SEMANA] ou [MONITORAR].';
+
+    try {
+      const r = await fetch(beUrl + '/api/claude', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({system: aiSystem, messages:[{role:'user',content:aiPrompt}], max_tokens:1200})
+      });
+      const d = await r.json();
+      const aiText = (d.content && d.content[0] && d.content[0].text) || 'Sem resposta da IA.';
+      window._lastSaudeDiag = aiText;
+
+      const aiEl = document.getElementById('saude-ai-content');
+      if (aiEl) aiEl.innerHTML = aiText.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+
+      // Plano de ação — extrai linhas marcadas
+      const actEl = document.getElementById('saude-actions');
+      if (actEl) {
+        const lines = aiText.split('\n').filter(l => /\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i.test(l));
+        if (lines.length) {
+          actEl.innerHTML = lines.map(l => {
+            const m = l.match(/\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i);
+            const pri = m ? m[1].toUpperCase() : 'MONITORAR';
+            const priC = pri==='URGENTE'?'var(--neg)':pri==='ESTA SEMANA'?'var(--warn)':'var(--info)';
+            const priBg= pri==='URGENTE'?'var(--negdim)':pri==='ESTA SEMANA'?'var(--warndim)':'var(--infodim)';
+            const txt = l.replace(/\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i,'').replace(/^[-*\s]+/,'').trim();
+            return '<div class="saude-action-row"><span style="font-family:var(--f-mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:'+priBg+';color:'+priC+'">'+pri+'</span><span style="font-size:13px;color:var(--tx2)">'+txt+'</span><span></span></div>';
+          }).join('');
+        } else {
+          actEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--tx4)">Nenhuma ação prioritária identificada</div>';
+        }
+      }
+    } catch(e) {
+      const aiEl = document.getElementById('saude-ai-content');
+      if (aiEl) aiEl.innerHTML = '<div style="color:var(--neg)">Erro ao consultar IA: ' + e.message + '</div>';
+    }
+
     prog.style.width = '100%';
     clearInterval(interval);
 
