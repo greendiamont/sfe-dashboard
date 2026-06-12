@@ -4360,7 +4360,8 @@ async function doSync() {
     const r=await fetch(BE_URL+'/api/sync?days='+days+'&clientUserId='+session.empresa.pluggy_user);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data=await r.json();
-    if(data.data?.accounts?.length>0){
+    try{
+        if(data.data?.accounts?.length>0){
       S.accounts=data.data.accounts.map(a=>({...a,name:a._bankName||a.name,_bank:a._bankName||'Banco',_code:(a._bankName||'BK').slice(0,2).toUpperCase(),balance:a.balance||0}));
       S.transactions=data.data.transactions.map(t=>({...t,amount:t.amount||0,_bank:(t._bankName||'BK').slice(0,2).toUpperCase(),_bankFull:t._bankName||'Banco',_category:t.category||'Outros',description:t.description||'—'}));
       S.isDemo=false;
