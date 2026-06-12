@@ -4368,8 +4368,8 @@ async function doSync() {
       if(mode){mode.textContent='AO VIVO';mode.className='tb-mode live';}
       if(dot) dot.style.background='var(--pos)';
       renderAll();
-    }
-  } catch(e){console.warn('Sync:',e.message);}
+       
+    } catch(e){console.warn('Sync:',e.message);}
   finally{
     if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}
     renderAll();
