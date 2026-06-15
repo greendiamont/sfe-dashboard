@@ -3755,78 +3755,6 @@ function exportSaude() {
 
 <scr' + 'ipt>window.onload = () => setTimeout(() => window.print(), 600);</scr' + 'ipt>
 
-<!-- ══ MODAL EXTRATO BANCÁRIO ══ -->
-<div class="modal" id="modal-extrato" onclick="if(event.target===this)fecharExtrato()" style="align-items:center">
-  <div class="modal-box" style="width:780px;max-height:85vh;display:flex;flex-direction:column">
-
-    <!-- Header -->
-    <div class="modal-head" style="flex-shrink:0">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="ext-bank-badge" style="font-family:var(--f-mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:6px">SC</div>
-        <div>
-          <div class="modal-title" id="ext-bank-name">Banco</div>
-          <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-bank-sub">Extrato do período</div>
-        </div>
-      </div>
-      <button class="modal-close" onclick="fecharExtrato()">✕</button>
-    </div>
-
-    <!-- KPIs -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);flex-shrink:0;border-bottom:1px solid var(--b1)">
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saldo Atual</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--t1)" id="ext-saldo">—</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Entradas</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--pos)" id="ext-ent">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-ent-n">0 créditos</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saídas</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--neg)" id="ext-sai">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-sai-n">0 débitos</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resultado</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700" id="ext-res">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-res-lbl">—</div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;background:var(--ink4);border-bottom:1px solid var(--b1);flex-shrink:0">
-      <button id="ext-tab-all"     onclick="extSetTab('all')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">TODAS</button>
-      <button id="ext-tab-credit"  onclick="extSetTab('credit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CRÉDITOS</button>
-      <button id="ext-tab-debit"   onclick="extSetTab('debit')"  style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">DÉBITOS</button>
-      <button id="ext-tab-card"    onclick="extSetTab('card')"   style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CARTÃO</button>
-      <div style="margin-left:auto;padding:6px 12px">
-        <input id="ext-search" type="text" placeholder="Buscar lançamento..." style="font-size:11px;background:var(--ink5);border:1px solid var(--b1);border-radius:6px;color:var(--tx1);padding:5px 10px;outline:none;width:180px" oninput="extFilter()">
-      </div>
-    </div>
-
-    <!-- Categorias resumo -->
-    <div id="ext-cats" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b1);flex-wrap:wrap;flex-shrink:0;background:var(--ink4)"></div>
-
-    <!-- Transações -->
-    <div style="overflow-y:auto;flex:1">
-      <div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:7px 16px;background:var(--ink4);border-bottom:1px solid var(--b2);position:sticky;top:0">
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Data</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Histórico</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Tipo</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Categoria</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase;text-align:right">Valor (R$)</span>
-      </div>
-      <div id="ext-tx-list"></div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:10px 16px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--ink4)">
-      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-footer-count">—</span>
-      <button class="btn btn-ghost" onclick="extExportCSV()" style="font-size:10px;padding:5px 12px">⬇ Exportar CSV</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>`;
@@ -4300,6 +4228,50 @@ function extExportCSV(){
 }
 
 </script>
+
+<!-- ══ MODAL EXTRATO BANCÁRIO ══ -->
+<div class="modal" id="modal-extrato" onclick="if(event.target===this)fecharExtrato()" style="align-items:center">
+  <div class="modal-box" style="width:780px;max-height:85vh;display:flex;flex-direction:column">
+    <div class="modal-head" style="flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="ext-bank-badge" style="font-family:var(--f-mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:6px">SC</div>
+        <div>
+          <div class="modal-title" id="ext-bank-name">Banco</div>
+          <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-bank-sub">Extrato do período</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="fecharExtrato()">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);flex-shrink:0;border-bottom:1px solid var(--b1)">
+      <div style="background:var(--ink3);padding:14px 16px"><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saldo Atual</div><div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--t1)" id="ext-saldo">—</div></div>
+      <div style="background:var(--ink3);padding:14px 16px"><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Entradas</div><div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--pos)" id="ext-ent">—</div><div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-ent-n">0 créditos</div></div>
+      <div style="background:var(--ink3);padding:14px 16px"><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saídas</div><div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--neg)" id="ext-sai">—</div><div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-sai-n">0 débitos</div></div>
+      <div style="background:var(--ink3);padding:14px 16px"><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resultado</div><div style="font-family:var(--f-display);font-size:20px;font-weight:700" id="ext-res">—</div><div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-res-lbl">—</div></div>
+    </div>
+    <div style="display:flex;gap:0;background:var(--ink4);border-bottom:1px solid var(--b1);flex-shrink:0">
+      <button id="ext-tab-all" onclick="extSetTab('all')" style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">TODAS</button>
+      <button id="ext-tab-credit" onclick="extSetTab('credit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CRÉDITOS</button>
+      <button id="ext-tab-debit" onclick="extSetTab('debit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">DÉBITOS</button>
+      <button id="ext-tab-card" onclick="extSetTab('card')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CARTÃO</button>
+      <div style="margin-left:auto;padding:6px 12px"><input id="ext-search" type="text" placeholder="Buscar lançamento..." style="font-size:11px;background:var(--ink5);border:1px solid var(--b1);border-radius:6px;color:var(--tx1);padding:5px 10px;outline:none;width:180px" oninput="extFilter()"></div>
+    </div>
+    <div id="ext-cats" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b1);flex-wrap:wrap;flex-shrink:0;background:var(--ink4)"></div>
+    <div style="overflow-y:auto;flex:1">
+      <div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:7px 16px;background:var(--ink4);border-bottom:1px solid var(--b2);position:sticky;top:0">
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Data</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Histórico</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Tipo</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Categoria</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase;text-align:right">Valor (R$)</span>
+      </div>
+      <div id="ext-tx-list"></div>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--ink4)">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-footer-count">—</span>
+      <button class="btn btn-ghost" onclick="extExportCSV()" style="font-size:10px;padding:5px 12px">⬇ Exportar CSV</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ LOGIN SCREEN ══ -->
 <div id="login-screen" style="position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-body)">
