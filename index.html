@@ -790,7 +790,7 @@ body {
 
 .cell-primary { font-weight: 500; color: var(--tx1); }
 .cell-mono    { font-family: var(--f-mono); font-size: 12px; font-weight: 500; }
-.cell-dim     { color: var(--tx4); font-size: 12px; }
+.cell-dim     { color: var(--tx3); font-size: 12px; font-weight: 400; }
 .cell-r       { text-align: right; }
 
 .bar-pill { height: 3px; background: var(--ink5); border-radius: 2px; margin-top: 4px; overflow: hidden; }
@@ -1116,7 +1116,7 @@ body {
   letter-spacing: -1.5px;
 }
 
-.saude-score-100 { font-family: var(--f-mono); font-size: 14px; color: var(--tx4); margin-top: 2px; }
+.saude-score-100 { font-family: var(--f-mono); font-size: 14px; color: var(--tx3); font-weight: 600; margin-top: 2px; }
 
 .saude-info { flex: 1; }
 .saude-info-title { font-family: var(--f-display); font-size: 22px; font-weight: 700; margin-bottom: 6px; }
@@ -1437,7 +1437,7 @@ body {
 
 /* ══ TABLE HELPERS ══ */
 .ename { font-size: 13px; font-weight: 500; color: var(--tx1); }
-.ecode { font-family: var(--f-mono); font-size: 10px; color: var(--tx4); }
+.ecode { font-family: var(--f-mono); font-size: 10px; font-weight: 500; color: var(--tx3); }
 .emono { font-family: var(--f-mono); font-size: 12px; }
 .bar-mini { height: 3px; background: var(--ink5); border-radius: 2px; margin-top: 4px; overflow: hidden; max-width: 120px; }
 
@@ -2632,12 +2632,12 @@ function renderBanks() {
     const pct = ((a.balance/total)*100).toFixed(1);
     const pos = a.balance >= 0;
     return `<tr style="cursor:pointer" onclick="bkAbrirBanco('${a.code}')">
-      <td class="ecode">${String(i+1).padStart(3,'0')}</td>
+      <td class="ecode" style="color:var(--tx2)">${String(i+1).padStart(3,'0')}</td>
       <td><div class="ename">${a.name}</div><div class="bar-mini"><div style="height:100%;width:${pct}%;background:${a.color}"></div></div></td>
-      <td class="emono" style="color:var(--tx5);font-size:11px">${a.type}</td>
+      <td class="emono" style="color:var(--tx2);font-size:11px;font-weight:500">${a.type}</td>
       <td class="ecode">Ag ${a.agency} / Cta ${a.account}</td>
       <td class="emono" style="text-align:right;color:${pos?'var(--pos)':'var(--neg)'}">${fmt(a.balance)}</td>
-      <td class="emono" style="text-align:right;color:var(--tx5)">${pct}%</td>
+      <td class="emono" style="text-align:right;color:var(--tx3);font-weight:500">${pct}%</td>
       <td style="width:100px"><div style="height:4px;background:var(--ink5)"><div style="height:100%;width:${pct}%;background:${a.color}"></div></div></td>
     </tr>`;
   }).join('');
@@ -2648,7 +2648,7 @@ function renderBanks() {
   if(pieEl) charts['bk-pie'] = new Chart(pieEl, {
     type:'doughnut',
     data:{labels:S.accounts.map(a=>a.name),datasets:[{data:S.accounts.map(a=>Math.max(a.balance,0)),backgroundColor:S.accounts.map(a=>a.color+'55'),borderColor:S.accounts.map(a=>a.color),borderWidth:2,hoverOffset:8}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{labels:{color:'var(--tx3)',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
   });
 
   // Gráfico evolução por banco (simulado com variações)
@@ -2658,7 +2658,7 @@ function renderBanks() {
     const days=parseInt(document.getElementById('period-sel')?.value||30);
     const labels=[],saldoAcum=[];
     for(let i=6;i>=0;i--){const d=new Date(Date.now()-i*Math.ceil(days/6)*86400000);labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));}
-    charts['bk-evol'] = new Chart(evolEl,{type:'line',data:{labels,datasets:S.accounts.map(a=>({label:a.name,data:labels.map((_,i)=>Math.round(a.balance*(0.88+i*0.02+(Math.random()-0.5)*0.04))),borderColor:a.color,backgroundColor:a.color+'22',borderWidth:2,pointRadius:3,tension:.4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'var(--tx3)',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}}}});
+    charts['bk-evol'] = new Chart(evolEl,{type:'line',data:{labels,datasets:S.accounts.map(a=>({label:a.name,data:labels.map((_,i)=>Math.round(a.balance*(0.88+i*0.02+(Math.random()-0.5)*0.04))),borderColor:a.color,backgroundColor:a.color+'22',borderWidth:2,pointRadius:3,tension:.4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}}}});
   }
 }
 
@@ -2728,7 +2728,7 @@ function bkAbrirBanco(code) {
       ins.push(sl.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0));
       outs.push(Math.abs(sl.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)));
     }
-    charts['bd-fluxo']=new Chart(flEl,{type:'bar',data:{labels:lb,datasets:[{label:'Créditos',data:ins,backgroundColor:acc.color+'44',borderColor:acc.color,borderWidth:1,borderRadius:2},{label:'Débitos',data:outs,backgroundColor:'rgba(248,113,113,.2)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'var(--tx3)',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}}}});
+    charts['bd-fluxo']=new Chart(flEl,{type:'bar',data:{labels:lb,datasets:[{label:'Créditos',data:ins,backgroundColor:acc.color+'44',borderColor:acc.color,borderWidth:1,borderRadius:2},{label:'Débitos',data:outs,backgroundColor:'rgba(248,113,113,.2)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}}}});
   }
 
   // Gráfico categorias do banco
@@ -2738,7 +2738,7 @@ function bkAbrirBanco(code) {
     const catMap={};
     txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';catMap[c]=(catMap[c]||0)+Math.abs(t.amount);});
     const catE=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
-    charts['bd-cat']=new Chart(catEl,{type:'doughnut',data:{labels:catE.map(e=>e[0]),datasets:[{data:catE.map(e=>e[1]),backgroundColor:catE.map(e=>(CAT_COLORS[e[0]]||'#445566')+'55'),borderColor:catE.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{labels:{color:'var(--tx3)',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}});
+    charts['bd-cat']=new Chart(catEl,{type:'doughnut',data:{labels:catE.map(e=>e[0]),datasets:[{data:catE.map(e=>e[1]),backgroundColor:catE.map(e=>(CAT_COLORS[e[0]]||'#445566')+'55'),borderColor:catE.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}});
   }
 
   // Seção cartões de crédito
@@ -2830,11 +2830,11 @@ function buildCFChart(id, txs, days) {
     {label:'Créditos',data:ins, backgroundColor:'rgba(26,138,74,.3)', borderColor:'rgba(34,170,90,.9)', borderWidth:1,borderRadius:2},
     {label:'Débitos', data:outs,backgroundColor:'rgba(192,39,26,.2)', borderColor:'rgba(224,48,32,.8)',  borderWidth:1,borderRadius:2},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{
-    legend:{labels:{color:'#6688aa',font:{family:'IBM Plex Mono',size:10},boxWidth:10}},
-    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
+    legend:{labels:{color:'#b0bdd4',font:{family:'IBM Plex Mono',size:10},boxWidth:10}},
+    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#e0e8f4',bodyColor:'#b0bdd4',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
   },scales:{
-    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9}}},
-    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
+    x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{family:'IBM Plex Mono',size:9}}},
+    y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
   }}});
 }
 
@@ -2871,11 +2871,11 @@ function renderProjection(txs) {
     {label:'Saldo Projetado',data,borderColor:'rgba(232,176,32,.8)',backgroundColor:'rgba(232,176,32,.06)',borderWidth:2,pointRadius:0,tension:.4,fill:true},
     {label:'Limite Mínimo',data:alertLine,borderColor:'rgba(248,113,113,.5)',backgroundColor:'transparent',borderWidth:1,borderDash:[4,4],pointRadius:0},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{
-    legend:{labels:{color:'#6688aa',font:{size:10}}},
+    legend:{labels:{color:'#b0bdd4',font:{size:10}}},
     tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}
   },scales:{
-    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},
-    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}
+    x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},
+    y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}
   }}});
 
   // Indicadores da projeção
@@ -2918,7 +2918,7 @@ function renderProjection(txs) {
       wins.push(sl.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0));
       wouts.push(Math.abs(sl.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)));
     }
-    charts['flx-rvc']=new Chart(rvcEl,{type:'bar',data:{labels:wlb,datasets:[{label:'Receitas',data:wins,backgroundColor:'rgba(74,222,128,.3)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:2},{label:'Custos',data:wouts,backgroundColor:'rgba(248,113,113,.2)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'var(--tx3)',font:{size:9}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}}}});
+    charts['flx-rvc']=new Chart(rvcEl,{type:'bar',data:{labels:wlb,datasets:[{label:'Receitas',data:wins,backgroundColor:'rgba(74,222,128,.3)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:2},{label:'Custos',data:wouts,backgroundColor:'rgba(248,113,113,.2)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}}}});
   }
 
   // Gráfico Burn Rate
@@ -2927,7 +2927,7 @@ function renderProjection(txs) {
   if(burnEl){
     const months=['3 meses atrás','2 meses atrás','Mês passado','Este mês'];
     const burnData=[daily_avg_out*30*0.92,daily_avg_out*30*0.96,daily_avg_out*30*0.98,daily_avg_out*30];
-    charts['flx-burn']=new Chart(burnEl,{type:'line',data:{labels:months,datasets:[{label:'Burn Rate',data:burnData,borderColor:'rgba(248,113,113,.8)',backgroundColor:'rgba(248,113,113,.08)',borderWidth:2,pointRadius:4,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${fmt(c.raw)}/mês`}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}}}});
+    charts['flx-burn']=new Chart(burnEl,{type:'line',data:{labels:months,datasets:[{label:'Burn Rate',data:burnData,borderColor:'rgba(248,113,113,.8)',backgroundColor:'rgba(248,113,113,.08)',borderWidth:2,pointRadius:4,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${fmt(c.raw)}/mês`}}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}}}});
   }
 
   // Gráfico Cobertura de Caixa (gauge-like)
@@ -3043,11 +3043,11 @@ function renderCats(txs) {
         borderWidth:1,borderRadius:2
       }))
     },options:{responsive:true,maintainAspectRatio:false,plugins:{
-      legend:{labels:{color:'#6688aa',font:{size:9},boxWidth:10}},
+      legend:{labels:{color:'#b0bdd4',font:{size:9},boxWidth:10}},
       tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
     },scales:{
-      x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},
-      y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}
+      x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},
+      y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}
     }}});
   }
 }
@@ -3313,7 +3313,7 @@ function renderCP() {
       <td><span style="font-family:var(--mono);font-size:9px;color:${CAT_COLORS[item.categoria]||'#446688'}">${item.categoria}</span></td>
       <td class="ecode">${item.emissao}</td>
       <td class="ecode" style="color:${s==='vencido'?'var(--rlt)':s==='hoje'?'var(--alt)':'var(--s3)'}">${item.vencimento}<br><span style="font-size:9px">${dStr}</span></td>
-      <td class="emono r" style="text-align:right;color:${s==='pago'?'var(--s5)':'var(--rlt)'}">${fmt(item.valor)}</td>
+      <td class="emono r" style="text-align:right;color:${s==='pago'?'var(--tx3)':'var(--rlt)'}">${fmt(item.valor)}</td>
       <td style="white-space:nowrap">
         ${s!=='pago' ? `<button class="btn-sys" onclick="marcarPago('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--glt2);border-color:var(--grn)">✓ PAGO</button> ` : ''}
         <button class="btn-sys" onclick="editCP('${item.id}')" style="font-size:9px;padding:3px 8px">✎</button>
@@ -3377,7 +3377,7 @@ function renderCR() {
       <td class="ecode">${item.emissao}</td>
       <td class="ecode" style="color:${s==='vencido'?'var(--rlt)':s==='hoje'?'var(--alt)':'var(--s3)'}">${item.vencimento}<br><span style="font-size:9px">${dStr}</span></td>
       <td class="ecode" style="color:${d<0&&s!=='recebido'?'var(--rlt)':'var(--s5)'}">${dStr}</td>
-      <td class="emono r" style="text-align:right;color:${s==='recebido'?'var(--s5)':'var(--glt2)'}">${fmt(item.valor)}</td>
+      <td class="emono r" style="text-align:right;color:${s==='recebido'?'var(--tx3)':'var(--glt2)'}">${fmt(item.valor)}</td>
       <td style="white-space:nowrap">
         ${s!=='recebido' ? `<button class="btn-sys" onclick="marcarRecebido('${item.id}')" style="font-size:9px;padding:3px 8px;color:var(--glt2);border-color:var(--grn)">✓ REC.</button> ` : ''}
         <button class="btn-sys" onclick="editCR('${item.id}')" style="font-size:9px;padding:3px 8px">✎</button>
@@ -3651,7 +3651,7 @@ function renderClientes() {
         <div style="color:var(--s2)">${c.limite>0?fmt(c.limite):'Sem limite'}</div>
         ${c.limite>0?`<div style="font-size:9px;color:${limiteUsado>80?'var(--rlt)':'var(--s5)'}">Usado: ${limiteUsado}%</div>`:''}
       </td>
-      <td class="emono r" style="text-align:right;color:${crAberto>0?'var(--glt2)':'var(--s5)'}">${fmt(crAberto)}</td>
+      <td class="emono r" style="text-align:right;color:${crAberto>0?'var(--glt2)':'var(--tx3)'}">${fmt(crAberto)}</td>
       <td style="white-space:nowrap">
         <button class="btn-sys" onclick="editCliente('${c.id}')" style="font-size:9px;padding:3px 8px">✎ EDITAR</button>
         <button class="btn-sys" onclick="deleteCliente('${c.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
@@ -3692,7 +3692,7 @@ function renderFornecedores() {
       <td><span style="font-family:var(--mono);font-size:9px;color:${catColor}">${f.categoria}</span></td>
       <td style="font-size:12px"><div style="color:var(--s2)">${f.contato||'—'}</div><div class="ecode">${f.tel||''}</div></td>
       <td class="ecode">${f.cidade||'—'}</td>
-      <td class="emono r" style="text-align:right;color:${cpAberto>0?'var(--rlt)':'var(--s5)'}">${fmt(cpAberto)}</td>
+      <td class="emono r" style="text-align:right;color:${cpAberto>0?'var(--rlt)':'var(--tx3)'}">${fmt(cpAberto)}</td>
       <td style="white-space:nowrap">
         <button class="btn-sys" onclick="editFornecedor('${f.id}')" style="font-size:9px;padding:3px 8px">✎ EDITAR</button>
         <button class="btn-sys" onclick="deleteFornecedor('${f.id}')" style="font-size:9px;padding:3px 8px;color:var(--rlt)">✕</button>
@@ -3903,9 +3903,9 @@ async function gerarSaude() {
       const c = sc>=75?'var(--glt2)':sc>=50?'var(--alt)':'var(--rlt)';
       const bg = sc>=75?'var(--gbg2)':sc>=50?'var(--abg)':'var(--rbg)';
       return `<div style="background:${bg};border:1px solid ${c}33;border-radius:2px;padding:14px;border-left:3px solid ${c}">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--s5);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600">${ind.label}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700">${ind.label}</div>
         <div style="font-family:var(--mono);font-size:20px;font-weight:600;color:${c};margin-bottom:4px">${ind.val}</div>
-        <div style="font-size:11px;color:var(--s5)">${ind.desc}</div>
+        <div style="font-size:11px;font-weight:400;color:var(--tx3)">${ind.desc}</div>
         <div style="margin-top:8px;height:3px;background:rgba(255,255,255,.05);border-radius:2px"><div style="height:100%;width:${sc}%;background:${c};border-radius:2px;transition:width .8s"></div></div>
       </div>`;
     }).join('');
@@ -3976,8 +3976,8 @@ async function gerarSaude() {
             responsive: true, maintainAspectRatio: false,
             plugins: {legend:{display:false}, tooltip:{backgroundColor:'#1c1f2c',callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.raw)}}},
             scales: {
-              x: {grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#606680',font:{size:8}}},
-              y: {grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#606680',font:{size:8},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}
+              x: {grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#606680',font:{size:8}}},
+              y: {grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#606680',font:{size:8},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}
             }
           }
         });
@@ -4002,8 +4002,8 @@ async function gerarSaude() {
             responsive: true, maintainAspectRatio: false,
             plugins: {legend:{display:false}, tooltip:{backgroundColor:'#1c1f2c',callbacks:{label:c=>' '+fmt(c.raw)}}},
             scales: {
-              x: {grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#606680',font:{size:9}}},
-              y: {grid:{color:'rgba(255,255,255,.03)'}, ticks:{color:'#606680',font:{size:9},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}
+              x: {grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#606680',font:{size:9}}},
+              y: {grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#606680',font:{size:9},callback:v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}}
             }
           }
         });
@@ -4121,7 +4121,7 @@ function exportSaude() {
     <div class="logo-mark"></div>
     <div>
       <div class="logo-text">SFE</div>
-      <div style="font-size:9px;color:#6688aa;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</div>
+      <div style="font-size:9px;font-weight:600;color:#9aaabf;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</div>
     </div>
   </div>
   <div class="header-info">
@@ -4576,7 +4576,7 @@ function extRenderCats() {
   if(!cats.length){el.style.display='none';return;}
   el.style.display='flex';
   el.innerHTML=cats.map(([c,v])=>{
-    const col=(typeof CAT_COLORS!=='undefined'&&CAT_COLORS[c])||'#6688aa';
+    const col=(typeof CAT_COLORS!=='undefined'&&CAT_COLORS[c])||'#7090b0';
     return `<div style="display:flex;align-items:center;gap:5px;background:${col}18;border:1px solid ${col}33;border-radius:4px;padding:3px 8px;cursor:pointer" onclick="extFilterCat(this.dataset.cat)" data-cat="${c}"><div style="width:6px;height:6px;border-radius:50%;background:${col}"></div><span style="font-size:10px;color:var(--tx2)">${c}</span><span style="font-family:var(--f-mono);font-size:10px;font-weight:600;color:${col}">${fmtK(v)}</span></div>`;
   }).join('');
 }
@@ -4617,7 +4617,7 @@ function extRenderTx(txs) {
   txs.forEach(function(t){
     const pos=t.amount>0;
     const cat=t._category||'Outros';
-    const col=(window.CAT_COLORS&&CAT_COLORS[cat])||'#6688aa';
+    const col=(window.CAT_COLORS&&CAT_COLORS[cat])||'#7090b0';
     const isCard=(cat||'').indexOf('Cart')>=0||(t.description||'').toLowerCase().indexOf('cart')>=0;
     const tipo=isCard?'Cartao':pos?'Credito':'Debito';
     const tipoLabel=isCard?'💳 Cartão':pos?'↑ Crédito':'↓ Débito';
@@ -4627,7 +4627,7 @@ function extRenderTx(txs) {
     const amtPrefix=pos?'+':'';
     rows.push(
       '<div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:10px 16px;border-bottom:1px solid var(--b1);align-items:center">'
-      +'<span style="font-family:var(--f-mono);font-size:11px;color:var(--tx4)">'+fmtD(t.date)+'</span>'
+      +'<span style="font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--tx3)">'+fmtD(t.date)+'</span>'
       +'<span style="font-size:13px;font-weight:500;color:var(--tx1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:12px" title="'+desc+'">'+desc+'</span>'
       +'<span style="font-size:11px;font-weight:600;color:'+tipoC+'">'+tipoLabel+'</span>'
       +'<span style="display:inline-flex;align-items:center;gap:5px">'
@@ -4678,24 +4678,24 @@ function extExportCSV(){
     </div>
     <div style="display:flex;gap:0;background:var(--ink4);border-bottom:1px solid var(--b1);flex-shrink:0">
       <button id="ext-tab-all" onclick="extSetTab('all')" style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">TODAS</button>
-      <button id="ext-tab-credit" onclick="extSetTab('credit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CRÉDITOS</button>
-      <button id="ext-tab-debit" onclick="extSetTab('debit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">DÉBITOS</button>
-      <button id="ext-tab-card" onclick="extSetTab('card')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CARTÃO</button>
+      <button id="ext-tab-credit" onclick="extSetTab('credit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx2)">CRÉDITOS</button>
+      <button id="ext-tab-debit" onclick="extSetTab('debit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx2)">DÉBITOS</button>
+      <button id="ext-tab-card" onclick="extSetTab('card')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx2)">CARTÃO</button>
       <div style="margin-left:auto;padding:6px 12px"><input id="ext-search" type="text" placeholder="Buscar lançamento..." style="font-size:11px;background:var(--ink5);border:1px solid var(--b1);border-radius:6px;color:var(--tx1);padding:5px 10px;outline:none;width:180px" oninput="extFilter()"></div>
     </div>
     <div id="ext-cats" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b1);flex-wrap:wrap;flex-shrink:0;background:var(--ink4)"></div>
     <div style="overflow-y:auto;flex:1">
       <div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:7px 16px;background:var(--ink4);border-bottom:1px solid var(--b2);position:sticky;top:0">
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Data</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Histórico</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Tipo</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Categoria</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase;text-align:right">Valor (R$)</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase">Data</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase">Histórico</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase">Tipo</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase">Categoria</span>
+        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx3);text-transform:uppercase;text-align:right">Valor (R$)</span>
       </div>
       <div id="ext-tx-list"></div>
     </div>
     <div style="padding:10px 16px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--ink4)">
-      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-footer-count">—</span>
+      <span style="font-family:var(--f-mono);font-size:10px;font-weight:600;color:var(--tx2)" id="ext-footer-count">—</span>
       <button class="btn btn-ghost" onclick="extExportCSV()" style="font-size:10px;padding:5px 12px">⬇ Exportar CSV</button>
     </div>
   </div>
@@ -4717,11 +4717,11 @@ function extExportCSV(){
     <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--gold);border-radius:var(--radius);padding:32px;box-shadow:0 32px 80px rgba(0,0,0,.6)">
       <div id="login-error" style="display:none;background:var(--negdim);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--neg);margin-bottom:16px;text-align:center"></div>
       <div style="margin-bottom:16px">
-        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx4);display:block;margin-bottom:6px">CNPJ</label>
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx2);display:block;margin-bottom:6px">CNPJ</label>
         <input id="login-cnpj" type="text" placeholder="00.000.000/0001-00" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 14px;outline:none" onkeypress="if(event.key==='Enter')document.getElementById('login-senha').focus()">
       </div>
       <div style="margin-bottom:24px">
-        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx4);display:block;margin-bottom:6px">SENHA</label>
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx2);display:block;margin-bottom:6px">SENHA</label>
         <input id="login-senha" type="password" placeholder="••••••••" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 14px;outline:none" onkeypress="if(event.key==='Enter')doLogin()">
       </div>
       <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#b07010);color:#000;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;box-shadow:0 4px 20px rgba(232,160,32,.3)">Entrar no Sistema</button>
