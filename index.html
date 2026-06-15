@@ -2203,11 +2203,34 @@ const CAT_BG = {
 let S = { accounts:[], transactions:[], cfg:{} };
 let charts = {};
 
+// ══ SESSION ══
+const BE_URL = 'https://sfe-backend-production.up.railway.app';
+let SFE_SESSION = null;
+
 // ══ BOOT ══
 document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     const _t=document.getElementById('tb-time'); if(_t) _t.textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   }, 1000);
+
+  // ── Restaurar sessão salva ──
+  const ls = document.getElementById('login-screen');
+  let sessionOk = false;
+  const savedSession = localStorage.getItem('sfe_session');
+  if (savedSession) {
+    try {
+      const s = JSON.parse(savedSession);
+      if (s.ts && Date.now()-s.ts < 86400000) {
+        SFE_SESSION = s;
+        if (ls) ls.style.display = 'none';
+        const co = document.getElementById('tb-company');
+        if (co) co.textContent = s.empresa.razao.slice(0,28);
+        sessionOk = true;
+      }
+    } catch(e) {}
+    if (!sessionOk) localStorage.removeItem('sfe_session');
+  }
+  if (!sessionOk && ls) ls.style.display = 'flex';
 
   const saved = localStorage.getItem('sfe_v4');
   if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
@@ -2229,6 +2252,9 @@ document.addEventListener('DOMContentLoaded', () => {
   seedCadastros();
   renderClientes();
   renderFornecedores();
+
+  // Sync automático se sessão com pluggy
+  if (sessionOk && SFE_SESSION?.empresa?.pluggy_user) setTimeout(doSync, 1200);
 });
 
 function applyConfig() {
@@ -2536,10 +2562,9 @@ function renderAlerts(txs) {
   if (!alerts.length)
     alerts.push({s:'I',bg:'var(--gbg2)',fc:'var(--glt2)',title:'SEM OCORRÊNCIAS CRÍTICAS',desc:'Todos os indicadores dentro dos parâmetros configurados para o período.'});
 
-const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
+  const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
   ['sb-badge','nav-badge'].forEach(id => {
     const el = document.getElementById(id);
-    if (!el) return;
     if (crit>0) {el.textContent=crit;el.style.display='';}
     else el.style.display='none';
   });
@@ -3425,14 +3450,9 @@ async function gerarSaude() {
     const scoreColor = scoreGeral >= 75 ? '#22aa5a' : scoreGeral >= 50 ? '#d89020' : '#e03020';
     const scoreLabel = scoreGeral >= 75 ? 'BOA' : scoreGeral >= 50 ? 'ATENÇÃO' : 'CRÍTICO';
 
-document.getElementById('sl-score-lbl').textContent = `${scoreGeral}/100 — ${scoreLabel}`;
+    document.getElementById('sl-score-lbl').textContent = `${scoreGeral}/100 — ${scoreLabel}`;
     document.getElementById('sl-score-lbl').style.color = scoreColor;
     document.getElementById('sl-score-lbl').style.borderColor = scoreColor + '44';
-
-    // Cache global para o Painel Executivo usar o MESMO score
-    window._lastSaudeScore = scoreGeral;
-    window._lastSaudeScoreColor = scoreColor;
-    window._lastSaudeScoreLabel = scoreLabel;
 
     // Gauge chart
     // Animate SVG arc gauge
@@ -3467,56 +3487,6 @@ document.getElementById('sl-score-lbl').textContent = `${scoreGeral}/100 — ${s
     const ts = new Date().toLocaleString('pt-BR');
     document.getElementById('saude-ts').textContent = `Gerado: ${ts}`;
     document.getElementById('saude-footer-ts').textContent = ts;
-
-   // Chamar IA para análise + plano de ação
-    const beUrl = (S.cfg && S.cfg.be) || 'https://sfe-backend-production.up.railway.app';
-    const aiSystem = 'Você é um analista financeiro sênior especializado em PMEs brasileiras. Responda em português, de forma objetiva. Use R$ para valores.';
-    const aiPrompt = 'DADOS DA EMPRESA:\n'
-      + 'Saldo consolidado: ' + fmt(saldo) + '\n'
-      + 'Entradas (30d): ' + fmt(ent) + '\n'
-      + 'Saídas (30d): ' + fmt(sai) + '\n'
-      + 'Resultado: ' + fmt(res) + ' (margem ' + margem.toFixed(1) + '%)\n'
-      + 'Score de saúde: ' + scoreGeral + '/100 (' + scoreLabel + ')\n'
-      + 'CP em aberto: ' + fmt(cpAberto) + ' | CP vencido: ' + fmt(cpVencido) + '\n'
-      + 'CR em aberto: ' + fmt(crAberto) + ' | CR inadimplente: ' + fmt(crVencido) + '\n'
-      + 'Principais despesas: ' + catEntries.slice(0,5).map(e=>e[0]+': '+fmt(e[1])).join(', ') + '\n\n'
-      + 'Gere: 1) Diagnóstico geral (2-3 frases). 2) Pontos críticos. 3) Pontos positivos. '
-      + '4) Plano de ação com 3-5 itens, cada um marcado como [URGENTE], [ESTA SEMANA] ou [MONITORAR].';
-
-    try {
-      const r = await fetch(beUrl + '/api/claude', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({system: aiSystem, messages:[{role:'user',content:aiPrompt}], max_tokens:1200})
-      });
-      const d = await r.json();
-      const aiText = (d.content && d.content[0] && d.content[0].text) || 'Sem resposta da IA.';
-      window._lastSaudeDiag = aiText;
-
-      const aiEl = document.getElementById('saude-ai-content');
-      if (aiEl) aiEl.innerHTML = aiText.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-
-      // Plano de ação — extrai linhas marcadas
-      const actEl = document.getElementById('saude-actions');
-      if (actEl) {
-        const lines = aiText.split('\n').filter(l => /\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i.test(l));
-        if (lines.length) {
-          actEl.innerHTML = lines.map(l => {
-            const m = l.match(/\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i);
-            const pri = m ? m[1].toUpperCase() : 'MONITORAR';
-            const priC = pri==='URGENTE'?'var(--neg)':pri==='ESTA SEMANA'?'var(--warn)':'var(--info)';
-            const priBg= pri==='URGENTE'?'var(--negdim)':pri==='ESTA SEMANA'?'var(--warndim)':'var(--infodim)';
-            const txt = l.replace(/\[(URGENTE|ESTA SEMANA|MONITORAR)\]/i,'').replace(/^[-*\s]+/,'').trim();
-            return '<div class="saude-action-row"><span style="font-family:var(--f-mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:'+priBg+';color:'+priC+'">'+pri+'</span><span style="font-size:13px;color:var(--tx2)">'+txt+'</span><span></span></div>';
-          }).join('');
-        } else {
-          actEl.innerHTML = '<div style="padding:16px;text-align:center;font-size:12px;color:var(--tx4)">Nenhuma ação prioritária identificada</div>';
-        }
-      }
-    } catch(e) {
-      const aiEl = document.getElementById('saude-ai-content');
-      if (aiEl) aiEl.innerHTML = '<div style="color:var(--neg)">Erro ao consultar IA: ' + e.message + '</div>';
-    }
 
     prog.style.width = '100%';
     clearInterval(interval);
@@ -3980,33 +3950,24 @@ function renderPainel(txs) {
   const res   = ent - sai;
   const today = new Date(); today.setHours(0,0,0,0);
 
-// CP/CR stats (usa statusCP/statusCR, que são os campos reais do modelo de dados)
-  const cpVenc  = cp.filter(i=>statusCP(i)==='vencido');
-  const crVenc  = cr.filter(i=>statusCR(i)==='vencido');
+  // CP/CR stats
+  const cpVenc  = cp.filter(i=>!i.pago && new Date(i.vencimento||i.venc)<today);
+  const crVenc  = cr.filter(i=>!i.recebido && new Date(i.vencimento||i.venc)<today);
   const cpVencV = cpVenc.reduce((s,i)=>s+(i.valor||i.val||0),0);
   const crVencV = crVenc.reduce((s,i)=>s+(i.valor||i.val||0),0);
-  const cp7d    = cp.filter(i=>['hoje','7d'].includes(statusCP(i)));
-  const cr7d    = cr.filter(i=>['hoje','7d'].includes(statusCR(i)));
+  const cp7d    = cp.filter(i=>!i.pago && diffDays(i.vencimento||i.venc)>=0 && diffDays(i.vencimento||i.venc)<=7);
+  const cr7d    = cr.filter(i=>!i.recebido && diffDays(i.vencimento||i.venc)>=0 && diffDays(i.vencimento||i.venc)<=7);
 
-  // Score — usa o MESMO score do relatório "Saúde da Empresa" se já foi gerado,
-  // garantindo coerência entre Painel Executivo e Diagnóstico
-  let score, scoreC, scoreLbl;
-  if (typeof window._lastSaudeScore === 'number') {
-    score    = window._lastSaudeScore;
-    scoreC   = window._lastSaudeScoreColor;
-    scoreLbl = window._lastSaudeScoreLabel;
-  } else {
-    // Fallback simplificado enquanto o relatório de Saúde ainda não foi gerado
-    const scores = {
-      liq:  Math.min(100,Math.max(0,(saldo/Math.max(sai/30,1))/30*100)),
-      marg: Math.min(100,Math.max(0,res>=0?70+Math.min(30,res/Math.max(ent,1)*100):Math.max(0,50+res/Math.max(sai,1)*100))),
-      cp:   Math.min(100,Math.max(0,100-cpVencV/Math.max(cp.reduce((s,i)=>s+(i.valor||i.val||0),0),1)*100)),
-      cr:   Math.min(100,Math.max(0,100-crVencV/Math.max(cr.reduce((s,i)=>s+(i.valor||i.val||0),0),1)*100)),
-    };
-    score = Math.round(Object.values(scores).reduce((s,v)=>s+v,0)/4);
-    scoreC = score>=75?'#4ade80':score>=50?'#fbbf24':'#f87171';
-    scoreLbl = score>=75?'SAUDÁVEL':score>=50?'ATENÇÃO':'CRÍTICO';
-  }
+  // Score
+  const scores = {
+    liq:  Math.min(100,Math.max(0,(saldo/Math.max(sai/30,1))/30*100)),
+    marg: Math.min(100,Math.max(0,res>=0?70+Math.min(30,res/Math.max(ent,1)*100):Math.max(0,50+res/Math.max(sai,1)*100))),
+    cp:   Math.min(100,Math.max(0,100-cpVencV/Math.max(cp.reduce((s,i)=>s+(i.valor||i.val||0),0),1)*100)),
+    cr:   Math.min(100,Math.max(0,100-crVencV/Math.max(cr.reduce((s,i)=>s+(i.valor||i.val||0),0),1)*100)),
+  };
+  const score = Math.round(Object.values(scores).reduce((s,v)=>s+v,0)/4);
+  const scoreC = score>=75?'#4ade80':score>=50?'#fbbf24':'#f87171';
+  const scoreLbl = score>=75?'SAUDÁVEL':score>=50?'ATENÇÃO':'CRÍTICO';
 
   // Score gauge
   const gaugeEl = document.getElementById('painel-gauge');
@@ -4083,11 +4044,11 @@ function renderPainel(txs) {
   const vencEl = document.getElementById('painel-vencimentos');
   if (vencEl) {
     const venc = [];
-    cp.filter(i=>statusCP(i)!=='pago').sort((a,b)=>new Date(a.vencimento||a.venc)-new Date(b.vencimento||b.venc)).slice(0,3).forEach(i=>{
+    cp.filter(i=>!i.pago).sort((a,b)=>new Date(a.vencimento||a.venc)-new Date(b.vencimento||b.venc)).slice(0,3).forEach(i=>{
       const d=diffDays(i.vencimento||i.venc);
       venc.push({type:'CP',name:i.fornecedor||i.desc||'—',days:d,val:i.valor||i.val||0,neg:true});
     });
-    cr.filter(i=>statusCR(i)!=='recebido').sort((a,b)=>new Date(a.vencimento||a.venc)-new Date(b.vencimento||b.venc)).slice(0,3).forEach(i=>{
+    cr.filter(i=>!i.recebido).sort((a,b)=>new Date(a.vencimento||a.venc)-new Date(b.vencimento||b.venc)).slice(0,3).forEach(i=>{
       const d=diffDays(i.vencimento||i.venc);
       venc.push({type:'CR',name:i.cliente||i.desc||'—',days:d,val:i.valor||i.val||0,neg:false});
     });
@@ -4143,6 +4104,70 @@ function renderPainel(txs) {
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
 function loadDemo(){buildDemo();renderAll();}
+
+// ══ LOGIN & SESSION ══
+async function doLogin() {
+  const cnpj  = document.getElementById('login-cnpj').value.trim();
+  const senha = document.getElementById('login-senha').value.trim();
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-error');
+  if (!cnpj || !senha) { if(err){err.textContent='Preencha CNPJ e senha';err.style.display='block';} return; }
+  btn.textContent='Autenticando...'; btn.disabled=true;
+  if(err) err.style.display='none';
+  try {
+    const r = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpj.replace(/\D/g,''),senha})});
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error||'Credenciais inválidas');
+    SFE_SESSION = data;
+    localStorage.setItem('sfe_session',JSON.stringify({token:data.token,ts:Date.now(),empresa:data.empresa}));
+    const co=document.getElementById('tb-company'); if(co) co.textContent=data.empresa.razao.slice(0,28);
+    document.getElementById('login-screen').style.display='none';
+    buildDemo(); renderAll();
+    seedDemoData(); renderCP(); renderCR();
+    seedCadastros(); renderClientes(); renderFornecedores();
+    if(data.empresa.pluggy_user) setTimeout(doSync,1200);
+  } catch(e) {
+    if(err){err.textContent=e.message;err.style.display='block';}
+    btn.textContent='Entrar no Sistema'; btn.disabled=false;
+  }
+}
+
+function loginDemo() {
+  SFE_SESSION={demo:true,empresa:{razao:'Distribuidora Sul Catarinense Ltda',cnpj:'12348756000109',plano:'pro'}};
+  const co=document.getElementById('tb-company'); if(co) co.textContent='Distribuidora Sul Catarinens...';
+  document.getElementById('login-screen').style.display='none';
+  buildDemo(); renderAll();
+  seedDemoData(); renderCP(); renderCR();
+  seedCadastros(); renderClientes(); renderFornecedores();
+}
+
+async function doSync() {
+  const session=SFE_SESSION||JSON.parse(localStorage.getItem('sfe_session')||'null');
+  if(!session||session.demo||!session.empresa?.pluggy_user) return;
+  const btn=document.getElementById('sync-btn');
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  try {
+    const days=parseInt(document.getElementById('period-sel')?.value||30);
+    const r=await fetch(BE_URL+'/api/sync?days='+days+'&clientUserId='+session.empresa.pluggy_user);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    if(data.data?.accounts?.length>0){
+      S.accounts=data.data.accounts.map(a=>({...a,name:a._bankName||a.name,_bank:a._bankName||'Banco',_code:(a._bankName||'BK').slice(0,2).toUpperCase(),balance:a.balance||0}));
+      S.transactions=data.data.transactions.map(t=>({...t,amount:t.amount||0,_bank:(t._bankName||'BK').slice(0,2).toUpperCase(),_bankFull:t._bankName||'Banco',_category:t.category||'Outros',description:t.description||'—'}));
+      S.isDemo=false;
+      const mode=document.getElementById('tb-mode'); const dot=document.getElementById('tb-dot');
+      if(mode){mode.textContent='AO VIVO';mode.className='tb-mode live';}
+      if(dot) dot.style.background='var(--pos)';
+      renderAll();
+    }
+  } catch(e){console.warn('Sync:',e.message);}
+  finally{
+    if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}
+    renderAll();
+  }
+}
+
+function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
 // ══ EXTRATO BANCÁRIO ══
 let _extBankCode = null;
 let _extTab = 'all';
@@ -4306,171 +4331,6 @@ function extExportCSV(){
       </div>
     </div>
     <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--tx5)">SFE v2.0 · Sistema Financeiro Empresarial<br><span style="color:var(--tx4)">Dados protegidos · LGPD compliant</span></div>
-  </div>
-</div>
-
-<script>
-
-// ══ LOGIN & SESSION ══
-const BE_URL = 'https://sfe-backend-production.up.railway.app';
-let SFE_SESSION = null;
-
-async function doLogin() {
-  const cnpj  = document.getElementById('login-cnpj').value.trim();
-  const senha = document.getElementById('login-senha').value.trim();
-  const btn   = document.getElementById('login-btn');
-  const err   = document.getElementById('login-error');
-  if (!cnpj || !senha) { if(err){err.textContent='Preencha CNPJ e senha';err.style.display='block';} return; }
-  btn.textContent='Autenticando...'; btn.disabled=true;
-  if(err) err.style.display='none';
-  try {
-    const r = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpj.replace(/\D/g,''),senha})});
-    const data = await r.json();
-    if (!data.ok) throw new Error(data.error||'Credenciais inválidas');
-    SFE_SESSION = data;
-    localStorage.setItem('sfe_session',JSON.stringify({token:data.token,ts:Date.now(),empresa:data.empresa}));
-    const co=document.getElementById('tb-company'); if(co) co.textContent=data.empresa.razao.slice(0,28);
-    document.getElementById('login-screen').style.display='none';
-    buildDemo(); renderAll();
-    seedDemoData(); renderCP(); renderCR();
-    seedCadastros(); renderClientes(); renderFornecedores();
-    if(data.empresa.pluggy_user) setTimeout(doSync,1200);
-  } catch(e) {
-    if(err){err.textContent=e.message;err.style.display='block';}
-    btn.textContent='Entrar no Sistema'; btn.disabled=false;
-  }
-}
-
-function loginDemo() {
-  SFE_SESSION={demo:true,empresa:{razao:'Distribuidora Sul Catarinense Ltda',cnpj:'12348756000109',plano:'pro'}};
-  const co=document.getElementById('tb-company'); if(co) co.textContent='Distribuidora Sul Catarinens...';
-  document.getElementById('login-screen').style.display='none';
-  buildDemo(); renderAll();
-  seedDemoData(); renderCP(); renderCR();
-  seedCadastros(); renderClientes(); renderFornecedores();
-}
-
-async function doSync() {
-  const session=SFE_SESSION||JSON.parse(localStorage.getItem('sfe_session')||'null');
-  if(!session||session.demo||!session.empresa?.pluggy_user) return;
-  const btn=document.getElementById('sync-btn');
-  if(btn){btn.textContent='⏳';btn.disabled=true;}
-  try {
-    const days=parseInt(document.getElementById('period-sel')?.value||30);
-    const r=await fetch(BE_URL+'/api/sync?days='+days+'&clientUserId='+session.empresa.pluggy_user);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const data=await r.json();
-    try{
-        if(data.data?.accounts?.length>0){
-      S.accounts=data.data.accounts.map(a=>({...a,name:a._bankName||a.name,_bank:a._bankName||'Banco',_code:(a._bankName||'BK').slice(0,2).toUpperCase(),balance:a.balance||0}));
-      S.transactions=data.data.transactions.map(t=>({...t,amount:t.amount||0,_bank:(t._bankName||'BK').slice(0,2).toUpperCase(),_bankFull:t._bankName||'Banco',_category:t.category||'Outros',description:t.description||'—'}));
-      S.isDemo=false;
-      const mode=document.getElementById('tb-mode'); const dot=document.getElementById('tb-dot');
-      if(mode){mode.textContent='AO VIVO';mode.className='tb-mode live';}
-      if(dot) dot.style.background='var(--pos)';
-      renderAll();
-    }
-    } catch(e){console.warn('Sync:',e.message);}
-  finally{
-    if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}
-    renderAll();
-  }
-}
-
-function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
-
-document.addEventListener('DOMContentLoaded',()=>{
-  const ls=document.getElementById('login-screen');
-  if(!ls) return;
-  const saved=localStorage.getItem('sfe_session');
-  if(saved){
-    try{
-      const s=JSON.parse(saved);
-      if(s.ts&&Date.now()-s.ts<86400000){
-        SFE_SESSION=s;
-        ls.style.display='none';
-        const co=document.getElementById('tb-company');
-        if(co) co.textContent=s.empresa.razao.slice(0,28);
-        return;
-      }
-    }catch(e){}
-    localStorage.removeItem('sfe_session');
-  }
-  ls.style.display='flex';
-});
-
-</script>
-
-<!-- ══ MODAL EXTRATO BANCÁRIO ══ -->
-<div class="modal" id="modal-extrato" onclick="if(event.target===this)fecharExtrato()" style="align-items:center">
-  <div class="modal-box" style="width:780px;max-height:85vh;display:flex;flex-direction:column">
-
-    <!-- Header -->
-    <div class="modal-head" style="flex-shrink:0">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="ext-bank-badge" style="font-family:var(--f-mono);font-size:13px;font-weight:700;padding:4px 12px;border-radius:6px">SC</div>
-        <div>
-          <div class="modal-title" id="ext-bank-name">Banco</div>
-          <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-bank-sub">Extrato do período</div>
-        </div>
-      </div>
-      <button class="modal-close" onclick="fecharExtrato()">✕</button>
-    </div>
-
-    <!-- KPIs -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);flex-shrink:0;border-bottom:1px solid var(--b1)">
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saldo Atual</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--t1)" id="ext-saldo">—</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Entradas</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--pos)" id="ext-ent">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-ent-n">0 créditos</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Saídas</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--neg)" id="ext-sai">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-sai-n">0 débitos</div>
-      </div>
-      <div style="background:var(--ink3);padding:14px 16px">
-        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resultado</div>
-        <div style="font-family:var(--f-display);font-size:20px;font-weight:700" id="ext-res">—</div>
-        <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="ext-res-lbl">—</div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;background:var(--ink4);border-bottom:1px solid var(--b1);flex-shrink:0">
-      <button id="ext-tab-all"     onclick="extSetTab('all')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">TODAS</button>
-      <button id="ext-tab-credit"  onclick="extSetTab('credit')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CRÉDITOS</button>
-      <button id="ext-tab-debit"   onclick="extSetTab('debit')"  style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">DÉBITOS</button>
-      <button id="ext-tab-card"    onclick="extSetTab('card')"   style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:10px 18px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx4)">CARTÃO</button>
-      <div style="margin-left:auto;padding:6px 12px">
-        <input id="ext-search" type="text" placeholder="Buscar lançamento..." style="font-size:11px;background:var(--ink5);border:1px solid var(--b1);border-radius:6px;color:var(--tx1);padding:5px 10px;outline:none;width:180px" oninput="extFilter()">
-      </div>
-    </div>
-
-    <!-- Categorias resumo -->
-    <div id="ext-cats" style="display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--b1);flex-wrap:wrap;flex-shrink:0;background:var(--ink4)"></div>
-
-    <!-- Transações -->
-    <div style="overflow-y:auto;flex:1">
-      <div style="display:grid;grid-template-columns:70px 1fr 90px 110px 110px;padding:7px 16px;background:var(--ink4);border-bottom:1px solid var(--b2);position:sticky;top:0">
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Data</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Histórico</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Tipo</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase">Categoria</span>
-        <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--tx4);text-transform:uppercase;text-align:right">Valor (R$)</span>
-      </div>
-      <div id="ext-tx-list"></div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:10px 16px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--ink4)">
-      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)" id="ext-footer-count">—</span>
-      <button class="btn btn-ghost" onclick="extExportCSV()" style="font-size:10px;padding:5px 12px">⬇ Exportar CSV</button>
-    </div>
   </div>
 </div>
 
