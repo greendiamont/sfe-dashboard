@@ -2521,6 +2521,25 @@ function navTo(page, navEl, sbEl) {
   // Activate clicked elements
   if (navEl) navEl.classList.add('active');
   if (sbEl)  sbEl.classList.add('active');
+
+  // Re-renderizar graficos apos pagina ficar visivel (Chart.js precisa de dimensoes)
+  setTimeout(() => {
+    const days = parseInt(document.getElementById('period-sel')?.value || 30);
+    const from = new Date(Date.now() - days * 86400000);
+    const txs  = S.transactions.filter(t => new Date(t.date) >= from);
+    if (page === 'fluxo') {
+      renderCashflow(txs, days);
+      renderProjection(txs);
+    } else if (page === 'categorias') {
+      renderCats(txs);
+    } else if (page === 'alertas') {
+      renderAlerts(txs);
+    } else if (page === 'bancos') {
+      renderBanks();
+    } else if (page === 'lancamentos') {
+      renderTxLog(txs);
+    }
+  }, 50);
 }
 
 // ══ RENDER ALL ══
@@ -2966,13 +2985,11 @@ function renderAlerts(txs) {
     alerts.push({s:'I',bg:'var(--gbg2)',fc:'var(--glt2)',title:'SEM OCORRÊNCIAS CRÍTICAS',desc:'Todos os indicadores dentro dos parâmetros configurados para o período.'});
 
   const crit = alerts.filter(a=>a.s==='C'||a.s==='A').length;
-  ['sb-badge','nav-badge'].forEach(id => {
-    const el = document.getElementById(id);
-    if (crit>0) {el.textContent=crit;el.style.display='';}
-    else el.style.display='none';
-  });
-  if(document.getElementById('alt-count')) if(document.getElementById('alt-count')) document.getElementById('alt-count').textContent = `${alerts.length} OCORRÊNCIAS`;
-  document.getElementById('alt-log').innerHTML = alerts.map(a=>`
+  const sb = document.getElementById('sb-alerts');
+  if(sb){ if(crit>0){sb.textContent=crit;sb.style.display='';}else sb.style.display='none'; }
+  safeSet('alt-count', `${alerts.length} OCORRÊNCIAS`);
+  const altLog = document.getElementById('alt-log');
+  if(altLog) altLog.innerHTML = alerts.map(a=>`
     <div class="alert-entry">
       <div class="asev" style="background:${a.bg};color:${a.fc}">${a.s}</div>
       <div><div class="atitle">${a.title}</div><div class="adesc">${a.desc}</div></div>
@@ -2986,46 +3003,52 @@ function renderCats(txs) {
   txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
   const entries=Object.entries(map).sort((a,b)=>b[1]-a[1]);
   const total=entries.reduce((s,e)=>s+e[1],0);
-  if(document.getElementById('cat-total')) if(document.getElementById('cat-total')) document.getElementById('cat-total').textContent = `TOTAL DESPESAS: ${fmt(total)}`;
-  if(document.getElementById('cat-count')) if(document.getElementById('cat-count')) document.getElementById('cat-count').textContent = `${entries.length} CATEGORIAS`;
+  safeSet('cat-total', `TOTAL DESPESAS: ${fmt(total)}`);
+  safeSet('cat-count', `${entries.length} CATEGORIAS`);
 
-  document.getElementById('cat-rows').innerHTML = entries.map(([c,v])=>{
+  const catRows = document.getElementById('cat-rows');
+  if(catRows) catRows.innerHTML = entries.map(([c,v])=>{
     const pct=(v/total*100).toFixed(1),col=CAT_COLORS[c]||'#445566';
     return `<div class="cat-row"><div class="cdot" style="background:${col}"></div><div class="cnm">${c}</div><div class="cval">${fmt(v)}</div><div class="cpct">${pct}%</div><div class="cbar"><div class="cbar-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
   }).join('');
 
   // Pie
-  if (charts['pie']) charts['pie'].destroy();
-  charts['pie'] = new Chart(document.getElementById('pie-chart'),{type:'doughnut',data:{
-    labels:entries.map(e=>e[0]),
-    datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>(CAT_COLORS[e[0]]||'#445566')+'40'),borderColor:entries.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:2,hoverOffset:8}]
-  },options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
-    legend:{display:false},
-    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)`}}
-  }}});
+  const pieEl = document.getElementById('pie-chart');
+  if(pieEl) {
+    if (charts['pie']) charts['pie'].destroy();
+    charts['pie'] = new Chart(pieEl,{type:'doughnut',data:{
+      labels:entries.map(e=>e[0]),
+      datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>(CAT_COLORS[e[0]]||'#445566')+'40'),borderColor:entries.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:2,hoverOffset:8}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
+      legend:{display:false},
+      tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.raw)} (${(ctx.raw/total*100).toFixed(1)}%)`}}
+    }}});
+  }
 
   // Category bar (evolution)
   const top5 = entries.slice(0,5);
   const months = ['Mar','Abr','Mai'];
   const multipliers = [[0.85,0.92,1],[0.78,0.88,1],[0.90,0.95,1],[0.82,0.91,1],[0.88,0.94,1]];
-  if (charts['catbar']) charts['catbar'].destroy();
-  charts['catbar'] = new Chart(document.getElementById('cat-bar'),{type:'bar',data:{
-    labels:months,
-    datasets:top5.map(([c,v],i)=>({
-      label:c, data:multipliers[i].map(m=>Math.round(v*m)),
-      backgroundColor:(CAT_COLORS[c]||'#445566')+'66',
-      borderColor:CAT_COLORS[c]||'#445566',
-      borderWidth:1,borderRadius:2
-    }))
-  },options:{responsive:true,maintainAspectRatio:false,plugins:{
-    legend:{labels:{color:'#6688aa',font:{family:'IBM Plex Mono',size:9},boxWidth:10}},
-    tooltip:{backgroundColor:'#1a2332',borderColor:'rgba(255,255,255,.1)',borderWidth:1,titleColor:'#ccd8e8',bodyColor:'#8899bb',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
-  },scales:{
-    x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9}}},
-    y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{family:'IBM Plex Mono',size:9},callback:v=>fmtK(v)}}
-  }}});
+  const catBarEl = document.getElementById('cat-bar');
+  if(catBarEl) {
+    if (charts['catbar']) charts['catbar'].destroy();
+    charts['catbar'] = new Chart(catBarEl,{type:'bar',data:{
+      labels:months,
+      datasets:top5.map(([c,v],i)=>({
+        label:c, data:multipliers[i].map(m=>Math.round(v*m)),
+        backgroundColor:(CAT_COLORS[c]||'#445566')+'66',
+        borderColor:CAT_COLORS[c]||'#445566',
+        borderWidth:1,borderRadius:2
+      }))
+    },options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{labels:{color:'#6688aa',font:{size:9},boxWidth:10}},
+      tooltip:{backgroundColor:'#1a2332',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.raw)}`}}
+    },scales:{
+      x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9}}},
+      y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#445566',font:{size:9},callback:v=>fmtK(v)}}
+    }}});
+  }
 }
-
 // ══ SIDEBAR BANKS ══
 function renderSidebar() {
   document.getElementById('sb-banks').innerHTML = S.accounts.map(a=>`
