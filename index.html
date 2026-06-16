@@ -1502,6 +1502,7 @@ body {
       <option value="180">180 DIAS</option>
     </select>
     <button class="btn btn-ghost" onclick="openModal()">⚙ Config</button>
+    <button class="btn btn-ghost" onclick="abrirImportOFX()" style="border-color:var(--b3);color:var(--gold)">⬆ OFX</button>
     <button class="btn btn-gold" id="sync-btn" onclick="doSync()">↻ Sincronizar</button>
     <button class="btn btn-ghost" onclick="logout()" style="padding:9px 12px" title="Sair">⏏</button>
   </div>
@@ -1871,6 +1872,7 @@ body {
       <span style="font-family:var(--f-mono);font-size:10px;font-weight:600;color:var(--tx2)" id="ln-count">—</span>
       <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
       <button class="btn btn-ghost" onclick="exportLancamentosPDF()">⬇ PDF</button>
+      <button class="btn btn-gold" onclick="abrirImportOFX()">⬆ Importar OFX</button>
     </div>
   </div>
 
@@ -2360,6 +2362,164 @@ body {
 </div>
 
 </main>
+
+<!-- ══ MODAL IMPORTAR OFX ══ -->
+<div class="modal" id="modal-ofx" onclick="if(event.target===this)fecharImportOFX()" style="align-items:center">
+  <div class="modal-box" style="width:720px;max-height:90vh;display:flex;flex-direction:column">
+
+    <!-- Header -->
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;background:var(--glow);border:1px solid var(--b3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">⬆</div>
+        <div>
+          <div class="modal-title">Importar Extrato OFX / CSV</div>
+          <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)">Suporte a OFX, QFX, OFC e CSV padrão bancário</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="fecharImportOFX()">✕</button>
+    </div>
+
+    <!-- Corpo com scroll -->
+    <div style="overflow-y:auto;flex:1">
+
+      <!-- STEP 1: Upload -->
+      <div id="ofx-step1" style="padding:24px">
+        <div style="margin-bottom:20px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+            <span style="background:var(--gold);color:#000;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px">1</span>
+            Selecionar banco e arquivo
+          </div>
+
+          <!-- Seleção de banco -->
+          <div style="margin-bottom:16px">
+            <label class="form-label">Banco / Instituição</label>
+            <select class="form-input" id="ofx-banco-sel" onchange="ofxBancoChanged()">
+              <option value="">— Detectar automaticamente —</option>
+              <option value="SC">Sicredi (748)</option>
+              <option value="BB">Banco do Brasil (001)</option>
+              <option value="BD">Bradesco (237)</option>
+              <option value="IT">Itaú (341)</option>
+              <option value="ST">Santander (033)</option>
+              <option value="CX">Caixa Econômica (104)</option>
+              <option value="SB">Sicoob (756)</option>
+              <option value="NU">Nubank (260)</option>
+              <option value="IN">Inter (077)</option>
+              <option value="UC">Unicred (136)</option>
+              <option value="XX">Outro banco</option>
+            </select>
+          </div>
+
+          <!-- Drop zone -->
+          <div id="ofx-dropzone"
+            style="border:2px dashed var(--b2);border-radius:var(--radius);padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ink4)"
+            onclick="document.getElementById('ofx-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='var(--gold)';this.style.background='var(--glow2)'"
+            ondragleave="this.style.borderColor='var(--b2)';this.style.background='var(--ink4)'"
+            ondrop="event.preventDefault();this.style.borderColor='var(--b2)';this.style.background='var(--ink4)';ofxHandleFile(event.dataTransfer.files[0])">
+            <div style="font-size:32px;margin-bottom:12px;opacity:.5">📂</div>
+            <div style="font-family:var(--f-display);font-size:15px;font-weight:600;color:var(--tx1);margin-bottom:6px">Clique ou arraste o arquivo aqui</div>
+            <div style="font-size:12px;color:var(--tx4)">Formatos aceitos: <strong style="color:var(--tx2)">.ofx · .qfx · .ofc · .csv</strong></div>
+            <div style="font-size:11px;color:var(--tx5);margin-top:6px">Exportado diretamente do seu internet banking</div>
+            <input type="file" id="ofx-file-input" accept=".ofx,.qfx,.ofc,.csv,.txt" style="display:none" onchange="ofxHandleFile(this.files[0])">
+          </div>
+
+          <!-- Onde exportar por banco -->
+          <div id="ofx-instrucoes" style="margin-top:16px;display:none">
+            <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Como exportar do seu banco</div>
+            <div id="ofx-instrucoes-texto" style="font-size:12px;color:var(--tx3);line-height:1.7;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);padding:12px 14px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Preview -->
+      <div id="ofx-step2" style="display:none;padding:0">
+
+        <!-- Resumo do arquivo -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--b1);border-bottom:1px solid var(--b1)">
+          <div style="background:var(--ink3);padding:14px 16px;text-align:center">
+            <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Lançamentos</div>
+            <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--tx0)" id="ofx-count">—</div>
+          </div>
+          <div style="background:var(--ink3);padding:14px 16px;text-align:center">
+            <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Entradas</div>
+            <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--pos)" id="ofx-ent">—</div>
+          </div>
+          <div style="background:var(--ink3);padding:14px 16px;text-align:center">
+            <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Saídas</div>
+            <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--neg)" id="ofx-sai">—</div>
+          </div>
+          <div style="background:var(--ink3);padding:14px 16px;text-align:center">
+            <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Período</div>
+            <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--gold)" id="ofx-periodo">—</div>
+          </div>
+        </div>
+
+        <!-- Info banco detectado -->
+        <div id="ofx-banco-info" style="padding:10px 20px;background:var(--glow2);border-bottom:1px solid var(--b3);font-size:12px;color:var(--tx2);display:none">
+          <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);margin-right:8px">BANCO DETECTADO</span>
+          <span id="ofx-banco-nome">—</span>
+          <span style="margin-left:16px;font-family:var(--f-mono);font-size:9px;color:var(--tx4)" id="ofx-conta-info">—</span>
+        </div>
+
+        <!-- Preview tabela -->
+        <div style="padding:12px 20px 6px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+            Preview — primeiros 10 lançamentos
+          </div>
+        </div>
+        <div style="overflow-x:auto;max-height:280px;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:80px 1fr 100px 100px;padding:6px 20px;background:var(--ink4);position:sticky;top:0;border-bottom:1px solid var(--b2)">
+            <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase">Data</span>
+            <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase">Histórico</span>
+            <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase">Categoria</span>
+            <span style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;text-align:right">Valor</span>
+          </div>
+          <div id="ofx-preview-rows"></div>
+        </div>
+
+        <!-- Opções de importação -->
+        <div style="padding:16px 20px;border-top:1px solid var(--b1);background:var(--ink4)">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Opções de importação</div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);cursor:pointer">
+              <input type="radio" name="ofx-modo" value="adicionar" checked style="accent-color:var(--gold)">
+              Adicionar aos lançamentos existentes
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);cursor:pointer">
+              <input type="radio" name="ofx-modo" value="substituir" style="accent-color:var(--gold)">
+              Substituir lançamentos do banco
+            </label>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--tx4)">
+            ⓘ Duplicatas são ignoradas automaticamente com base na data + valor + histórico
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Resultado -->
+      <div id="ofx-step3" style="display:none;padding:32px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px" id="ofx-result-icon">✓</div>
+        <div style="font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--tx0);margin-bottom:6px" id="ofx-result-title">Importação concluída</div>
+        <div style="font-size:13px;color:var(--tx3);margin-bottom:24px" id="ofx-result-sub">—</div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-gold" onclick="fecharImportOFX();navTo('lancamentos',document.querySelector('[onclick*=lancamentos]'))">Ver Lançamentos</button>
+          <button class="btn btn-ghost" onclick="ofxNovoArquivo()">Importar outro arquivo</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer com ações -->
+    <div id="ofx-footer" style="padding:14px 22px;border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;background:var(--ink4);flex-shrink:0">
+      <div style="font-size:11px;color:var(--tx4)" id="ofx-footer-msg">Selecione o banco e o arquivo para continuar</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="fecharImportOFX()">Cancelar</button>
+        <button class="btn btn-gold" id="ofx-btn-importar" onclick="ofxConfirmarImport()" style="display:none">⬆ Confirmar Importação</button>
+        <button class="btn btn-ghost" id="ofx-btn-voltar" onclick="ofxVoltar()" style="display:none">← Voltar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -4840,6 +5000,473 @@ function renderPainel(txs) {
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");document.getElementById("sb-overlay").classList.toggle("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sb-overlay").classList.remove("open");}
 function loadDemo(){buildDemo();renderAll();}
+
+// ══ IMPORTAR OFX / CSV ══════════════════════════════════════
+let _ofxTransacoes = []; // transações parseadas aguardando confirmação
+
+// Mapa de bancos: código → info
+const OFX_BANCOS = {
+  'SC': {nome:'Sicredi',       cor:'#3FA110', codigo:'748'},
+  'BB': {nome:'Banco do Brasil',cor:'#1194F6', codigo:'001'},
+  'BD': {nome:'Bradesco',      cor:'#e5173f', codigo:'237'},
+  'IT': {nome:'Itaú',          cor:'#ec7000', codigo:'341'},
+  'ST': {nome:'Santander',     cor:'#cc0000', codigo:'033'},
+  'CX': {nome:'Caixa',         cor:'#296fa7', codigo:'104'},
+  'SB': {nome:'Sicoob',        cor:'#007d3e', codigo:'756'},
+  'NU': {nome:'Nubank',        cor:'#820ad1', codigo:'260'},
+  'IN': {nome:'Inter',         cor:'#ff6900', codigo:'077'},
+  'UC': {nome:'Unicred',       cor:'#0056a2', codigo:'136'},
+  'XX': {nome:'Outro banco',   cor:'#6688aa', codigo:'000'},
+};
+
+// Instruções por banco
+const OFX_INSTRUCOES = {
+  'SC': 'Sicredi Internet Banking → Extrato → Exportar → Formato OFX → selecionar período → Baixar',
+  'BB': 'BB Internet Banking → Conta Corrente → Extrato → Exportar → OFX → período → Download',
+  'BD': 'Bradesco Net Empresa → Extrato → Exportar → Formato .OFX → Confirmar',
+  'IT': 'Itaú Empresas → Extrato → Exportar → OFX/Quicken → selecionar datas',
+  'ST': 'Santander Way ou Internet Banking → Extrato → Baixar Extrato → formato OFX',
+  'CX': 'Caixa Empresarial → Extrato → Exportar → Formato OFX',
+  'SB': 'Sicoob Internet Banking → Extrato de Conta → Exportar → OFX',
+  'NU': 'Nubank app → Perfil → Exportar extrato → OFX (somente app mobile)',
+  'IN': 'Banco Inter → Extrato → Exportar → OFX ou CSV',
+  'UC': 'Unicred Internet Banking → Extratos → Exportar OFX',
+  'XX': 'Acesse o internet banking do seu banco → Extrato → Exportar/Baixar → formato OFX, QFX ou OFC',
+};
+
+function abrirImportOFX() {
+  document.getElementById('modal-ofx').classList.add('open');
+  ofxReset();
+}
+
+function fecharImportOFX() {
+  document.getElementById('modal-ofx').classList.remove('open');
+  _ofxTransacoes = [];
+}
+
+function ofxReset() {
+  _ofxTransacoes = [];
+  document.getElementById('ofx-step1').style.display = '';
+  document.getElementById('ofx-step2').style.display = 'none';
+  document.getElementById('ofx-step3').style.display = 'none';
+  document.getElementById('ofx-btn-importar').style.display = 'none';
+  document.getElementById('ofx-btn-voltar').style.display = 'none';
+  document.getElementById('ofx-footer-msg').textContent = 'Selecione o banco e o arquivo para continuar';
+  document.getElementById('ofx-instrucoes').style.display = 'none';
+  document.getElementById('ofx-file-input').value = '';
+  // Reset dropzone
+  const dz = document.getElementById('ofx-dropzone');
+  dz.style.borderColor = 'var(--b2)';
+  dz.style.background  = 'var(--ink4)';
+}
+
+function ofxNovoArquivo() {
+  ofxReset();
+}
+
+function ofxVoltar() {
+  document.getElementById('ofx-step1').style.display = '';
+  document.getElementById('ofx-step2').style.display = 'none';
+  document.getElementById('ofx-step3').style.display = 'none';
+  document.getElementById('ofx-btn-importar').style.display = 'none';
+  document.getElementById('ofx-btn-voltar').style.display = 'none';
+  document.getElementById('ofx-footer-msg').textContent = 'Selecione o banco e o arquivo para continuar';
+}
+
+function ofxBancoChanged() {
+  const sel  = document.getElementById('ofx-banco-sel').value;
+  const inst = document.getElementById('ofx-instrucoes');
+  const txt  = document.getElementById('ofx-instrucoes-texto');
+  if (sel && OFX_INSTRUCOES[sel]) {
+    inst.style.display = '';
+    txt.textContent    = OFX_INSTRUCOES[sel];
+  } else {
+    inst.style.display = 'none';
+  }
+}
+
+function ofxHandleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // Feedback visual no dropzone
+  const dz = document.getElementById('ofx-dropzone');
+  dz.innerHTML = '<div style="font-size:24px;margin-bottom:8px">⏳</div>'
+    + '<div style="font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--gold)">Processando ' + file.name + '...</div>';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let txs = [];
+      if (['ofx','qfx','ofc'].includes(ext)) {
+        txs = parseOFX(e.target.result, file.name);
+      } else if (ext === 'csv' || ext === 'txt') {
+        txs = parseCSV(e.target.result, file.name);
+      } else {
+        throw new Error('Formato não suportado: .' + ext);
+      }
+
+      if (!txs.length) throw new Error('Nenhum lançamento encontrado no arquivo');
+
+      _ofxTransacoes = txs;
+      ofxMostrarPreview(txs, file.name);
+    } catch(err) {
+      dz.innerHTML = '<div style="font-size:24px;margin-bottom:8px">⚠</div>'
+        + '<div style="font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--neg);margin-bottom:8px">' + err.message + '</div>'
+        + '<div style="font-size:11px;color:var(--tx4)">Clique para tentar outro arquivo</div>';
+      dz.onclick = function(){ document.getElementById('ofx-file-input').click(); };
+    }
+  };
+  reader.readAsText(file, 'latin1'); // OFX usa latin1
+}
+
+// ── PARSER OFX ──────────────────────────────
+function parseOFX(raw, filename) {
+  const txs = [];
+
+  // Detectar banco pelo FID/ORG no arquivo
+  let bankCode = document.getElementById('ofx-banco-sel').value || '';
+  const fidMatch  = raw.match(/<FID>(\d+)/i)  || raw.match(/FID:(\d+)/i);
+  const orgMatch  = raw.match(/<ORG>([^<\r\n]+)/i) || raw.match(/ORG:([^\r\n]+)/i);
+  const fidVal    = fidMatch  ? fidMatch[1].trim()  : '';
+  const orgVal    = orgMatch  ? orgMatch[1].trim()  : '';
+
+  // Mapear FID para código interno
+  if (!bankCode) {
+    const fidMap = {'748':'SC','001':'BB','237':'BD','341':'IT','033':'ST','104':'CX','756':'SB','260':'NU','077':'IN','136':'UC'};
+    bankCode = fidMap[fidVal] || 'XX';
+  }
+
+  const banco = OFX_BANCOS[bankCode] || OFX_BANCOS['XX'];
+
+  // Detectar conta
+  const acctMatch  = raw.match(/<ACCTID>([^<\r\n]+)/i) || raw.match(/ACCTID:([^\r\n]+)/i);
+  const acctVal    = acctMatch ? acctMatch[1].trim() : '';
+
+  // Atualizar info do banco detectado
+  const bancoInfoEl = document.getElementById('ofx-banco-info');
+  const bancoNomeEl = document.getElementById('ofx-banco-nome');
+  const contaInfoEl = document.getElementById('ofx-conta-info');
+  if (bancoInfoEl) {
+    bancoInfoEl.style.display = '';
+    if(bancoNomeEl) bancoNomeEl.textContent = banco.nome + (fidVal ? ' (cód. ' + fidVal + ')' : '');
+    if(contaInfoEl) contaInfoEl.textContent = acctVal ? 'Conta: ' + acctVal : '';
+  }
+
+  // Atualizar select se detectou
+  if (bankCode && bankCode !== 'XX') {
+    document.getElementById('ofx-banco-sel').value = bankCode;
+    ofxBancoChanged();
+  }
+
+  // Extrair período
+  const dtStartM = raw.match(/<DTSTART>(\d{8})/i) || raw.match(/DTSTART:(\d{8})/i);
+  const dtEndM   = raw.match(/<DTEND>(\d{8})/i)   || raw.match(/DTEND:(\d{8})/i);
+  const dtStart  = dtStartM ? ofxParseDate(dtStartM[1]) : null;
+  const dtEnd    = dtEndM   ? ofxParseDate(dtEndM[1])   : null;
+  const periodEl = document.getElementById('ofx-periodo');
+  if (periodEl && dtStart && dtEnd) {
+    periodEl.textContent = fmtD(dtStart) + ' → ' + fmtD(dtEnd);
+  }
+
+  // Encontrar todas as transações — suporta formato SGML e format
+  const stmttrn = raw.match(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi)
+    || raw.match(/\{STMTTRN([\s\S]*?)\}/gi)
+    || [];
+
+  // Fallback: formato flat sem tags de fechamento
+  if (!stmttrn.length) {
+    // OFX 1.x sem fechamento de tag
+    const blocks = raw.split(/(?=<STMTTRN>)/gi).slice(1);
+    blocks.forEach(function(block) {
+      const tx = ofxExtrairTx(block, bankCode, banco.nome);
+      if (tx) txs.push(tx);
+    });
+  } else {
+    stmttrn.forEach(function(block) {
+      const tx = ofxExtrairTx(block, bankCode, banco.nome);
+      if (tx) txs.push(tx);
+    });
+  }
+
+  // Ordenar por data decrescente
+  txs.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  return txs;
+}
+
+function ofxExtrairTx(block, bankCode, bankName) {
+  const get = function(tag) {
+    const m = block.match(new RegExp('<' + tag + '>([^<\\r\\n]+)', 'i'))
+           || block.match(new RegExp(tag + ':([^\\r\\n]+)', 'i'));
+    return m ? m[1].trim() : '';
+  };
+
+  const dtposted = get('DTPOSTED') || get('DTUSER');
+  const trnamt   = get('TRNAMT');
+  const memo     = get('MEMO') || get('NAME') || get('CHECKNUM') || '';
+  const fitid    = get('FITID') || get('CHECKNUM') || '';
+  const trntype  = get('TRNTYPE') || '';
+
+  if (!dtposted || !trnamt) return null;
+
+  const amount = parseFloat(trnamt.replace(',', '.'));
+  if (isNaN(amount)) return null;
+
+  const dateStr = ofxParseDate(dtposted.slice(0, 8));
+  const desc    = ofxLimparMemo(memo);
+
+  return {
+    id:          'ofx_' + fitid + '_' + dtposted.slice(0,8),
+    description: desc,
+    date:        dateStr,
+    amount:      amount,
+    _bank:       bankCode,
+    _bankFull:   bankName,
+    _category:   ofxCategoria(desc, amount),
+    _source:     'ofx',
+    _fitid:      fitid,
+  };
+}
+
+function ofxParseDate(d8) {
+  // YYYYMMDD → ISO string
+  if (!d8 || d8.length < 8) return new Date().toISOString();
+  const y = d8.slice(0,4), m = d8.slice(4,6), day = d8.slice(6,8);
+  return new Date(y + '-' + m + '-' + day + 'T12:00:00').toISOString();
+}
+
+function ofxLimparMemo(memo) {
+  return memo
+    .replace(/\s+/g, ' ')
+    .replace(/^\d{6,}\s*/,'')   // remover nº de documento do início
+    .replace(/[*]{2,}/g, '')    // asteriscos duplos
+    .trim()
+    .slice(0, 80);
+}
+
+// ── PARSER CSV ──────────────────────────────
+function parseCSV(raw, filename) {
+  const txs   = [];
+  const lines = raw.split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if (lines.length < 2) throw new Error('CSV vazio ou formato inválido');
+
+  const bankCode = document.getElementById('ofx-banco-sel').value || 'XX';
+  const banco    = OFX_BANCOS[bankCode] || OFX_BANCOS['XX'];
+
+  // Detectar separador
+  const sep = lines[0].includes(';') ? ';' : ',';
+
+  // Detectar header
+  const header = lines[0].split(sep).map(function(h){ return h.trim().toLowerCase().replace(/["']/g,''); });
+
+  // Mapear colunas comuns dos bancos brasileiros
+  const colMap = {
+    data:      ['data','date','data lançamento','data lanc','dtposted','data movimento','data mov'],
+    historico: ['histórico','historico','descrição','descricao','memo','histórico/origem','complement','narrativa','description','histórico da transação'],
+    valor:     ['valor','value','trnamt','crédito/débito','credito debito','montante','amount'],
+    tipo:      ['tipo','type','trntype','natureza','dc','d/c'],
+    credito:   ['crédito','credito','entrada','credit'],
+    debito:    ['débito','debito','saída','saida','debit'],
+  };
+
+  function findCol(aliases) {
+    for (var i = 0; i < aliases.length; i++) {
+      var idx = header.indexOf(aliases[i]);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  }
+
+  const iData  = findCol(colMap.data);
+  const iHist  = findCol(colMap.historico);
+  const iValor = findCol(colMap.valor);
+  const iTipo  = findCol(colMap.tipo);
+  const iCred  = findCol(colMap.credito);
+  const iDebit = findCol(colMap.debito);
+
+  if (iData < 0) throw new Error('Coluna de data não encontrada. Colunas encontradas: ' + header.join(', '));
+
+  for (var i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(sep).map(function(c){ return c.trim().replace(/^["']|["']$/g,''); });
+    if (cols.length < 2 || !cols[iData]) continue;
+
+    // Parsear data (DD/MM/YYYY ou YYYY-MM-DD)
+    let dateStr;
+    const dRaw = cols[iData].trim();
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(dRaw)) {
+      const parts = dRaw.split('/');
+      dateStr = new Date(parts[2] + '-' + parts[1] + '-' + parts[0] + 'T12:00:00').toISOString();
+    } else if (/^\d{4}-\d{2}-\d{2}/.test(dRaw)) {
+      dateStr = new Date(dRaw + 'T12:00:00').toISOString();
+    } else {
+      dateStr = new Date().toISOString();
+    }
+
+    // Parsear valor
+    let amount = 0;
+    if (iValor >= 0 && cols[iValor]) {
+      const vRaw = cols[iValor].replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,'');
+      amount = parseFloat(vRaw) || 0;
+      // Verificar sinal pelo tipo
+      if (iTipo >= 0 && cols[iTipo]) {
+        const tipo = cols[iTipo].toUpperCase();
+        if (['D','DEBITO','DÉBITO','DEBIT','DB','SAIDA','SAÍDA'].includes(tipo) && amount > 0) amount = -amount;
+        if (['C','CREDITO','CRÉDITO','CREDIT','CR','ENTRADA'].includes(tipo) && amount < 0) amount = -amount;
+      }
+    } else if (iCred >= 0 && iDebit >= 0) {
+      // Colunas separadas de crédito e débito
+      const cRaw = (cols[iCred]||'').replace(/\./g,'').replace(',','.').replace(/[^\d.]/g,'');
+      const dRaw2= (cols[iDebit]||'').replace(/\./g,'').replace(',','.').replace(/[^\d.]/g,'');
+      const cVal = parseFloat(cRaw) || 0;
+      const dVal = parseFloat(dRaw2) || 0;
+      amount = cVal > 0 ? cVal : (dVal > 0 ? -dVal : 0);
+    }
+
+    if (amount === 0) continue;
+
+    const desc = iHist >= 0 ? ofxLimparMemo(cols[iHist] || 'Lançamento') : 'Lançamento';
+
+    txs.push({
+      id:          'csv_' + i + '_' + dRaw.replace(/\D/g,''),
+      description: desc,
+      date:        dateStr,
+      amount:      amount,
+      _bank:       bankCode,
+      _bankFull:   banco.nome,
+      _category:   ofxCategoria(desc, amount),
+      _source:     'csv',
+    });
+  }
+
+  txs.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+  return txs;
+}
+
+// ── CATEGORIZAÇÃO AUTOMÁTICA ──
+function ofxCategoria(desc, amount) {
+  const d = (desc || '').toLowerCase();
+  if (amount > 0) {
+    if (d.includes('ted') || d.includes('pix') || d.includes('transf')) return 'Transferência';
+    return 'Vendas';
+  }
+  if (d.includes('salario') || d.includes('salário') || d.includes('folha') || d.includes('fgts') || d.includes('inss') || d.includes('rh ')) return 'Folha de Pagamento';
+  if (d.includes('das') || d.includes('darf') || d.includes('iss') || d.includes('irpj') || d.includes('csll') || d.includes('imposto') || d.includes('receita federal')) return 'Impostos';
+  if (d.includes('aluguel') || d.includes('locaç') || d.includes('imobili')) return 'Aluguel';
+  if (d.includes('frete') || d.includes('transportadora') || d.includes('log') || d.includes('cte ') || d.includes('entrega')) return 'Fretes e Logística';
+  if (d.includes('energia') || d.includes('celesc') || d.includes('internet') || d.includes('claro') || d.includes('vivo') || d.includes('tim') || d.includes('telefon')) return 'Serviços';
+  if (d.includes('ted') || d.includes('pix') || d.includes('transf') || d.includes('trf')) return 'Transferência';
+  if (d.includes('juros') || d.includes('tarifa') || d.includes('iof') || d.includes('financ') || d.includes('empréstimo') || d.includes('cdb') || d.includes('limite')) return 'Financeiro';
+  return 'Fornecedores';
+}
+
+// ── PREVIEW ──
+function ofxMostrarPreview(txs, filename) {
+  const ent = txs.filter(function(t){return t.amount>0;}).reduce(function(s,t){return s+t.amount;},0);
+  const sai = Math.abs(txs.filter(function(t){return t.amount<0;}).reduce(function(s,t){return s+t.amount;},0));
+
+  const cntEl = document.getElementById('ofx-count');    if(cntEl) cntEl.textContent = txs.length;
+  const entEl = document.getElementById('ofx-ent');      if(entEl) entEl.textContent = fmt(ent);
+  const saiEl = document.getElementById('ofx-sai');      if(saiEl) saiEl.textContent = fmt(sai);
+
+  // Preview primeiros 10
+  const previewEl = document.getElementById('ofx-preview-rows');
+  if (previewEl) {
+    previewEl.innerHTML = txs.slice(0, 10).map(function(t) {
+      const pos = t.amount > 0;
+      const cat = t._category || 'Outros';
+      const col = (CAT_COLORS && CAT_COLORS[cat]) || '#6688aa';
+      return '<div style="display:grid;grid-template-columns:80px 1fr 100px 100px;padding:9px 20px;border-bottom:1px solid var(--b1);align-items:center">'
+        + '<span style="font-family:var(--f-mono);font-size:11px;color:var(--tx3)">' + fmtD(t.date) + '</span>'
+        + '<span style="font-size:12px;color:var(--tx1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:12px">' + (t.description||'—') + '</span>'
+        + '<span><span style="background:' + col + '22;color:' + col + ';font-family:var(--f-mono);font-size:9px;padding:2px 6px;border-radius:3px">' + cat.slice(0,12).toUpperCase() + '</span></span>'
+        + '<span style="font-family:var(--f-mono);font-size:12px;font-weight:700;text-align:right;color:' + (pos?'var(--pos)':'var(--neg)') + '">' + (pos?'+':'') + fmt(t.amount) + '</span>'
+        + '</div>';
+    }).join('');
+
+    if (txs.length > 10) {
+      previewEl.innerHTML += '<div style="padding:10px 20px;font-size:11px;color:var(--tx4);text-align:center">... e mais ' + (txs.length - 10) + ' lançamentos</div>';
+    }
+  }
+
+  // Mostrar step 2
+  document.getElementById('ofx-step1').style.display = 'none';
+  document.getElementById('ofx-step2').style.display = '';
+  document.getElementById('ofx-btn-importar').style.display = '';
+  document.getElementById('ofx-btn-voltar').style.display  = '';
+  document.getElementById('ofx-footer-msg').textContent = txs.length + ' lançamentos prontos para importar';
+}
+
+// ── CONFIRMAR IMPORTAÇÃO ──
+function ofxConfirmarImport() {
+  if (!_ofxTransacoes.length) return;
+
+  const modo     = document.querySelector('input[name="ofx-modo"]:checked')?.value || 'adicionar';
+  const bankCode = _ofxTransacoes[0]?._bank || 'XX';
+  let   novas    = 0;
+  let   duplas   = 0;
+
+  if (modo === 'substituir') {
+    // Remover lançamentos existentes do mesmo banco
+    S.transactions = S.transactions.filter(function(t){ return t._bank !== bankCode; });
+  }
+
+  // Chave de deduplicação
+  const existentes = new Set(S.transactions.map(function(t){
+    return [fmtD(t.date), Math.round(t.amount * 100), (t.description||'').slice(0,20)].join('|');
+  }));
+
+  _ofxTransacoes.forEach(function(t) {
+    const key = [fmtD(t.date), Math.round(t.amount * 100), (t.description||'').slice(0,20)].join('|');
+    if (existentes.has(key)) {
+      duplas++;
+    } else {
+      S.transactions.push(t);
+      existentes.add(key);
+      novas++;
+    }
+  });
+
+  // Reordenar por data
+  S.transactions.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+
+  // Atualizar saldo do banco importado (saldo atual = último lançamento acumulado)
+  const bancoDB = OFX_BANCOS[bankCode];
+  const contaExiste = S.accounts.find(function(a){ return a.code === bankCode; });
+  if (!contaExiste && bancoDB) {
+    // Adicionar conta se não existir
+    const totalBanco = _ofxTransacoes.reduce(function(s,t){return s+t.amount;}, 0);
+    S.accounts.push({
+      name:    bancoDB.nome,
+      code:    bankCode,
+      color:   bancoDB.cor,
+      type:    'CONTA CORRENTE PJ',
+      agency:  '—',
+      account: '—',
+      balance: totalBanco,
+    });
+  }
+
+  // Mostrar resultado
+  document.getElementById('ofx-step2').style.display = 'none';
+  document.getElementById('ofx-step3').style.display = '';
+  document.getElementById('ofx-btn-importar').style.display = 'none';
+  document.getElementById('ofx-btn-voltar').style.display   = 'none';
+  document.getElementById('ofx-footer-msg').textContent     = 'Importação concluída com sucesso';
+
+  const iconEl  = document.getElementById('ofx-result-icon');
+  const titleEl = document.getElementById('ofx-result-title');
+  const subEl   = document.getElementById('ofx-result-sub');
+  if(iconEl)  iconEl.textContent  = '✓';
+  if(titleEl) titleEl.textContent = novas + ' lançamentos importados';
+  if(subEl)   subEl.textContent   = duplas > 0
+    ? duplas + ' duplicatas ignoradas automaticamente · Banco: ' + (OFX_BANCOS[bankCode]?.nome || bankCode)
+    : 'Banco: ' + (OFX_BANCOS[bankCode]?.nome || bankCode);
+
+  // Atualizar todo o dashboard
+  renderAll();
+  renderCP();
+  renderCR();
+}
 
 // ══ LOGIN & SESSION ══
 async function doLogin() {
