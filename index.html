@@ -1870,11 +1870,57 @@ body {
     <div class="page-actions">
       <span style="font-family:var(--f-mono);font-size:10px;font-weight:600;color:var(--tx2)" id="ln-count">—</span>
       <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn btn-ghost" onclick="exportLancamentosPDF()">⬇ PDF</button>
     </div>
   </div>
-  <div class="panel" style="margin:0 32px 32px">
+
+  <!-- Filtros -->
+  <div style="padding:0 32px 0">
+    <div class="filter-bar" style="border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--b1);border-bottom:none">
+      <button class="filter-btn active" id="lnf-todos"   onclick="lnFiltrar('todos')">Todos</button>
+      <button class="filter-btn"        id="lnf-credit"  onclick="lnFiltrar('credit')">Créditos</button>
+      <button class="filter-btn"        id="lnf-debit"   onclick="lnFiltrar('debit')">Débitos</button>
+      <select class="sel" id="ln-banco-sel" onchange="lnFiltrar()" style="font-size:10px;padding:6px 10px;height:32px">
+        <option value="">Todos os bancos</option>
+      </select>
+      <select class="sel" id="ln-cat-sel" onchange="lnFiltrar()" style="font-size:10px;padding:6px 10px;height:32px">
+        <option value="">Todas as categorias</option>
+      </select>
+      <div class="filter-search">
+        <input class="search-input" id="ln-search" type="text" placeholder="Buscar histórico..." oninput="lnFiltrar()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="panel" style="margin:0 32px 8px;border-radius:0 0 var(--radius) var(--radius)">
     <div class="tx-header"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span class="r">Valor (R$)</span></div>
     <div id="tx-log-full"></div>
+    <!-- Paginação -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--b1);background:var(--ink4)">
+      <span style="font-family:var(--f-mono);font-size:10px;color:var(--tx3)" id="ln-pag-info">—</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" id="ln-prev" onclick="lnPagina(-1)" style="padding:5px 12px;font-size:11px">← Anterior</button>
+        <div id="ln-pag-nums" style="display:flex;gap:4px"></div>
+        <button class="btn btn-ghost" id="ln-next" onclick="lnPagina(1)"  style="padding:5px 12px;font-size:11px">Próxima →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumo do período filtrado -->
+  <div style="padding:0 32px 32px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="ln-resumo">
+    <div class="panel"><div class="panel-body" style="text-align:center">
+      <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Total Créditos (filtro)</div>
+      <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--pos)" id="ln-res-ent">—</div>
+    </div></div>
+    <div class="panel"><div class="panel-body" style="text-align:center">
+      <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Total Débitos (filtro)</div>
+      <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--neg)" id="ln-res-sai">—</div>
+    </div></div>
+    <div class="panel"><div class="panel-body" style="text-align:center">
+      <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resultado (filtro)</div>
+      <div style="font-family:var(--f-display);font-size:20px;font-weight:700" id="ln-res-liq">—</div>
+    </div></div>
   </div>
 </div>
 
@@ -2942,9 +2988,14 @@ function renderProjection(txs) {
   }
 }
 
-// ══ TX LOG ══
+// ══ TX LOG — com paginação e filtros ══
+const LN_POR_PAGINA = 50;
+let _lnPagina  = 1;
+let _lnFiltro  = 'todos';
+let _lnTxsFiltradas = [];
+
 function renderTxRows(txs, limit) {
-  return txs.slice(0,limit||999).map(t => {
+  return txs.slice(0, limit || 999).map(t => {
     const cat=t._category||'Outros', color=CAT_COLORS[cat]||'#445566', cbg=CAT_BG[cat]||'#080e14', pos=t.amount>0;
     const bkColor = DEMO.banks.find(b=>b.code===t._bank)?.color || '#446688';
     return `<div class="tx-row">
@@ -2958,10 +3009,248 @@ function renderTxRows(txs, limit) {
 }
 
 function renderTxLog(txs) {
-  document.getElementById('tx-log-main').innerHTML = renderTxRows(txs,10);
-  document.getElementById('tx-log-full').innerHTML = renderTxRows(txs);
-  document.getElementById('ln-count').textContent  = `${txs.length} LANÇAMENTOS`;
+  // Painel executivo — só 10
+  const mainEl = document.getElementById('tx-log-main');
+  if (mainEl) mainEl.innerHTML = renderTxRows(txs, 10);
+
+  // Atualizar selects de banco e categoria
+  const bancoSel = document.getElementById('ln-banco-sel');
+  const catSel   = document.getElementById('ln-cat-sel');
+  if (bancoSel) {
+    const bancos = [...new Set(txs.map(t=>t._bank).filter(Boolean))].sort();
+    bancoSel.innerHTML = '<option value="">Todos os bancos</option>' +
+      bancos.map(b=>`<option value="${b}">${b}</option>`).join('');
+  }
+  if (catSel) {
+    const cats = [...new Set(txs.map(t=>t._category||'Outros'))].sort();
+    catSel.innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+
+  // Guardar txs globais para paginação
+  window._lnTxsAll = txs;
+  _lnPagina = 1;
+  lnFiltrar();
 }
+
+function lnFiltrar(filtro) {
+  if (filtro) {
+    _lnFiltro = filtro;
+    _lnPagina = 1;
+    // Atualizar botões
+    document.querySelectorAll('[id^="lnf-"]').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('lnf-' + filtro);
+    if (btn) btn.classList.add('active');
+  }
+
+  const txsAll = window._lnTxsAll || [];
+  const search  = (document.getElementById('ln-search')?.value  || '').toLowerCase();
+  const banco   = document.getElementById('ln-banco-sel')?.value || '';
+  const cat     = document.getElementById('ln-cat-sel')?.value   || '';
+
+  let filtered = txsAll.filter(t => {
+    if (_lnFiltro === 'credit' && t.amount <= 0) return false;
+    if (_lnFiltro === 'debit'  && t.amount >= 0) return false;
+    if (banco  && t._bank !== banco) return false;
+    if (cat    && (t._category || 'Outros') !== cat) return false;
+    if (search && !(t.description || '').toLowerCase().includes(search) &&
+                  !(t._category   || '').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  _lnTxsFiltradas = filtered;
+  lnRenderPagina();
+}
+
+function lnRenderPagina() {
+  const txs   = _lnTxsFiltradas;
+  const total = txs.length;
+  const pages = Math.max(1, Math.ceil(total / LN_POR_PAGINA));
+  _lnPagina   = Math.min(_lnPagina, pages);
+
+  const inicio = (_lnPagina - 1) * LN_POR_PAGINA;
+  const fim    = Math.min(inicio + LN_POR_PAGINA, total);
+  const slice  = txs.slice(inicio, fim);
+
+  // Render rows
+  const el = document.getElementById('tx-log-full');
+  if (el) el.innerHTML = slice.length
+    ? renderTxRows(slice, LN_POR_PAGINA)
+    : '<div style="padding:32px;text-align:center;color:var(--tx4);font-size:13px">Nenhum lançamento encontrado</div>';
+
+  // Info paginação
+  const info = document.getElementById('ln-pag-info');
+  if (info) info.textContent = total === 0
+    ? 'Nenhum resultado'
+    : `Exibindo ${inicio+1}–${fim} de ${total} lançamentos`;
+
+  // Contagem geral
+  const cnt = document.getElementById('ln-count');
+  if (cnt) cnt.textContent = `${total} / ${(window._lnTxsAll||[]).length} LANÇAMENTOS`;
+
+  // Botões prev/next
+  const prev = document.getElementById('ln-prev');
+  const next = document.getElementById('ln-next');
+  if (prev) prev.disabled = _lnPagina <= 1;
+  if (next) next.disabled = _lnPagina >= pages;
+
+  // Números de página (máx 5 visíveis)
+  const numsEl = document.getElementById('ln-pag-nums');
+  if (numsEl) {
+    let start = Math.max(1, _lnPagina - 2);
+    let end   = Math.min(pages, start + 4);
+    start     = Math.max(1, end - 4);
+    let html  = '';
+    for (let p = start; p <= end; p++) {
+      html += `<button onclick="lnIrPagina(${p})" style="font-family:var(--f-mono);font-size:10px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid ${p===_lnPagina?'var(--gold)':'var(--b1)'};background:${p===_lnPagina?'var(--glow)':'var(--ink4)'};color:${p===_lnPagina?'var(--gold)':'var(--tx3)'};cursor:pointer">${p}</button>`;
+    }
+    numsEl.innerHTML = html;
+  }
+
+  // Resumo financeiro do filtro
+  const ent = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const liq = ent - sai;
+  const entEl = document.getElementById('ln-res-ent'); if (entEl) entEl.textContent = fmt(ent);
+  const saiEl = document.getElementById('ln-res-sai'); if (saiEl) saiEl.textContent = fmt(sai);
+  const liqEl = document.getElementById('ln-res-liq');
+  if (liqEl) { liqEl.textContent = fmt(liq); liqEl.style.color = liq >= 0 ? 'var(--pos)' : 'var(--neg)'; }
+}
+
+function lnPagina(delta) {
+  _lnPagina += delta;
+  lnRenderPagina();
+  document.getElementById('page-lancamentos')?.scrollTo(0, 0);
+}
+
+function lnIrPagina(p) {
+  _lnPagina = p;
+  lnRenderPagina();
+}
+
+// ══ EXPORT PDF LANÇAMENTOS ══
+function exportLancamentosPDF() {
+  const txs  = _lnTxsFiltradas.length ? _lnTxsFiltradas : (window._lnTxsAll || []);
+  const co   = document.getElementById('tb-company')?.textContent || 'Empresa';
+  const ts   = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const days = document.getElementById('period-sel')?.value || '30';
+
+  const ent  = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai  = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const liq  = ent - sai;
+
+  // Agrupar por data para o PDF
+  const rows = txs.map(t => {
+    const pos = t.amount > 0;
+    const cat = t._category || 'Outros';
+    const col = CAT_COLORS[cat] || '#445566';
+    return `<tr>
+      <td style="font-family:monospace;font-size:10px;color:#666;white-space:nowrap">${fmtD(t.date)}</td>
+      <td style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description||'—'}</td>
+      <td style="font-family:monospace;font-size:10px;font-weight:700;color:${DEMO.banks.find(b=>b.code===t._bank)?.color||'#446688'}">${t._bank||'—'}</td>
+      <td><span style="background:${col}22;color:${col};font-family:monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px">${cat.slice(0,14).toUpperCase()}</span></td>
+      <td style="font-family:monospace;font-size:11px;font-weight:700;text-align:right;color:${pos?'#16a34a':'#dc2626'}">${pos?'+':''}${fmt(t.amount)}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<hea'+'d>
+<meta charset="UTF-8">
+<title>Lançamentos — ${co}</title>
+<sty'+'le>
+  @page { size: A4; margin: 14mm 12mm; }
+  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Arial,sans-serif; font-size:11px; color:#1a1a2e; background:#fff; }
+
+  .header { background:#060d1a; color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+  .logo-mark { width:16px; height:16px; background:#e8b020; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:inline-block; margin-right:8px; vertical-align:middle; }
+  .logo-text { font-size:14px; font-weight:800; letter-spacing:2px; }
+  .header-info { text-align:right; font-size:10px; color:#9aaabf; }
+  .header-co { font-size:12px; font-weight:700; color:#fff; }
+  .gold-bar { height:3px; background:linear-gradient(90deg,#e8b020,#c8940a); }
+
+  .resumo { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; padding:12px 16px; background:#f8f8f8; border-bottom:1px solid #ddd; }
+  .res-box { text-align:center; }
+  .res-lbl { font-family:monospace; font-size:8px; text-transform:uppercase; letter-spacing:1px; color:#888; margin-bottom:3px; }
+  .res-val { font-size:13px; font-weight:700; }
+
+  .filtros { padding:8px 16px; font-size:10px; color:#666; border-bottom:1px solid #eee; background:#fafafa; }
+
+  table { width:100%; border-collapse:collapse; }
+  thead tr { background:#060d1a; }
+  thead th { font-family:monospace; font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#e8b020; padding:6px 8px; text-align:left; }
+  thead th:last-child { text-align:right; }
+  tbody tr:nth-child(even) { background:#f9f9f9; }
+  tbody tr:hover { background:#f0f4ff; }
+  tbody td { padding:5px 8px; border-bottom:1px solid #eee; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+
+  .footer { margin-top:12px; padding-top:8px; border-top:1px solid #ddd; display:flex; justify-content:space-between; font-size:9px; color:#aaa; }
+  .page-break { page-break-before:always; }
+</sty'+'le>
+</hea'+'d>
+<bod'+'y>
+
+<div class="header">
+  <div>
+    <span class="logo-mark"></span>
+    <span class="logo-text">SFE</span>
+    <span style="font-size:9px;color:#6688aa;margin-left:8px;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</span>
+  </div>
+  <div class="header-info">
+    <div class="header-co">${co}</div>
+    <div>Relatório de Lançamentos · Período: ${days} dias</div>
+    <div>Gerado em ${ts}</div>
+  </div>
+</div>
+<div class="gold-bar"></div>
+
+<div class="resumo">
+  <div class="res-box"><div class="res-lbl">Total lançamentos</div><div class="res-val" style="color:#333">${txs.length}</div></div>
+  <div class="res-box"><div class="res-lbl">Total Créditos</div><div class="res-val" style="color:#16a34a">${fmt(ent)}</div></div>
+  <div class="res-box"><div class="res-lbl">Total Débitos</div><div class="res-val" style="color:#dc2626">${fmt(sai)}</div></div>
+  <div class="res-box"><div class="res-lbl">Resultado Líquido</div><div class="res-val" style="color:${liq>=0?'#16a34a':'#dc2626'}">${fmt(liq)}</div></div>
+</div>
+
+<div class="filtros">
+  Filtros aplicados:
+  ${_lnFiltro !== 'todos' ? `<strong>Tipo: ${_lnFiltro === 'credit' ? 'Créditos' : 'Débitos'}</strong> · ` : ''}
+  ${document.getElementById('ln-banco-sel')?.value ? `<strong>Banco: ${document.getElementById('ln-banco-sel').value}</strong> · ` : ''}
+  ${document.getElementById('ln-cat-sel')?.value   ? `<strong>Categoria: ${document.getElementById('ln-cat-sel').value}</strong> · ` : ''}
+  ${document.getElementById('ln-search')?.value    ? `<strong>Busca: "${document.getElementById('ln-search').value}"</strong> · ` : ''}
+  Ordenado por data (mais recente primeiro)
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:70px">Data</th>
+      <th>Histórico</th>
+      <th style="width:50px">Banco</th>
+      <th style="width:110px">Categoria</th>
+      <th style="width:110px;text-align:right">Valor (R$)</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+</table>
+
+<div class="footer">
+  <span>SFE Sistema Financeiro Empresarial · greendiamont.github.io/sfe-dashboard</span>
+  <span>${txs.length} lançamentos · ${ts}</span>
+</div>
+
+<scr'+'ipt>window.onload = () => setTimeout(() => window.print(), 500);</scr'+'ipt>
+</bod'+'y>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+  if (!win) { alert('Permita pop-ups para exportar o PDF'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
 
 // ══ ALERTS ══
 function renderAlerts(txs) {
