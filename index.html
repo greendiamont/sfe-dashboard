@@ -3135,122 +3135,123 @@ function exportLancamentosPDF() {
   const ts   = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const days = document.getElementById('period-sel')?.value || '30';
 
-  const ent  = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-  const sai  = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
-  const liq  = ent - sai;
+  const ent = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const liq = ent - sai;
 
-  // Agrupar por data para o PDF
-  const rows = txs.map(t => {
+  const filtroTipo  = _lnFiltro !== 'todos' ? (_lnFiltro === 'credit' ? 'Créditos' : 'Débitos') : '';
+  const filtroBanco = document.getElementById('ln-banco-sel')?.value || '';
+  const filtroCat   = document.getElementById('ln-cat-sel')?.value   || '';
+  const filtroQ     = document.getElementById('ln-search')?.value    || '';
+  const filtrosTexto = [
+    filtroTipo  ? 'Tipo: ' + filtroTipo   : '',
+    filtroBanco ? 'Banco: ' + filtroBanco : '',
+    filtroCat   ? 'Categoria: ' + filtroCat : '',
+    filtroQ     ? 'Busca: "' + filtroQ + '"' : '',
+  ].filter(Boolean).join(' · ') || 'Todos os lançamentos';
+
+  // Montar linhas da tabela
+  const rows = txs.map(function(t) {
     const pos = t.amount > 0;
     const cat = t._category || 'Outros';
-    const col = CAT_COLORS[cat] || '#445566';
-    return `<tr>
-      <td style="font-family:monospace;font-size:10px;color:#666;white-space:nowrap">${fmtD(t.date)}</td>
-      <td style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description||'—'}</td>
-      <td style="font-family:monospace;font-size:10px;font-weight:700;color:${DEMO.banks.find(b=>b.code===t._bank)?.color||'#446688'}">${t._bank||'—'}</td>
-      <td><span style="background:${col}22;color:${col};font-family:monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px">${cat.slice(0,14).toUpperCase()}</span></td>
-      <td style="font-family:monospace;font-size:11px;font-weight:700;text-align:right;color:${pos?'#16a34a':'#dc2626'}">${pos?'+':''}${fmt(t.amount)}</td>
-    </tr>`;
+    const col = (CAT_COLORS && CAT_COLORS[cat]) || '#445566';
+    const bkColor = (DEMO.banks.find(function(b){return b.code===t._bank;})||{}).color || '#446688';
+    const valColor = pos ? '#15803d' : '#dc2626';
+    const valStr   = (pos ? '+' : '') + fmt(t.amount);
+    return '<tr>'
+      + '<td style="font-family:monospace;font-size:10px;color:#555;white-space:nowrap;padding:5px 8px;border-bottom:1px solid #eee">' + fmtD(t.date) + '</td>'
+      + '<td style="font-size:11px;padding:5px 8px;border-bottom:1px solid #eee;max-width:300px">' + (t.description||'—') + '</td>'
+      + '<td style="font-family:monospace;font-size:10px;font-weight:700;padding:5px 8px;border-bottom:1px solid #eee;color:' + bkColor + '">' + (t._bank||'—') + '</td>'
+      + '<td style="padding:5px 8px;border-bottom:1px solid #eee"><span style="background:' + col + '22;color:' + col + ';font-family:monospace;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px">' + cat.slice(0,14).toUpperCase() + '</span></td>'
+      + '<td style="font-family:monospace;font-size:11px;font-weight:700;text-align:right;padding:5px 8px;border-bottom:1px solid #eee;color:' + valColor + '">' + valStr + '</td>'
+      + '</tr>';
   }).join('');
 
-  const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<hea'+'d>
-<meta charset="UTF-8">
-<title>Lançamentos — ${co}</title>
-<sty'+'le>
-  @page { size: A4; margin: 14mm 12mm; }
-  @media print { body { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:Arial,sans-serif; font-size:11px; color:#1a1a2e; background:#fff; }
+  // Montar HTML completo via concatenação (evita parsing pelo browser)
+  const css = [
+    '@page{size:A4;margin:14mm 12mm}',
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}',
+    '*{box-sizing:border-box;margin:0;padding:0}',
+    'body{font-family:Arial,sans-serif;font-size:11px;color:#1a1a2e;background:#fff}',
+    '.hdr{background:#060d1a;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}',
+    '.lm{width:16px;height:16px;background:#e8b020;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:inline-block;margin-right:8px;vertical-align:middle}',
+    '.lt{font-size:14px;font-weight:800;letter-spacing:2px}',
+    '.hi{text-align:right;font-size:10px;color:#9aaabf}',
+    '.hco{font-size:12px;font-weight:700;color:#fff}',
+    '.gb{height:3px;background:linear-gradient(90deg,#e8b020,#c8940a)}',
+    '.res{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid #ddd}',
+    '.rb{text-align:center;padding:10px 8px;border-right:1px solid #ddd}',
+    '.rb:last-child{border-right:none}',
+    '.rl{font-family:monospace;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px}',
+    '.rv{font-size:14px;font-weight:700}',
+    '.fi{padding:7px 16px;font-size:10px;color:#555;border-bottom:1px solid #eee;background:#fafafa}',
+    'table{width:100%;border-collapse:collapse}',
+    'thead tr{background:#060d1a}',
+    'thead th{font-family:monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#e8b020;padding:7px 8px;text-align:left}',
+    'thead th:last-child{text-align:right}',
+    'tbody tr:nth-child(even){background:#f9f9f9}',
+    '.ft{margin-top:14px;padding-top:8px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:9px;color:#aaa}',
+  ].join('');
 
-  .header { background:#060d1a; color:#fff; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
-  .logo-mark { width:16px; height:16px; background:#e8b020; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:inline-block; margin-right:8px; vertical-align:middle; }
-  .logo-text { font-size:14px; font-weight:800; letter-spacing:2px; }
-  .header-info { text-align:right; font-size:10px; color:#9aaabf; }
-  .header-co { font-size:12px; font-weight:700; color:#fff; }
-  .gold-bar { height:3px; background:linear-gradient(90deg,#e8b020,#c8940a); }
+  const html = '<!DOCTYPE html>'
+    + '<html lang="pt-BR">'
+    + '<head>'
+    + '<meta charset="UTF-8">'
+    + '<title>Lancamentos — ' + co + '</title>'
+    + '<style>' + css + '</style>'
+    + '</head>'
+    + '<body>'
 
-  .resumo { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; padding:12px 16px; background:#f8f8f8; border-bottom:1px solid #ddd; }
-  .res-box { text-align:center; }
-  .res-lbl { font-family:monospace; font-size:8px; text-transform:uppercase; letter-spacing:1px; color:#888; margin-bottom:3px; }
-  .res-val { font-size:13px; font-weight:700; }
+    + '<div class="hdr">'
+    +   '<div><span class="lm"></span><span class="lt">SFE</span>'
+    +   '<span style="font-size:9px;color:#6688aa;margin-left:8px;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</span></div>'
+    +   '<div class="hi"><div class="hco">' + co + '</div>'
+    +   '<div>Relatorio de Lancamentos · ' + days + ' dias</div>'
+    +   '<div>Gerado em ' + ts + '</div></div>'
+    + '</div>'
+    + '<div class="gb"></div>'
 
-  .filtros { padding:8px 16px; font-size:10px; color:#666; border-bottom:1px solid #eee; background:#fafafa; }
+    + '<div class="res">'
+    +   '<div class="rb"><div class="rl">Lancamentos</div><div class="rv" style="color:#333">' + txs.length + '</div></div>'
+    +   '<div class="rb"><div class="rl">Total Creditos</div><div class="rv" style="color:#15803d">' + fmt(ent) + '</div></div>'
+    +   '<div class="rb"><div class="rl">Total Debitos</div><div class="rv" style="color:#dc2626">' + fmt(sai) + '</div></div>'
+    +   '<div class="rb"><div class="rl">Resultado Liquido</div><div class="rv" style="color:' + (liq>=0?'#15803d':'#dc2626') + '">' + fmt(liq) + '</div></div>'
+    + '</div>'
 
-  table { width:100%; border-collapse:collapse; }
-  thead tr { background:#060d1a; }
-  thead th { font-family:monospace; font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#e8b020; padding:6px 8px; text-align:left; }
-  thead th:last-child { text-align:right; }
-  tbody tr:nth-child(even) { background:#f9f9f9; }
-  tbody tr:hover { background:#f0f4ff; }
-  tbody td { padding:5px 8px; border-bottom:1px solid #eee; vertical-align:middle; }
-  tbody tr:last-child td { border-bottom:none; }
+    + '<div class="fi">Filtros: <strong>' + filtrosTexto + '</strong> · Ordenado por data (mais recente primeiro)</div>'
 
-  .footer { margin-top:12px; padding-top:8px; border-top:1px solid #ddd; display:flex; justify-content:space-between; font-size:9px; color:#aaa; }
-  .page-break { page-break-before:always; }
-</sty'+'le>
-</hea'+'d>
-<bod'+'y>
+    + '<table>'
+    +   '<thead><tr>'
+    +     '<th style="width:68px">Data</th>'
+    +     '<th>Historico</th>'
+    +     '<th style="width:48px">Banco</th>'
+    +     '<th style="width:110px">Categoria</th>'
+    +     '<th style="width:110px;text-align:right">Valor (R$)</th>'
+    +   '</tr></thead>'
+    +   '<tbody>' + rows + '</tbody>'
+    + '</table>'
 
-<div class="header">
-  <div>
-    <span class="logo-mark"></span>
-    <span class="logo-text">SFE</span>
-    <span style="font-size:9px;color:#6688aa;margin-left:8px;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</span>
-  </div>
-  <div class="header-info">
-    <div class="header-co">${co}</div>
-    <div>Relatório de Lançamentos · Período: ${days} dias</div>
-    <div>Gerado em ${ts}</div>
-  </div>
-</div>
-<div class="gold-bar"></div>
+    + '<div class="ft">'
+    +   '<span>SFE Sistema Financeiro Empresarial · greendiamont.github.io/sfe-dashboard</span>'
+    +   '<span>' + txs.length + ' lancamentos · ' + ts + '</span>'
+    + '</div>'
 
-<div class="resumo">
-  <div class="res-box"><div class="res-lbl">Total lançamentos</div><div class="res-val" style="color:#333">${txs.length}</div></div>
-  <div class="res-box"><div class="res-lbl">Total Créditos</div><div class="res-val" style="color:#16a34a">${fmt(ent)}</div></div>
-  <div class="res-box"><div class="res-lbl">Total Débitos</div><div class="res-val" style="color:#dc2626">${fmt(sai)}</div></div>
-  <div class="res-box"><div class="res-lbl">Resultado Líquido</div><div class="res-val" style="color:${liq>=0?'#16a34a':'#dc2626'}">${fmt(liq)}</div></div>
-</div>
+    + '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'
+    + '</body>'
+    + '</html>';
 
-<div class="filtros">
-  Filtros aplicados:
-  ${_lnFiltro !== 'todos' ? `<strong>Tipo: ${_lnFiltro === 'credit' ? 'Créditos' : 'Débitos'}</strong> · ` : ''}
-  ${document.getElementById('ln-banco-sel')?.value ? `<strong>Banco: ${document.getElementById('ln-banco-sel').value}</strong> · ` : ''}
-  ${document.getElementById('ln-cat-sel')?.value   ? `<strong>Categoria: ${document.getElementById('ln-cat-sel').value}</strong> · ` : ''}
-  ${document.getElementById('ln-search')?.value    ? `<strong>Busca: "${document.getElementById('ln-search').value}"</strong> · ` : ''}
-  Ordenado por data (mais recente primeiro)
-</div>
-
-<table>
-  <thead>
-    <tr>
-      <th style="width:70px">Data</th>
-      <th>Histórico</th>
-      <th style="width:50px">Banco</th>
-      <th style="width:110px">Categoria</th>
-      <th style="width:110px;text-align:right">Valor (R$)</th>
-    </tr>
-  </thead>
-  <tbody>${rows}</tbody>
-</table>
-
-<div class="footer">
-  <span>SFE Sistema Financeiro Empresarial · greendiamont.github.io/sfe-dashboard</span>
-  <span>${txs.length} lançamentos · ${ts}</span>
-</div>
-
-<scr'+'ipt>window.onload = () => setTimeout(() => window.print(), 500);</scr'+'ipt>
-</bod'+'y>
-</html>`;
-
-  const win = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
-  if (!win) { alert('Permita pop-ups para exportar o PDF'); return; }
-  win.document.write(html);
-  win.document.close();
+  // Usar Blob URL — evita qualquer conflito com o parser HTML do browser
+  const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank', 'width=960,height=720,scrollbars=yes');
+  if (!win) {
+    alert('Permita pop-ups para exportar o PDF');
+    URL.revokeObjectURL(url);
+    return;
+  }
+  // Liberar URL após 60s
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
 }
-
 
 // ══ ALERTS ══
 function renderAlerts(txs) {
