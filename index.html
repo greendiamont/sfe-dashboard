@@ -68,7 +68,7 @@
 
   /* Layout */
   --sidebar-w: 240px;
-  --topbar-h:  60px;
+  --topbar-h:  72px;
   --radius:    12px;
   --radius-sm: 8px;
 }
@@ -251,8 +251,8 @@ body {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 24px;
+  gap: 0;
+  padding: 0;
 }
 
 .tb-breadcrumb {
@@ -262,27 +262,33 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 0 20px;
+  border-right: 1px solid var(--b1);
+  height: 100%;
+  white-space: nowrap;
 }
 
 .tb-breadcrumb span { color: var(--tx2); }
 .tb-breadcrumb .sep { color: var(--tx5); }
 
+/* Bloco empresa — ocupa o centro com destaque */
 .tb-entity {
-  margin-left: auto;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--ink4);
-  border: 1px solid var(--b1);
-  border-radius: 20px;
-  padding: 5px 14px 5px 10px;
+  gap: 12px;
+  padding: 0 24px;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(212,160,23,.06) 0%, transparent 60%);
+  border-left: 3px solid var(--gold);
+  border-radius: 0;
 }
 
 .tb-entity-dot {
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--pos);
-  box-shadow: 0 0 8px var(--pos);
+  box-shadow: 0 0 10px var(--pos);
   animation: pulse 2.5s infinite;
   flex-shrink: 0;
 }
@@ -290,10 +296,10 @@ body {
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
 .tb-entity-name {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  color: var(--tx2);
-  font-weight: 500;
+  font-family: var(--f-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tx0);
 }
 
 .tb-right {
@@ -1489,21 +1495,21 @@ body {
       <span id="tb-module">Painel Executivo</span>
     </div>
 
-    <!-- Empresa — nome + CNPJ + logo -->
-    <div class="tb-entity" style="gap:10px;padding:5px 14px 5px 8px;max-width:340px">
+    <!-- Bloco empresa — grande e destacado -->
+    <div class="tb-entity">
       <div class="tb-entity-dot" id="tb-dot"></div>
 
-      <!-- Logo da empresa (inicial ou imagem) -->
-      <div id="tb-logo-empresa" style="width:28px;height:28px;border-radius:6px;background:var(--ink5);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-size:13px;font-weight:800;color:var(--gold);flex-shrink:0;overflow:hidden;cursor:pointer" title="Clique para alterar logo" onclick="document.getElementById('logo-upload').click()">
+      <!-- Logo da empresa -->
+      <div id="tb-logo-empresa" style="width:38px;height:38px;border-radius:8px;background:var(--ink5);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-size:16px;font-weight:800;color:var(--gold);flex-shrink:0;overflow:hidden;cursor:pointer" title="Clique para carregar logo da empresa" onclick="document.getElementById('logo-upload').click()">
         <span id="tb-logo-inicial">S</span>
-        <img id="tb-logo-img" style="display:none;width:100%;height:100%;object-fit:cover">
+        <img id="tb-logo-img" style="display:none;width:100%;height:100%;object-fit:contain;padding:2px">
       </div>
       <input type="file" id="logo-upload" accept="image/*" style="display:none" onchange="carregarLogo(this)">
 
       <!-- Nome + CNPJ -->
-      <div style="overflow:hidden">
-        <div id="tb-company" style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--tx0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2">—</div>
-        <div id="tb-cnpj" style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);letter-spacing:.5px;margin-top:1px">—</div>
+      <div style="overflow:hidden;min-width:0">
+        <div id="tb-company" style="font-family:var(--f-display);font-size:17px;font-weight:700;color:var(--tx0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;letter-spacing:-.3px">—</div>
+        <div id="tb-cnpj" style="font-family:var(--f-mono);font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.5px;margin-top:2px">—</div>
       </div>
     </div>
   </div>
