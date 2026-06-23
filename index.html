@@ -2592,8 +2592,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (s.ts && Date.now()-s.ts < 86400000) {
         SFE_SESSION = s;
         if (ls) ls.style.display = 'none';
-        const co = document.getElementById('tb-company');
-        if (co) co.textContent = s.empresa.razao.slice(0,28);
+
+        // Atualizar topbar com dados da empresa real
+        const co   = document.getElementById('tb-company');
+        const dot  = document.getElementById('tb-dot');
+        const mode = document.getElementById('tb-mode');
+        if(co)   co.textContent = (s.empresa.fantasia||s.empresa.razao||'').slice(0,28);
+        if(dot)  dot.style.background = 'var(--pos)';
+        if(mode) { mode.textContent = 'PRO'; mode.className = 'tb-mode live'; }
+
+        // Atualizar DEMO.co para o nome real (usado em exports)
+        if(s.empresa) {
+          DEMO.co   = s.empresa.razao   || DEMO.co;
+          DEMO.cnpj = s.empresa.cnpj    || DEMO.cnpj;
+        }
+
         sessionOk = true;
       }
     } catch(e) {}
@@ -5486,14 +5499,58 @@ async function doLogin() {
     const r = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cnpj:cnpj.replace(/\D/g,''),senha})});
     const data = await r.json();
     if (!data.ok) throw new Error(data.error||'Credenciais inválidas');
+
     SFE_SESSION = data;
     localStorage.setItem('sfe_session',JSON.stringify({token:data.token,ts:Date.now(),empresa:data.empresa}));
-    const co=document.getElementById('tb-company'); if(co) co.textContent=data.empresa.razao.slice(0,28);
+
+    // Atualizar nome/CNPJ da empresa na topbar
+    const co  = document.getElementById('tb-company');
+    const dot = document.getElementById('tb-dot');
+    const mode= document.getElementById('tb-mode');
+    if(co)   co.textContent  = (data.empresa.fantasia||data.empresa.razao).slice(0,28);
+    if(dot)  dot.style.background = 'var(--pos)';
+    if(mode) { mode.textContent = 'PRO'; mode.className = 'tb-mode live'; }
+
+    // Fechar tela de login
     document.getElementById('login-screen').style.display='none';
-    buildDemo(); renderAll();
-    seedDemoData(); renderCP(); renderCR();
-    seedCadastros(); renderClientes(); renderFornecedores();
-    if(data.empresa.pluggy_user) setTimeout(doSync,1200);
+
+    // Iniciar com dados vazios (empresa real, sem demo)
+    S.accounts     = [];
+    S.transactions = [];
+
+    // Atualizar o DEMO.co para o nome real (usado em exports/PDF)
+    DEMO.co   = data.empresa.razao;
+    DEMO.cnpj = data.empresa.cnpj;
+
+    // Renderizar dashboard vazio com dados do cliente
+    renderAll();
+    renderCP();
+    renderCR();
+    renderClientes();
+    renderFornecedores();
+    renderSidebar();
+
+    // Exibir mensagem de boas-vindas com instruções
+    const diagEl = document.getElementById('painel-ia-diag');
+    if(diagEl) diagEl.innerHTML = `
+      <div style="font-size:12px;line-height:1.9;color:var(--tx2)">
+        <div style="font-family:var(--f-mono);font-size:10px;font-weight:700;color:var(--gold);margin-bottom:8px">
+          ✓ BEM-VINDO, ${(data.empresa.fantasia||data.empresa.razao).split(' ')[0].toUpperCase()}
+        </div>
+        Para começar, importe seus dados bancários:<br>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          <button onclick="abrirImportOFX()" style="font-family:var(--f-mono);font-size:10px;font-weight:600;padding:7px 14px;border-radius:6px;border:1px solid #1a6fa8;background:rgba(26,111,168,.15);color:#4a9fd4;cursor:pointer;text-align:left">
+            ⬆ Importar extrato OFX / CSV do seu banco
+          </button>
+          <button onclick="doSync()" style="font-family:var(--f-mono);font-size:10px;font-weight:600;padding:7px 14px;border-radius:6px;border:1px solid var(--b3);background:var(--glow2);color:var(--gold);cursor:pointer;text-align:left">
+            ↻ Conectar via Open Finance (Pluggy/TecnoSpeed)
+          </button>
+        </div>
+      </div>`;
+
+    // Se tiver Pluggy configurado, sincronizar automaticamente
+    if(data.empresa.pluggy_user) setTimeout(doSync, 1200);
+
   } catch(e) {
     if(err){err.textContent=e.message;err.style.display='block';}
     btn.textContent='Entrar no Sistema'; btn.disabled=false;
@@ -5734,7 +5791,10 @@ function extExportCSV(){
       </div>
       <div style="margin-bottom:24px">
         <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx2);display:block;margin-bottom:6px">SENHA</label>
-        <input id="login-senha" type="password" placeholder="••••••••" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 14px;outline:none" onkeypress="if(event.key==='Enter')doLogin()">
+        <div style="position:relative">
+          <input id="login-senha" type="password" placeholder="••••••••" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:14px;padding:12px 44px 12px 14px;outline:none" onkeypress="if(event.key==='Enter')doLogin()">
+          <button onclick="(function(){var i=document.getElementById('login-senha');var b=document.getElementById('btn-ver-senha');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁':'🙈';})()" id="btn-ver-senha" type="button" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--tx3);padding:4px;line-height:1">👁</button>
+        </div>
       </div>
       <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#b07010);color:#000;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;box-shadow:0 4px 20px rgba(232,160,32,.3)">Entrar no Sistema</button>
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--b1);text-align:center">
