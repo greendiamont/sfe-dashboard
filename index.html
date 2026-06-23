@@ -1577,7 +1577,7 @@ body {
     <button class="sb-btn" onclick="abrirImportOFX()" style="border-color:#1a6fa8;color:#4a9fd4;background:rgba(26,111,168,.12);margin-bottom:8px;font-size:10px">
       ⬆ Importar Dados OFX / CSV
     </button>
-    <button class="sb-btn gold" onclick="buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();localStorage.removeItem('sfe_cp_v1');localStorage.removeItem('sfe_cr_v1');localStorage.removeItem('sfe_cli_v1');localStorage.removeItem('sfe_frn_v1');localStorage.removeItem('sfe_demo_v2');buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();">
+    <button class="sb-btn gold" onclick="localStorage.removeItem('sfe_cp_v1');localStorage.removeItem('sfe_cr_v1');localStorage.removeItem('sfe_cli_v1');localStorage.removeItem('sfe_frn_v1');localStorage.removeItem('sfe_demo_v2');buildDemo();renderAll();seedDemoData();renderCP();renderCR();seedCadastros();renderClientes();renderFornecedores();">
       ▷ Carregar Demo
     </button>
     <button class="sb-btn" onclick="exportCSV()">⬇ Exportar CSV</button>
@@ -2616,27 +2616,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const saved = localStorage.getItem('sfe_v4');
   if (saved) { try { S.cfg = JSON.parse(saved); applyConfig(); } catch(e) {} }
-  // Always ensure backend URL is set
   if (!S.cfg.be) S.cfg.be = 'https://sfe-backend-production.up.railway.app';
 
-  // Clear stale demo data on every fresh load
-  localStorage.removeItem('sfe_demo_v2');
-
-  // Build demo data and render everything
-  try { buildDemo(); } catch(e) { console.warn('buildDemo:', e.message); }
-  try { renderAll(); } catch(e) { console.warn('renderAll:', e.message); }
   try { buildQuickQueries(); } catch(e) {}
 
-  // Seed CP/CR/Clientes/Fornecedores with demo data
-  seedDemoData();
-  renderCP();
-  renderCR();
-  seedCadastros();
-  renderClientes();
-  renderFornecedores();
+  if (sessionOk) {
+    // ── Cliente real logado — iniciar com dados ZERADOS ──
+    // Limpar qualquer dado demo que possa ter sobrado no localStorage
+    localStorage.removeItem('sfe_demo_v2');
+    localStorage.removeItem('sfe_cp_v1');
+    localStorage.removeItem('sfe_cr_v1');
+    localStorage.removeItem('sfe_cli_v1');
+    localStorage.removeItem('sfe_frn_v1');
 
-  // Sync automático se sessão com pluggy
-  if (sessionOk && SFE_SESSION?.empresa?.pluggy_user) setTimeout(doSync, 1200);
+    // Iniciar estado vazio
+    S.accounts     = [];
+    S.transactions = [];
+
+    // Renderizar dashboard vazio
+    try { renderAll(); }    catch(e) { console.warn('renderAll:', e.message); }
+    renderCP();
+    renderCR();
+    renderClientes();
+    renderFornecedores();
+
+    // Sync automático se tiver Pluggy
+    if (SFE_SESSION?.empresa?.pluggy_user) setTimeout(doSync, 1200);
+
+  } else {
+    // ── Nenhuma sessão — mostrar tela de login (dados demo carregam só após "Carregar Demo") ──
+    localStorage.removeItem('sfe_demo_v2');
+    S.accounts     = [];
+    S.transactions = [];
+    try { renderAll(); } catch(e) { console.warn('renderAll:', e.message); }
+    renderCP();
+    renderCR();
+    renderClientes();
+    renderFornecedores();
+  }
 });
 
 function applyConfig() {
@@ -5593,6 +5610,81 @@ async function doSync() {
 }
 
 function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
+
+// ══ TROCAR SENHA ══
+function toggleVer(inputId, btnId) {
+  const i = document.getElementById(inputId);
+  const b = document.getElementById(btnId);
+  if (!i) return;
+  i.type = i.type === 'password' ? 'text' : 'password';
+  if (b) b.textContent = i.type === 'password' ? '👁' : '🙈';
+}
+
+function abrirTrocarSenha() {
+  // Pré-preencher CNPJ se já estiver digitado no login
+  const cnpjLogin = document.getElementById('login-cnpj')?.value || '';
+  const tsCnpj = document.getElementById('ts-cnpj');
+  if (tsCnpj && cnpjLogin) tsCnpj.value = cnpjLogin;
+
+  // Limpar campos e mensagens
+  ['ts-senha-atual','ts-senha-nova','ts-senha-conf'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const errEl = document.getElementById('trocar-senha-error');
+  const okEl  = document.getElementById('trocar-senha-ok');
+  if(errEl) errEl.style.display = 'none';
+  if(okEl)  okEl.style.display  = 'none';
+
+  const modal = document.getElementById('modal-trocar-senha');
+  if(modal) modal.style.display = 'flex';
+}
+
+function fecharTrocarSenha() {
+  const modal = document.getElementById('modal-trocar-senha');
+  if(modal) modal.style.display = 'none';
+}
+
+async function doTrocarSenha() {
+  const cnpj      = (document.getElementById('ts-cnpj')?.value       || '').trim();
+  const senhaAtual = (document.getElementById('ts-senha-atual')?.value || '').trim();
+  const senhaNova  = (document.getElementById('ts-senha-nova')?.value  || '').trim();
+  const senhaConf  = (document.getElementById('ts-senha-conf')?.value  || '').trim();
+
+  const errEl = document.getElementById('trocar-senha-error');
+  const okEl  = document.getElementById('trocar-senha-ok');
+  const btn   = document.getElementById('ts-btn');
+
+  function showErr(msg) { if(errEl){errEl.textContent=msg;errEl.style.display='block';} if(okEl) okEl.style.display='none'; }
+  function showOk(msg)  { if(okEl){okEl.textContent=msg;okEl.style.display='block';}  if(errEl) errEl.style.display='none'; }
+
+  if (!cnpj || !senhaAtual || !senhaNova || !senhaConf) return showErr('Preencha todos os campos.');
+  if (senhaNova.length < 6) return showErr('A nova senha deve ter ao menos 6 caracteres.');
+  if (senhaNova !== senhaConf) return showErr('Nova senha e confirmação não coincidem.');
+
+  btn.textContent = 'Aguarde...'; btn.disabled = true;
+
+  try {
+    const cnpjLimpo = cnpj.replace(/\D/g,'');
+    const r = await fetch(BE_URL + '/api/empresa/' + cnpjLimpo + '/trocar-senha', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ senhaAtual, senhaNova })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Erro ao alterar senha');
+
+    showOk('✓ Senha alterada com sucesso! Faça login com a nova senha.');
+    ['ts-senha-atual','ts-senha-nova','ts-senha-conf'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    setTimeout(() => fecharTrocarSenha(), 2500);
+
+  } catch(e) {
+    showErr(e.message);
+  } finally {
+    btn.textContent = 'Alterar Senha'; btn.disabled = false;
+  }
+}
 // ══ EXTRATO BANCÁRIO ══
 let _extBankCode = null;
 let _extTab = 'all';
@@ -5797,12 +5889,71 @@ function extExportCSV(){
         </div>
       </div>
       <button onclick="doLogin()" id="login-btn" style="width:100%;background:linear-gradient(135deg,var(--gold),#b07010);color:#000;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px;border:none;border-radius:var(--radius-sm);cursor:pointer;box-shadow:0 4px 20px rgba(232,160,32,.3)">Entrar no Sistema</button>
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--b1);text-align:center">
+
+      <!-- Link alterar senha -->
+      <div style="margin-top:12px;text-align:center">
+        <button onclick="abrirTrocarSenha()" style="font-family:var(--f-mono);font-size:10px;font-weight:600;background:none;border:none;color:var(--tx3);cursor:pointer;text-decoration:underline;letter-spacing:.3px">🔑 Alterar senha</button>
+      </div>
+
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--b1);text-align:center">
         <div style="font-size:11px;color:var(--tx5);margin-bottom:8px">Acesso de demonstração</div>
         <button onclick="loginDemo()" style="font-family:var(--f-mono);font-size:10px;font-weight:600;padding:7px 16px;border-radius:var(--radius-sm);border:1px solid var(--b1);background:transparent;color:var(--tx3);cursor:pointer">▷ Entrar como Demo</button>
       </div>
     </div>
     <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--tx5)">SFE v2.0 · Sistema Financeiro Empresarial<br><span style="color:var(--tx4)">Dados protegidos · LGPD compliant</span></div>
+  </div>
+</div>
+
+<!-- ══ MODAL TROCAR SENHA ══ -->
+<div id="modal-trocar-senha" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:420px;background:#1e2230;border:1px solid rgba(255,255,255,.12);border-top:2px solid var(--gold);border-radius:var(--radius);box-shadow:0 24px 60px rgba(0,0,0,.6);animation:modalIn .2s ease">
+
+    <!-- Header -->
+    <div style="padding:18px 22px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--f-display);font-size:15px;font-weight:700;color:var(--tx0)">🔑 Alterar Senha</div>
+        <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4);margin-top:2px">Informe seu CNPJ e a senha atual</div>
+      </div>
+      <button onclick="fecharTrocarSenha()" style="background:none;border:none;color:var(--tx4);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:4px">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:22px">
+      <div id="trocar-senha-error" style="display:none;background:var(--negdim);border:1px solid rgba(248,113,113,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--neg);margin-bottom:16px;text-align:center"></div>
+      <div id="trocar-senha-ok" style="display:none;background:var(--posdim);border:1px solid rgba(74,222,128,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--pos);margin-bottom:16px;text-align:center"></div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);display:block;margin-bottom:6px">CNPJ</label>
+        <input id="ts-cnpj" type="text" placeholder="00.000.000/0001-00" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:13px;padding:10px 13px;outline:none">
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);display:block;margin-bottom:6px">SENHA ATUAL</label>
+        <div style="position:relative">
+          <input id="ts-senha-atual" type="password" placeholder="••••••••" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:13px;padding:10px 40px 10px 13px;outline:none">
+          <button onclick="toggleVer('ts-senha-atual','btn-ver-ts1')" id="btn-ver-ts1" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--tx3)">👁</button>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);display:block;margin-bottom:6px">NOVA SENHA</label>
+        <div style="position:relative">
+          <input id="ts-senha-nova" type="password" placeholder="mínimo 6 caracteres" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:13px;padding:10px 40px 10px 13px;outline:none">
+          <button onclick="toggleVer('ts-senha-nova','btn-ver-ts2')" id="btn-ver-ts2" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--tx3)">👁</button>
+        </div>
+      </div>
+      <div style="margin-bottom:0">
+        <label style="font-family:var(--f-mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--tx3);display:block;margin-bottom:6px">CONFIRMAR NOVA SENHA</label>
+        <div style="position:relative">
+          <input id="ts-senha-conf" type="password" placeholder="repita a nova senha" style="width:100%;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);color:var(--tx0);font-family:var(--f-mono);font-size:13px;padding:10px 40px 10px 13px;outline:none" onkeypress="if(event.key==='Enter')doTrocarSenha()">
+          <button onclick="toggleVer('ts-senha-conf','btn-ver-ts3')" id="btn-ver-ts3" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--tx3)">👁</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 22px;border-top:1px solid var(--b1);display:flex;gap:10px">
+      <button onclick="doTrocarSenha()" id="ts-btn" style="flex:1;background:linear-gradient(135deg,var(--gold),#b07010);color:#000;font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:11px;border:none;border-radius:var(--radius-sm);cursor:pointer">Alterar Senha</button>
+      <button onclick="fecharTrocarSenha()" style="padding:11px 16px;font-family:var(--f-mono);font-size:11px;font-weight:600;border-radius:var(--radius-sm);border:1px solid var(--b1);background:transparent;color:var(--tx3);cursor:pointer">Cancelar</button>
+    </div>
   </div>
 </div>
 
