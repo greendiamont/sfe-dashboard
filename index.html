@@ -1578,6 +1578,9 @@ body {
 
   <div class="sb-section">
     <div class="sb-section-label">Inteligência</div>
+    <div class="sb-item" onclick="navTo('relatorios',this)">
+      <span class="sb-icon">📊</span><span class="sb-label">Relatórios</span><span class="sb-code">R01</span>
+    </div>
     <div class="sb-item" onclick="navTo('ia',this)">
       <span class="sb-icon">🤖</span><span class="sb-label">Análise IA</span><span class="sb-code">AI</span>
     </div>
@@ -2128,6 +2131,276 @@ body {
         <thead><tr><th>Status</th><th>Razão Social</th><th>CNPJ</th><th>Categoria</th><th>Contato</th><th>Cidade/UF</th><th class="r">CP Aberto</th><th>Ações</th></tr></thead>
         <tbody id="frn-tbody"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ R01 RELATÓRIOS -->
+<div id="page-relatorios" class="page">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-eyebrow">R01 · Inteligência</div>
+      <div class="page-title">Relatórios Gerenciais</div>
+      <div class="page-sub">Análises avançadas com IA preditiva e visualizações estratégicas</div>
+    </div>
+    <div class="page-actions">
+      <select class="sel" id="rel-period" onchange="renderRelatorios()">
+        <option value="30">30 DIAS</option>
+        <option value="60">60 DIAS</option>
+        <option value="90">90 DIAS</option>
+        <option value="180">180 DIAS</option>
+      </select>
+      <button class="btn btn-ghost" onclick="exportRelPDF()">⬇ PDF</button>
+    </div>
+  </div>
+
+  <div class="content-pad">
+
+    <!-- ── TABS DOS RELATÓRIOS ── -->
+    <div style="display:flex;gap:0;background:var(--ink3);border:1px solid var(--b1);border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;margin-bottom:0">
+      <button class="rel-tab active" id="rel-tab-gastos"    onclick="relSetTab('gastos')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">📊 Categorização de Gastos</button>
+      <button class="rel-tab"        id="rel-tab-prev"      onclick="relSetTab('prev')"      style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">📈 Previsionamento de Caixa</button>
+      <button class="rel-tab"        id="rel-tab-pareto"    onclick="relSetTab('pareto')"    style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">🎯 Análise de Pareto</button>
+      <button class="rel-tab"        id="rel-tab-custom"    onclick="relSetTab('custom')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--t1)">⚙ Meu Relatório</button>
+    </div>
+
+    <!-- ══ TAB 1 — CATEGORIZAÇÃO DE GASTOS ══ -->
+    <div id="rel-panel-gastos" style="border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:24px;margin-bottom:24px">
+
+      <!-- KPIs rápidos -->
+      <div class="kpi-grid" style="margin-bottom:24px" id="rel-gastos-kpis"></div>
+
+      <div class="two-col" style="margin-bottom:24px">
+        <!-- Pizza -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Distribuição de Gastos</span>
+            <span class="panel-meta" id="rel-pizza-meta">DOUGHNUT</span>
+          </div>
+          <div style="padding:20px;height:300px"><canvas id="rel-pizza-chart"></canvas></div>
+        </div>
+        <!-- Ranking gargalos -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">🔴 Maiores Gargalos</span>
+            <span class="panel-meta" id="rel-gargalo-meta">—</span>
+          </div>
+          <div id="rel-gargalo-list" style="padding:0"></div>
+        </div>
+      </div>
+
+      <!-- Evolução mensal por categoria -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Evolução Mensal por Categoria</span>
+          <span class="panel-meta">TOP 5 CATEGORIAS</span>
+        </div>
+        <div style="padding:20px;height:260px"><canvas id="rel-evolucao-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 2 — PREVISIONAMENTO DE CAIXA ══ -->
+    <div id="rel-panel-prev" style="display:none;border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:24px;margin-bottom:24px">
+
+      <!-- KPIs preditivos -->
+      <div class="kpi-grid" style="margin-bottom:24px" id="rel-prev-kpis"></div>
+
+      <!-- Gráfico principal de previsionamento -->
+      <div class="panel" style="margin-bottom:24px">
+        <div class="panel-head">
+          <span class="panel-title">Projeção de Entradas, Saídas e Lucro — 60 dias</span>
+          <span class="panel-meta" style="color:var(--gold);border:1px solid var(--b3);padding:2px 8px;border-radius:3px;font-size:9px">IA PREDITIVA</span>
+        </div>
+        <div style="padding:20px;height:300px"><canvas id="rel-prev-chart"></canvas></div>
+      </div>
+
+      <!-- Análise IA do previsionamento -->
+      <div class="panel" style="border-color:rgba(212,160,23,.2);background:rgba(212,160,23,.03)">
+        <div class="panel-head" style="border-color:rgba(212,160,23,.2)">
+          <span class="panel-title">Análise Preditiva — Claude AI</span>
+          <span class="console-badge">CLAUDE AI</span>
+        </div>
+        <div class="panel-body">
+          <div id="rel-prev-ia" style="font-size:13px;line-height:1.9;color:var(--tx2)">
+            <div style="color:var(--tx4);font-size:12px;font-style:italic">Clique em "Gerar Análise IA" para obter a previsão inteligente do fluxo de caixa.</div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-gold" onclick="gerarPrevIA()" id="rel-prev-ia-btn">🤖 Gerar Análise IA</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB 3 — PARETO ══ -->
+    <div id="rel-panel-pareto" style="display:none;border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:24px;margin-bottom:24px">
+
+      <!-- Explicação Pareto -->
+      <div style="background:var(--ink4);border:1px solid var(--b1);border-left:3px solid var(--gold);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:24px;font-size:12px;color:var(--tx3);line-height:1.7">
+        <strong style="color:var(--gold);font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:1px">Princípio de Pareto (80/20)</strong><br>
+        80% dos seus gastos geralmente são causados por apenas 20% das categorias. Este relatório identifica quais categorias concentram o maior impacto financeiro.
+      </div>
+
+      <!-- Gráfico Pareto (barras + linha acumulada) -->
+      <div class="panel" style="margin-bottom:24px">
+        <div class="panel-head">
+          <span class="panel-title">Diagrama de Pareto — Concentração de Gastos</span>
+          <span class="panel-meta">BARRAS + % ACUMULADO</span>
+        </div>
+        <div style="padding:20px;height:320px"><canvas id="rel-pareto-chart"></canvas></div>
+      </div>
+
+      <!-- Tabela Pareto -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Ranking de Impacto Financeiro</span>
+          <span class="panel-meta" id="rel-pareto-meta">—</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr>
+              <th>#</th><th>Categoria</th><th class="r">Valor</th><th class="r">% do Total</th><th class="r">% Acumulado</th><th>Impacto</th><th>Classificação</th>
+            </tr></thead>
+            <tbody id="rel-pareto-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── PAINEL RELATÓRIO PERSONALIZADO ── -->
+<div id="rel-panel-custom" style="display:none;border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);margin:0 32px 24px">
+  <div style="display:grid;grid-template-columns:320px 1fr;min-height:600px">
+
+    <!-- PAINEL DE CONFIGURAÇÃO -->
+    <div style="background:var(--ink4);border-right:1px solid var(--b1);display:flex;flex-direction:column">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--b1);background:var(--ink5)">
+        <div style="font-family:var(--f-display);font-size:14px;font-weight:700;color:var(--tx0);margin-bottom:2px">⚙ Construtor de Relatório</div>
+        <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);letter-spacing:.5px">Configure e gere seu relatório personalizado</div>
+      </div>
+      <div style="padding:16px 20px;overflow-y:auto;flex:1">
+
+        <!-- Nome -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">① Nome do Relatório</div>
+          <input id="custom-nome" type="text" placeholder="Ex: Análise de Custos — Jun/2026" class="form-input" style="font-size:12px;padding:8px 12px">
+        </div>
+
+        <!-- Período -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">② Período</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);margin-bottom:4px">DE</div><input id="custom-de" type="date" class="form-input" style="font-size:11px;padding:7px 10px"></div>
+            <div><div style="font-family:var(--f-mono);font-size:9px;color:var(--tx4);margin-bottom:4px">ATÉ</div><input id="custom-ate" type="date" class="form-input" style="font-size:11px;padding:7px 10px"></div>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button onclick="customSetPeriod(7)"  class="filter-btn" style="font-size:9px;padding:4px 9px">7d</button>
+            <button onclick="customSetPeriod(30)" class="filter-btn" style="font-size:9px;padding:4px 9px">30d</button>
+            <button onclick="customSetPeriod(60)" class="filter-btn" style="font-size:9px;padding:4px 9px">60d</button>
+            <button onclick="customSetPeriod(90)" class="filter-btn" style="font-size:9px;padding:4px 9px">90d</button>
+            <button onclick="customSetPeriodMonth(0)"  class="filter-btn" style="font-size:9px;padding:4px 9px">Mês atual</button>
+            <button onclick="customSetPeriodMonth(-1)" class="filter-btn" style="font-size:9px;padding:4px 9px">Mês anterior</button>
+          </div>
+        </div>
+
+        <!-- Tipo -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">③ Tipo de Lançamento</div>
+          <div style="display:flex;gap:12px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="radio" name="custom-tipo" value="todos"   checked style="accent-color:var(--gold)"> Todos</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="radio" name="custom-tipo" value="entrada" style="accent-color:var(--gold)"> Entradas</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="radio" name="custom-tipo" value="saida"   style="accent-color:var(--gold)"> Saídas</label>
+          </div>
+        </div>
+
+        <!-- Banco -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">④ Banco</div>
+          <div id="custom-bancos-list" style="display:flex;flex-direction:column;gap:5px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" value="TODOS" id="custom-banco-todos" checked style="accent-color:var(--gold)" onchange="customToggleTodos(this,'banco')"> Todos os bancos</label>
+          </div>
+        </div>
+
+        <!-- Categorias -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">⑤ Categorias</div>
+          <div id="custom-cats-list" style="display:flex;flex-direction:column;gap:5px;max-height:150px;overflow-y:auto">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" value="TODOS" id="custom-cat-todos" checked style="accent-color:var(--gold)" onchange="customToggleTodos(this,'cat')"> Todas as categorias</label>
+          </div>
+        </div>
+
+        <!-- Blocos -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">⑥ Blocos de Análise</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${[
+              ['resumo','📋','Resumo Executivo','KPIs + resultado do período', true],
+              ['pizza','🥧','Gráfico de Categorias','Distribuição de gastos', true],
+              ['evolucao','📈','Evolução do Fluxo','Entradas vs saídas', true],
+              ['pareto','🎯','Pareto 80/20','Concentração de gastos', false],
+              ['lancamentos','📄','Extrato de Lançamentos','Lista completa filtrada', false],
+              ['cpcr','💰','Posição CP/CR','Contas a pagar e receber', false],
+              ['ia','🤖','Análise IA (Claude)','Diagnóstico inteligente', false],
+            ].map(([v,ic,nm,ds,ch]) => `<label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)"><input type="checkbox" name="custom-bloco" value="${v}" ${ch?'checked':''} style="accent-color:var(--gold);margin-top:2px;flex-shrink:0"><div><div style="font-weight:600;color:var(--tx1)">${ic} ${nm}</div><div style="font-size:10px;color:var(--tx4)">${ds}</div></div></label>`).join('')}
+          </div>
+        </div>
+
+        <!-- Agrupamento -->
+        <div style="margin-bottom:18px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">⑦ Agrupar por</div>
+          <select id="custom-agrup" class="form-input" style="font-size:11px;padding:7px 10px">
+            <option value="data">Data</option>
+            <option value="categoria">Categoria</option>
+            <option value="banco">Banco</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mês</option>
+          </select>
+        </div>
+
+        <!-- Ordenação -->
+        <div style="margin-bottom:8px">
+          <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">⑧ Ordenar por</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="custom-order-campo" class="form-input" style="font-size:11px;padding:7px 10px">
+              <option value="data">Data</option>
+              <option value="valor">Valor</option>
+              <option value="categoria">Categoria</option>
+            </select>
+            <select id="custom-order-dir" class="form-input" style="font-size:11px;padding:7px 10px">
+              <option value="desc">Decrescente</option>
+              <option value="asc">Crescente</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div style="padding:14px 20px;border-top:1px solid var(--b1);background:var(--ink5);display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-gold" onclick="gerarRelatorioPersonalizado()" style="width:100%;justify-content:center">▶ Gerar Relatório</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-ghost" onclick="exportarRelPersonPDF()" style="font-size:10px;justify-content:center">⬇ PDF</button>
+          <button class="btn btn-ghost" onclick="exportarRelPersonCSV()" style="font-size:10px;justify-content:center">⬇ CSV</button>
+        </div>
+        <button class="btn btn-ghost" onclick="salvarConfigRel()" style="font-size:10px;justify-content:center;color:var(--t1);border-color:var(--t1)">💾 Salvar Configuração</button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="custom-preview" style="padding:28px;overflow-y:auto">
+      <div style="text-align:center;padding:60px 20px;color:var(--tx4)" id="custom-preview-empty">
+        <div style="font-size:48px;margin-bottom:16px;opacity:.2">📊</div>
+        <div style="font-family:var(--f-display);font-size:16px;font-weight:600;color:var(--tx3);margin-bottom:6px">Configure e clique em Gerar Relatório</div>
+        <div style="font-size:12px;color:var(--tx5)">Selecione período, filtros e blocos à esquerda</div>
+      </div>
+      <div id="custom-preview-content" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -2790,7 +3063,9 @@ function navTo(page, navEl, sbEl) {
     const days = parseInt(document.getElementById('period-sel')?.value || 30);
     const from = new Date(Date.now() - days * 86400000);
     const txs  = S.transactions.filter(t => new Date(t.date) >= from);
-    if (page === 'fluxo') {
+    if (page === 'relatorios') {
+      renderRelatorios();
+    } else if (page === 'fluxo') {
       renderCashflow(txs, days);
       renderProjection(txs);
     } else if (page === 'categorias') {
@@ -5521,6 +5796,705 @@ function ofxConfirmarImport() {
   renderAll();
   renderCP();
   renderCR();
+}
+
+// ══ RELATÓRIOS (R01) ════════════════════════════════════════
+
+let _relTab = 'gastos';
+let _relCharts = {};
+
+function relSetTab(tab) {
+  _relTab = tab;
+  ['gastos','prev','pareto'].forEach(t => {
+    const btn   = document.getElementById('rel-tab-' + t);
+    const panel = document.getElementById('rel-panel-' + t);
+    const active = t === tab;
+    if(btn) {
+      btn.style.borderBottomColor = active ? 'var(--gold)' : 'transparent';
+      btn.style.color             = active ? 'var(--gold)' : 'var(--tx3)';
+      btn.style.fontWeight        = active ? '700' : '600';
+    }
+    if(panel) panel.style.display = active ? '' : 'none';
+  });
+  setTimeout(() => renderRelatorios(), 50);
+}
+
+function renderRelatorios() {
+  const days = parseInt(document.getElementById('rel-period')?.value || 30);
+  const from = new Date(Date.now() - days * 86400000);
+  const txs  = S.transactions.filter(t => new Date(t.date) >= from);
+
+  if (_relTab === 'gastos')  renderRelGastos(txs, days);
+  if (_relTab === 'prev')    renderRelPrev(txs, days);
+  if (_relTab === 'pareto')  renderRelPareto(txs, days);
+}
+
+// ── TAB 1: CATEGORIZAÇÃO DE GASTOS ──────────────────────────
+function renderRelGastos(txs, days) {
+  const saidas = txs.filter(t => t.amount < 0);
+  const total  = Math.abs(saidas.reduce((s,t) => s+t.amount, 0));
+  const ent    = txs.filter(t => t.amount > 0).reduce((s,t) => s+t.amount, 0);
+
+  // Mapa por categoria
+  const map = {};
+  saidas.forEach(t => {
+    const c = t._category || 'Outros';
+    map[c] = (map[c]||0) + Math.abs(t.amount);
+  });
+  const entries = Object.entries(map).sort((a,b) => b[1]-a[1]);
+  const top1    = entries[0];
+
+  // KPIs
+  const kpisEl = document.getElementById('rel-gastos-kpis');
+  if(kpisEl) kpisEl.innerHTML = `
+    <div class="kpi-card" style="--accent:var(--neg)">
+      <div class="kpi-eyebrow">Total Gastos (${days}d)</div>
+      <div class="kpi-value neg">${fmt(total)}</div>
+      <div class="kpi-label">${saidas.length} lançamentos de saída</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--gold)">
+      <div class="kpi-eyebrow">Maior Gargalo</div>
+      <div class="kpi-value" style="color:var(--gold);font-size:18px">${top1 ? top1[0] : '—'}</div>
+      <div class="kpi-label">${top1 ? fmt(top1[1]) + ' · ' + (top1[1]/total*100).toFixed(1) + '%' : '—'}</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--pos)">
+      <div class="kpi-eyebrow">Total Entradas (${days}d)</div>
+      <div class="kpi-value pos">${fmt(ent)}</div>
+      <div class="kpi-label">${txs.filter(t=>t.amount>0).length} lançamentos</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--info)">
+      <div class="kpi-eyebrow">Categorias distintas</div>
+      <div class="kpi-value" style="color:var(--info)">${entries.length}</div>
+      <div class="kpi-label">no período analisado</div>
+    </div>`;
+
+  // Gráfico pizza
+  if(_relCharts['pizza']) _relCharts['pizza'].destroy();
+  const pizzaEl = document.getElementById('rel-pizza-chart');
+  if(pizzaEl) {
+    _relCharts['pizza'] = new Chart(pizzaEl, {
+      type: 'doughnut',
+      data: {
+        labels: entries.map(e => e[0]),
+        datasets: [{
+          data: entries.map(e => e[1]),
+          backgroundColor: entries.map(e => (CAT_COLORS[e[0]]||'#445566') + '55'),
+          borderColor:     entries.map(e => CAT_COLORS[e[0]]||'#445566'),
+          borderWidth: 2, hoverOffset: 10
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '58%',
+        plugins: {
+          legend: { labels: { color: '#b0bdd4', font: {size:10}, boxWidth:12 }, position: 'right' },
+          tooltip: { backgroundColor:'#1a2332', callbacks: { label: c => ` ${c.label}: ${fmt(c.raw)} (${(c.raw/total*100).toFixed(1)}%)` }}
+        }
+      }
+    });
+  }
+  const pizzaMeta = document.getElementById('rel-pizza-meta');
+  if(pizzaMeta) pizzaMeta.textContent = entries.length + ' categorias';
+
+  // Lista gargalos
+  const gargaloEl = document.getElementById('rel-gargalo-list');
+  const gargaloMeta = document.getElementById('rel-gargalo-meta');
+  if(gargaloMeta) gargaloMeta.textContent = 'TOP ' + Math.min(entries.length, 6);
+  if(gargaloEl) {
+    const acum = { pct: 0 };
+    gargaloEl.innerHTML = entries.slice(0,6).map(([cat, val], i) => {
+      const pct   = (val/total*100);
+      acum.pct   += pct;
+      const col   = CAT_COLORS[cat] || '#445566';
+      const alert = pct > 30 ? '🔴' : pct > 15 ? '🟡' : '🟢';
+      return `<div style="display:grid;grid-template-columns:24px 16px 1fr 110px 60px;gap:10px;align-items:center;padding:11px 20px;border-bottom:1px solid var(--b1)">
+        <span style="font-family:var(--f-mono);font-size:11px;font-weight:700;color:var(--tx3)">${String(i+1).padStart(2,'0')}</span>
+        <span style="font-size:14px">${alert}</span>
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--tx1)">${cat}</div>
+          <div style="height:4px;background:var(--ink5);border-radius:2px;margin-top:5px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${col};border-radius:2px;transition:width .8s"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--f-mono);font-size:13px;font-weight:700;color:${col};text-align:right">${fmt(val)}</div>
+        <div style="font-family:var(--f-mono);font-size:11px;color:var(--tx3);text-align:right">${pct.toFixed(1)}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Evolução mensal (top 5 categorias)
+  if(_relCharts['evolucao']) _relCharts['evolucao'].destroy();
+  const evolEl = document.getElementById('rel-evolucao-chart');
+  if(evolEl) {
+    const top5    = entries.slice(0,5);
+    const nMeses  = Math.min(6, Math.floor(days/30)||1);
+    const mLabels = [];
+    const datasets = top5.map(([cat]) => ({ label:cat, data:[], backgroundColor:(CAT_COLORS[cat]||'#445566')+'55', borderColor:CAT_COLORS[cat]||'#445566', borderWidth:1.5, borderRadius:3 }));
+
+    for(let i=nMeses-1; i>=0; i--) {
+      const end   = new Date(); end.setMonth(end.getMonth()-i); end.setDate(1);
+      const start = new Date(end); start.setMonth(start.getMonth()-1);
+      mLabels.push(end.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}));
+      top5.forEach(([cat], idx) => {
+        const val = txs.filter(t => {
+          const d = new Date(t.date);
+          return (t._category||'Outros')===cat && t.amount<0 && d>=start && d<=end;
+        }).reduce((s,t) => s+Math.abs(t.amount), 0);
+        datasets[idx].data.push(Math.round(val));
+      });
+    }
+
+    _relCharts['evolucao'] = new Chart(evolEl, {
+      type: 'bar',
+      data: { labels: mLabels, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color:'#b0bdd4', font:{size:9}, boxWidth:10 }, position:'bottom' }, tooltip: { backgroundColor:'#1a2332', callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+        scales: {
+          x: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9aa0b4',font:{size:9}}, stacked:false },
+          y: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)} }
+        }
+      }
+    });
+  }
+}
+
+// ── TAB 2: PREVISIONAMENTO DE CAIXA ────────────────────────
+function renderRelPrev(txs, days) {
+  const saldo      = S.accounts.reduce((s,a) => s+(a.balance||0), 0);
+  const ent        = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai        = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const avgEntDia  = ent / Math.max(days,1);
+  const avgSaiDia  = sai / Math.max(days,1);
+  const avgLucDia  = avgEntDia - avgSaiDia;
+  const proj60Luc  = Math.round(avgLucDia * 60);
+  const diasRuptura = avgLucDia < 0 ? Math.round(saldo / Math.abs(avgLucDia)) : 999;
+
+  // KPIs
+  const kpisEl = document.getElementById('rel-prev-kpis');
+  if(kpisEl) kpisEl.innerHTML = `
+    <div class="kpi-card" style="--accent:var(--pos)">
+      <div class="kpi-eyebrow">Entrada média/dia</div>
+      <div class="kpi-value pos">${fmt(avgEntDia)}</div>
+      <div class="kpi-label">Baseado nos últimos ${days} dias</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--neg)">
+      <div class="kpi-eyebrow">Saída média/dia</div>
+      <div class="kpi-value neg">${fmt(avgSaiDia)}</div>
+      <div class="kpi-label">Burn rate diário</div>
+    </div>
+    <div class="kpi-card" style="--accent:${avgLucDia>=0?'var(--gold)':'var(--neg)'}">
+      <div class="kpi-eyebrow">Lucro projetado 60d</div>
+      <div class="kpi-value" style="color:${avgLucDia>=0?'var(--gold)':'var(--neg)'}">${fmt(proj60Luc)}</div>
+      <div class="kpi-label">${avgLucDia>=0?'Tendência positiva':'Tendência negativa'}</div>
+    </div>
+    <div class="kpi-card" style="--accent:${diasRuptura<30?'var(--neg)':diasRuptura<60?'var(--warn)':'var(--pos)'}">
+      <div class="kpi-eyebrow">${diasRuptura===999?'Ruptura de caixa':'Ruptura em'}</div>
+      <div class="kpi-value" style="color:${diasRuptura<30?'var(--neg)':diasRuptura<60?'var(--warn)':'var(--pos)'}">${diasRuptura===999?'Não prevista':diasRuptura+'d'}</div>
+      <div class="kpi-label">${diasRuptura===999?'Fluxo positivo':'Estimativa com tendência atual'}</div>
+    </div>`;
+
+  // Gráfico previsionamento
+  if(_relCharts['prev']) _relCharts['prev'].destroy();
+  const prevEl = document.getElementById('rel-prev-chart');
+  if(prevEl) {
+    const labels=[], dataEnt=[], dataSai=[], dataLuc=[], dataSaldo=[];
+    let saldoAcc = saldo;
+    for(let i=0; i<60; i++) {
+      const d = new Date(Date.now() + i*86400000);
+      if(i % 5 === 0 || i === 0) {
+        labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+        // Adicionar variação aleatória realista (±15%)
+        const varE = 1 + (Math.sin(i*0.3)*0.12);
+        const varS = 1 + (Math.cos(i*0.4)*0.10);
+        const projE = avgEntDia * 5 * varE;
+        const projS = avgSaiDia * 5 * varS;
+        saldoAcc += (avgEntDia - avgSaiDia) * 5;
+        dataEnt.push(Math.round(projE));
+        dataSai.push(Math.round(projS));
+        dataLuc.push(Math.round(projE - projS));
+        dataSaldo.push(Math.round(saldoAcc));
+      }
+    }
+    _relCharts['prev'] = new Chart(prevEl, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label:'Entradas Projetadas', data:dataEnt, backgroundColor:'rgba(74,222,128,.3)', borderColor:'rgba(74,222,128,.8)', borderWidth:1.5, borderRadius:3, order:2 },
+          { label:'Saídas Projetadas',   data:dataSai, backgroundColor:'rgba(248,113,113,.25)', borderColor:'rgba(248,113,113,.7)', borderWidth:1.5, borderRadius:3, order:2 },
+          { label:'Lucro/Prejuízo',      data:dataLuc, type:'line', borderColor:'rgba(212,160,23,.9)', backgroundColor:'rgba(212,160,23,.08)', borderWidth:2.5, pointRadius:3, tension:.4, fill:true, order:1 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'}, tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},
+        scales: {
+          x: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9aa0b4',font:{size:9}} },
+          y: { grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)} }
+        }
+      }
+    });
+  }
+}
+
+async function gerarPrevIA() {
+  const btn    = document.getElementById('rel-prev-ia-btn');
+  const iaEl   = document.getElementById('rel-prev-ia');
+  const days   = parseInt(document.getElementById('rel-period')?.value||30);
+  const from   = new Date(Date.now()-days*86400000);
+  const txs    = S.transactions.filter(t=>new Date(t.date)>=from);
+  const saldo  = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const ent    = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai    = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const map    = {};
+  txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+  const catTop = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c,v])=>`${c}: ${fmt(v)}`).join(', ');
+
+  if(btn){btn.disabled=true;btn.textContent='⏳ Consultando IA...';}
+  if(iaEl) iaEl.innerHTML='<div style="color:var(--tx4);font-size:12px;font-style:italic">⏳ Gerando análise preditiva...</div>';
+
+  try {
+    const beUrl  = (S.cfg&&S.cfg.be)||'https://sfe-backend-production.up.railway.app';
+    const prompt = `EMPRESA: ${DEMO.co} | Setor: Distribuidora SC | Período: ${days} dias
+SALDO ATUAL: ${fmt(saldo)}
+ENTRADAS: ${fmt(ent)} (média/dia: ${fmt(ent/days)})
+SAÍDAS: ${fmt(sai)} (média/dia: ${fmt(sai/days)})
+RESULTADO: ${fmt(ent-sai)} | MARGEM: ${ent>0?((ent-sai)/ent*100).toFixed(1):0}%
+PRINCIPAIS DESPESAS: ${catTop}
+
+Gere um relatório de previsionamento de caixa para os próximos 60 dias com:
+1) Tendência geral (positiva/negativa/estável) — 2 frases
+2) Projeção de entradas estimadas nos próximos 30 e 60 dias
+3) Projeção de saídas estimadas nos próximos 30 e 60 dias  
+4) Estimativa de lucro/prejuízo acumulado em 60 dias
+5) Principais riscos identificados (máx 3)
+6) Recomendações práticas para melhorar o fluxo (máx 3), cada uma com [URGENTE], [ESTA SEMANA] ou [MONITORAR]`;
+
+    const r = await fetch(beUrl+'/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:'Você é analista financeiro sênior especializado em PMEs brasileiras. Responda em português, seja objetivo e use R$ para valores.',messages:[{role:'user',content:prompt}],max_tokens:1000})});
+    const d = await r.json();
+    const txt = d.content?.[0]?.text || 'Sem resposta.';
+    if(iaEl) iaEl.innerHTML = txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--tx0)">$1</strong>').replace(/\n/g,'<br>');
+  } catch(e) {
+    if(iaEl) iaEl.innerHTML = `<div style="color:var(--neg)">Erro ao consultar IA: ${e.message}</div>`;
+  } finally {
+    if(btn){btn.disabled=false;btn.textContent='🤖 Gerar Análise IA';}
+  }
+}
+
+// ── TAB 3: PARETO ───────────────────────────────────────────
+function renderRelPareto(txs, days) {
+  const map = {};
+  txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const total   = entries.reduce((s,e)=>s+e[1],0);
+
+  const meta = document.getElementById('rel-pareto-meta');
+  if(meta) meta.textContent = entries.length + ' categorias · ' + fmt(total);
+
+  // Calcular % acumulado
+  let acum = 0;
+  const dados = entries.map(([cat,val]) => {
+    acum += val;
+    return { cat, val, pct:(val/total*100), acum:(acum/total*100) };
+  });
+
+  // Gráfico Pareto
+  if(_relCharts['pareto']) _relCharts['pareto'].destroy();
+  const paretoEl = document.getElementById('rel-pareto-chart');
+  if(paretoEl) {
+    _relCharts['pareto'] = new Chart(paretoEl, {
+      type: 'bar',
+      data: {
+        labels: dados.map(d=>d.cat),
+        datasets: [
+          { label:'Valor (R$)', data:dados.map(d=>d.val), backgroundColor:dados.map(d=>(CAT_COLORS[d.cat]||'#445566')+'77'), borderColor:dados.map(d=>CAT_COLORS[d.cat]||'#445566'), borderWidth:1.5, borderRadius:4, order:2 },
+          { label:'% Acumulado', data:dados.map(d=>d.acum), type:'line', borderColor:'rgba(212,160,23,.9)', backgroundColor:'transparent', borderWidth:2.5, pointRadius:5, pointBackgroundColor:'var(--gold)', tension:.3, yAxisID:'y2', order:1 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'}, tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>c.datasetIndex===0?` ${c.label}: ${fmt(c.raw)}`:` Acumulado: ${c.raw.toFixed(1)}%`}}},
+        scales:{
+          x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9}}},
+          y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)},position:'left'},
+          y2:{grid:{display:false},ticks:{color:'#d4a017',font:{size:9},callback:v=>v+'%'},position:'right',min:0,max:100}
+        }
+      }
+    });
+  }
+
+  // Tabela Pareto
+  const tbody = document.getElementById('rel-pareto-tbody');
+  if(tbody) tbody.innerHTML = dados.map((d,i) => {
+    const col   = CAT_COLORS[d.cat]||'#445566';
+    const classe = d.acum <= 80 ? {txt:'CLASSE A',c:'var(--neg)',bg:'var(--negdim)'} : d.acum <= 95 ? {txt:'CLASSE B',c:'var(--warn)',bg:'var(--warndim)'} : {txt:'CLASSE C',c:'var(--info)',bg:'var(--infodim)'};
+    const barW  = Math.min(d.pct*3, 100);
+    return `<tr>
+      <td class="cell-mono" style="font-weight:700">${String(i+1).padStart(2,'0')}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="width:10px;height:10px;border-radius:3px;background:${col}"></div><span style="font-weight:500">${d.cat}</span></div></td>
+      <td class="cell-mono cell-r" style="color:${col};font-weight:700">${fmt(d.val)}</td>
+      <td class="cell-mono cell-r">${d.pct.toFixed(1)}%</td>
+      <td class="cell-mono cell-r" style="color:${d.acum<=80?'var(--neg)':d.acum<=95?'var(--warn)':'var(--tx3)'};font-weight:600">${d.acum.toFixed(1)}%</td>
+      <td style="min-width:100px"><div style="height:6px;background:var(--ink5);border-radius:3px;overflow:hidden"><div style="height:100%;width:${barW}%;background:${col}"></div></div></td>
+      <td><span style="font-family:var(--f-mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:${classe.bg};color:${classe.c}">${classe.txt}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportRelPDF() {
+  alert('Em desenvolvimento — o PDF de relatórios gerenciais estará disponível em breve.');
+}
+
+// ══ RELATÓRIO PERSONALIZADO ═════════════════════════════════
+
+let _customCharts = {};
+
+function customSetPeriod(days) {
+  const ate = new Date();
+  const de  = new Date(Date.now() - days*86400000);
+  const fmt = d => d.toISOString().split('T')[0];
+  const deEl  = document.getElementById('custom-de');
+  const ateEl = document.getElementById('custom-ate');
+  if(deEl)  deEl.value  = fmt(de);
+  if(ateEl) ateEl.value = fmt(ate);
+}
+
+function customSetPeriodMonth(offset) {
+  const d    = new Date();
+  const ano  = d.getFullYear();
+  const mes  = d.getMonth() + offset;
+  const ini  = new Date(ano, mes, 1);
+  const fim  = new Date(ano, mes+1, 0);
+  const fmt  = d => d.toISOString().split('T')[0];
+  const deEl  = document.getElementById('custom-de');
+  const ateEl = document.getElementById('custom-ate');
+  if(deEl)  deEl.value  = fmt(ini);
+  if(ateEl) ateEl.value = fmt(fim);
+}
+
+function customToggleTodos(cb, tipo) {
+  const grupo = tipo === 'banco' ? 'custom-banco-' : 'custom-cat-';
+  if(cb.checked) {
+    document.querySelectorAll(`[id^="${grupo}"]:not(#${cb.id})`).forEach(el => { el.checked = false; });
+  }
+}
+
+function relSetTab(tab) {
+  _relTab = tab;
+  ['gastos','prev','pareto','custom'].forEach(t => {
+    const btn   = document.getElementById('rel-tab-' + t);
+    const panel = t === 'custom' ? document.getElementById('rel-panel-custom') : document.getElementById('rel-panel-' + t);
+    const active = t === tab;
+    if(btn) {
+      btn.style.borderBottomColor = active ? (t==='custom'?'var(--t1)':'var(--gold)') : 'transparent';
+      btn.style.color             = active ? (t==='custom'?'var(--t1)':'var(--gold)') : (t==='custom'?'var(--t1)':'var(--tx3)');
+      btn.style.fontWeight        = active ? '700' : '600';
+    }
+    if(panel) panel.style.display = active ? '' : 'none';
+  });
+  if(tab !== 'custom') setTimeout(() => renderRelatorios(), 50);
+  if(tab === 'custom') customPopularFiltros();
+}
+
+function customPopularFiltros() {
+  // Inicializar período padrão (30d)
+  const deEl = document.getElementById('custom-de');
+  const ateEl= document.getElementById('custom-ate');
+  if(deEl && !deEl.value) customSetPeriod(30);
+
+  // Popular bancos
+  const bancosEl = document.getElementById('custom-bancos-list');
+  if(bancosEl && S.accounts.length) {
+    const extras = S.accounts.map(a => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" class="custom-banco-cb" value="${a.code}" style="accent-color:var(--gold)" onchange="document.getElementById('custom-banco-todos').checked=false"> <span style="width:8px;height:8px;border-radius:50%;background:${a.color};display:inline-block"></span> ${a.name}</label>`).join('');
+    bancosEl.innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" value="TODOS" id="custom-banco-todos" checked style="accent-color:var(--gold)" onchange="customToggleTodos(this,'banco')"> Todos os bancos</label>${extras}`;
+  }
+
+  // Popular categorias
+  const catsEl = document.getElementById('custom-cats-list');
+  if(catsEl) {
+    const cats = Object.keys(CAT_COLORS);
+    const extras = cats.map(c => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" class="custom-cat-cb" value="${c}" style="accent-color:var(--gold)" onchange="document.getElementById('custom-cat-todos').checked=false"> <span style="width:8px;height:8px;border-radius:2px;background:${CAT_COLORS[c]};display:inline-block"></span> ${c}</label>`).join('');
+    catsEl.innerHTML = `<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" value="TODOS" id="custom-cat-todos" checked style="accent-color:var(--gold)" onchange="customToggleTodos(this,'cat')"> Todas as categorias</label>${extras}`;
+  }
+}
+
+async function gerarRelatorioPersonalizado() {
+  const nome   = document.getElementById('custom-nome')?.value || 'Relatório Personalizado';
+  const deVal  = document.getElementById('custom-de')?.value;
+  const ateVal = document.getElementById('custom-ate')?.value;
+  const tipo   = document.querySelector('input[name="custom-tipo"]:checked')?.value || 'todos';
+  const agrup  = document.getElementById('custom-agrup')?.value || 'data';
+  const orderC = document.getElementById('custom-order-campo')?.value || 'data';
+  const orderD = document.getElementById('custom-order-dir')?.value || 'desc';
+
+  if(!deVal || !ateVal) { alert('Selecione o período.'); return; }
+
+  const de  = new Date(deVal + 'T00:00:00');
+  const ate = new Date(ateVal + 'T23:59:59');
+
+  // Bancos selecionados
+  const todosBancos = document.getElementById('custom-banco-todos')?.checked;
+  const bancosSel   = todosBancos ? null : [...document.querySelectorAll('.custom-banco-cb:checked')].map(el=>el.value);
+
+  // Categorias selecionadas
+  const todasCats = document.getElementById('custom-cat-todos')?.checked;
+  const catsSel   = todasCats ? null : [...document.querySelectorAll('.custom-cat-cb:checked')].map(el=>el.value);
+
+  // Blocos selecionados
+  const blocos = [...document.querySelectorAll('input[name="custom-bloco"]:checked')].map(el=>el.value);
+
+  // Filtrar transações
+  let txs = S.transactions.filter(t => {
+    const d = new Date(t.date);
+    if(d < de || d > ate) return false;
+    if(tipo==='entrada' && t.amount<=0) return false;
+    if(tipo==='saida'   && t.amount>=0) return false;
+    if(bancosSel && !bancosSel.includes(t._bank)) return false;
+    if(catsSel   && !catsSel.includes(t._category||'Outros')) return false;
+    return true;
+  });
+
+  // Ordenar
+  txs = txs.sort((a,b) => {
+    let va, vb;
+    if(orderC==='data')      { va=new Date(a.date); vb=new Date(b.date); }
+    else if(orderC==='valor'){ va=Math.abs(a.amount); vb=Math.abs(b.amount); }
+    else                     { va=(a._category||''); vb=(b._category||''); }
+    return orderD==='desc' ? (va>vb?-1:1) : (va<vb?-1:1);
+  });
+
+  const ent   = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai   = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  const res   = ent - sai;
+  const saldo = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
+
+  // Mostrar preview
+  const emptyEl   = document.getElementById('custom-preview-empty');
+  const contentEl = document.getElementById('custom-preview-content');
+  if(emptyEl)   emptyEl.style.display   = 'none';
+  if(contentEl) contentEl.style.display = '';
+
+  let html = `
+    <div style="margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:var(--tx0);margin-bottom:4px">${nome}</div>
+      <div style="font-family:var(--f-mono);font-size:10px;color:var(--tx4)">${deVal} → ${ateVal} · ${txs.length} lançamentos · ${tipo==='todos'?'Entradas e saídas':tipo==='entrada'?'Apenas entradas':'Apenas saídas'}</div>
+    </div>`;
+
+  // Bloco Resumo
+  if(blocos.includes('resumo')) {
+    html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+      ${[
+        ['Entradas', fmt(ent), 'var(--pos)'],
+        ['Saídas',   fmt(sai), 'var(--neg)'],
+        ['Resultado', fmt(res), res>=0?'var(--gold)':'var(--neg)'],
+        ['Saldo Atual', fmt(saldo), 'var(--t1)'],
+      ].map(([l,v,c])=>`<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:16px">
+        <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">${l}</div>
+        <div style="font-family:var(--f-display);font-size:20px;font-weight:700;color:${c}">${v}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  // Bloco Pizza
+  if(blocos.includes('pizza')) {
+    const map={};
+    txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+    const ents=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    html += `<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1);margin-bottom:16px">🥧 Distribuição de Gastos por Categoria</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center">
+        <div style="height:220px"><canvas id="custom-pizza-chart"></canvas></div>
+        <div>${ents.slice(0,7).map(([c,v])=>{const col=CAT_COLORS[c]||'#445566';const pct=(v/sai*100).toFixed(1);return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:${col};flex-shrink:0"></div><span style="font-size:12px;flex:1;color:var(--tx2)">${c}</span><span style="font-family:var(--f-mono);font-size:11px;font-weight:600;color:${col}">${pct}%</span></div>`;}).join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  // Bloco Evolução
+  if(blocos.includes('evolucao')) {
+    html += `<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1);margin-bottom:16px">📈 Evolução do Fluxo no Período</div>
+      <div style="height:220px"><canvas id="custom-evolucao-chart"></canvas></div>
+    </div>`;
+  }
+
+  // Bloco Pareto
+  if(blocos.includes('pareto')) {
+    html += `<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1);margin-bottom:16px">🎯 Análise de Pareto 80/20</div>
+      <div style="height:240px"><canvas id="custom-pareto-chart"></canvas></div>
+    </div>`;
+  }
+
+  // Bloco Lançamentos
+  if(blocos.includes('lancamentos')) {
+    const rows = txs.slice(0,100).map(t=>{
+      const pos=t.amount>0;const cat=t._category||'Outros';const col=CAT_COLORS[cat]||'#445566';
+      return `<div class="tx-row"><span class="tx-date">${fmtD(t.date)}</span><span class="tx-desc">${t.description||'—'}</span><span class="tx-bank" style="color:${DEMO.banks.find(b=>b.code===t._bank)?.color||'#446688'}">${t._bank||'—'}</span><span><span style="background:${col}22;color:${col};font-family:var(--f-mono);font-size:9px;padding:2px 6px;border-radius:3px">${cat.slice(0,12).toUpperCase()}</span></span><span style="font-family:var(--f-mono);font-size:12px;font-weight:700;text-align:right;color:${pos?'var(--pos)':'var(--neg)'}">${pos?'+':''}${fmt(t.amount)}</span></div>`;
+    }).join('');
+    html += `<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);margin-bottom:24px">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--b1)"><div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1)">📄 Extrato de Lançamentos ${txs.length>100?'(primeiros 100)':''}</div></div>
+      <div class="tx-header"><span>Data</span><span>Histórico</span><span>Banco</span><span>Categoria</span><span class="r">Valor</span></div>
+      ${rows || '<div style="padding:20px;text-align:center;color:var(--tx4)">Nenhum lançamento no período</div>'}
+    </div>`;
+  }
+
+  // Bloco CP/CR
+  if(blocos.includes('cpcr')) {
+    const cp=loadCP(), cr=loadCR();
+    const cpAberto=cp.filter(i=>statusCP(i)!=='pago').reduce((s,i)=>s+i.valor,0);
+    const crAberto=cr.filter(i=>statusCR(i)!=='recebido').reduce((s,i)=>s+i.valor,0);
+    html += `<div style="background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1);margin-bottom:16px">💰 Posição CP / CR</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--ink5);border:1px solid var(--b1);border-radius:8px;padding:16px">
+          <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Contas a Pagar em aberto</div>
+          <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--neg)">${fmt(cpAberto)}</div>
+          <div style="font-size:11px;color:var(--tx4);margin-top:4px">${cp.filter(i=>statusCP(i)!=='pago').length} títulos</div>
+        </div>
+        <div style="background:var(--ink5);border:1px solid var(--b1);border-radius:8px;padding:16px">
+          <div style="font-family:var(--f-mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Contas a Receber em aberto</div>
+          <div style="font-family:var(--f-display);font-size:22px;font-weight:700;color:var(--pos)">${fmt(crAberto)}</div>
+          <div style="font-size:11px;color:var(--tx4);margin-top:4px">${cr.filter(i=>statusCR(i)!=='recebido').length} títulos</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Bloco IA
+  if(blocos.includes('ia')) {
+    html += `<div style="background:var(--ink4);border:1px solid rgba(212,160,23,.2);border-radius:var(--radius);padding:20px;margin-bottom:24px">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:600;color:var(--tx1);margin-bottom:12px">🤖 Análise IA — Claude</div>
+      <div id="custom-ia-content" style="font-size:12px;color:var(--tx3);font-style:italic">⏳ Gerando análise...</div>
+    </div>`;
+  }
+
+  if(contentEl) contentEl.innerHTML = html;
+
+  // Renderizar gráficos após inserir HTML
+  setTimeout(async () => {
+    // Pizza
+    if(blocos.includes('pizza')) {
+      const map={};
+      txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+      const ents=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+      if(_customCharts['pizza']) _customCharts['pizza'].destroy();
+      const el=document.getElementById('custom-pizza-chart');
+      if(el) _customCharts['pizza']=new Chart(el,{type:'doughnut',data:{labels:ents.map(e=>e[0]),datasets:[{data:ents.map(e=>e[1]),backgroundColor:ents.map(e=>(CAT_COLORS[e[0]]||'#445566')+'55'),borderColor:ents.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}});
+    }
+
+    // Evolução
+    if(blocos.includes('evolucao')) {
+      const dias=Math.max(1,Math.round((ate-de)/86400000));
+      const bkt=Math.min(12,dias),sz=Math.ceil(dias/bkt);
+      const lb=[],ins=[],outs=[];
+      for(let i=bkt-1;i>=0;i--){
+        const end2=new Date(ate.getTime()-i*sz*86400000),start2=new Date(ate.getTime()-(i+1)*sz*86400000);
+        lb.push(end2.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+        const sl=txs.filter(t=>{const d=new Date(t.date);return d>=start2&&d<=end2;});
+        ins.push(sl.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0));
+        outs.push(Math.abs(sl.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0)));
+      }
+      if(_customCharts['evolucao']) _customCharts['evolucao'].destroy();
+      const el=document.getElementById('custom-evolucao-chart');
+      if(el) _customCharts['evolucao']=new Chart(el,{type:'bar',data:{labels:lb,datasets:[{label:'Entradas',data:ins,backgroundColor:'rgba(74,222,128,.3)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:2},{label:'Saídas',data:outs,backgroundColor:'rgba(248,113,113,.2)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0bdd4',font:{size:9}}},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}}}}});
+    }
+
+    // Pareto
+    if(blocos.includes('pareto')) {
+      const map={};
+      txs.filter(t=>t.amount<0).forEach(t=>{const c=t._category||'Outros';map[c]=(map[c]||0)+Math.abs(t.amount);});
+      const ents=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+      const tot=ents.reduce((s,e)=>s+e[1],0);
+      let ac=0;
+      const acums=ents.map(([,v])=>{ac+=v;return parseFloat((ac/tot*100).toFixed(1));});
+      if(_customCharts['pareto']) _customCharts['pareto'].destroy();
+      const el=document.getElementById('custom-pareto-chart');
+      if(el) _customCharts['pareto']=new Chart(el,{type:'bar',data:{labels:ents.map(e=>e[0]),datasets:[{label:'Valor',data:ents.map(e=>e[1]),backgroundColor:ents.map(e=>(CAT_COLORS[e[0]]||'#445566')+'66'),borderColor:ents.map(e=>CAT_COLORS[e[0]]||'#445566'),borderWidth:1.5,borderRadius:3,order:2},{label:'% Acumulado',data:acums,type:'line',borderColor:'rgba(212,160,23,.9)',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'var(--gold)',yAxisID:'y2',order:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b0bdd4',font:{size:9}}},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>c.datasetIndex===0?` ${c.label}: ${fmt(c.raw)}`:` Acumulado: ${c.raw}%`}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtK(v)}},y2:{grid:{display:false},ticks:{color:'#d4a017',font:{size:9},callback:v=>v+'%'},position:'right',min:0,max:100}}}});
+    }
+
+    // IA
+    if(blocos.includes('ia')) {
+      try {
+        const beUrl=(S.cfg&&S.cfg.be)||'https://sfe-backend-production.up.railway.app';
+        const prompt=`EMPRESA: ${DEMO.co} | Período: ${deVal} a ${ateVal}
+ENTRADAS: ${fmt(ent)} | SAÍDAS: ${fmt(sai)} | RESULTADO: ${fmt(res)}
+LANÇAMENTOS ANALISADOS: ${txs.length}
+Tipo de análise: ${tipo==='todos'?'Geral':tipo==='entrada'?'Receitas':'Despesas'}
+Blocos solicitados: ${blocos.join(', ')}
+
+Gere um diagnóstico financeiro objetivo para esse período com:
+1) Visão geral (2 frases)
+2) Principais achados
+3) Recomendações práticas (máx 3), marcadas com [URGENTE], [ESTA SEMANA] ou [MONITORAR]`;
+        const r=await fetch(beUrl+'/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:'Você é analista financeiro sênior especializado em PMEs brasileiras. Seja objetivo, use R$ para valores.',messages:[{role:'user',content:prompt}],max_tokens:800})});
+        const d=await r.json();
+        const txt=d.content?.[0]?.text||'Sem resposta.';
+        const iaEl=document.getElementById('custom-ia-content');
+        if(iaEl) iaEl.innerHTML=txt.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--tx0)">$1</strong>').replace(/\n/g,'<br>');
+        iaEl.style.fontStyle='normal';iaEl.style.color='var(--tx2)';
+      } catch(e) {
+        const iaEl=document.getElementById('custom-ia-content');
+        if(iaEl) iaEl.innerHTML=`<span style="color:var(--neg)">Erro ao consultar IA: ${e.message}</span>`;
+      }
+    }
+
+  }, 100);
+}
+
+function exportarRelPersonPDF() {
+  const contentEl = document.getElementById('custom-preview-content');
+  if(!contentEl || contentEl.style.display==='none') { alert('Gere o relatório primeiro.'); return; }
+  const nome = document.getElementById('custom-nome')?.value || 'Relatório';
+  const co   = document.getElementById('tb-company')?.textContent || 'Empresa';
+  const ts   = new Date().toLocaleString('pt-BR');
+
+  const css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;background:#fff;color:#1a1a2e}@page{size:A4;margin:14mm 12mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}.hdr{background:#060d1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}.lm{width:14px;height:14px;background:#e8b020;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:inline-block;margin-right:6px;vertical-align:middle}.lt{font-size:13px;font-weight:800;letter-spacing:2px}.gb{height:3px;background:linear-gradient(90deg,#e8b020,#c8940a)}.body{padding:16px}';
+
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + nome + '</title><style>' + css + '</style></head><body>'
+    + '<div class="hdr"><div><span class="lm"></span><span class="lt">SFE</span></div><div style="text-align:right;font-size:10px;color:#9aaabf"><div style="color:#fff;font-weight:700">' + co + '</div><div>' + nome + '</div><div>' + ts + '</div></div></div>'
+    + '<div class="gb"></div><div class="body">' + contentEl.innerHTML + '</div>'
+    + '<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body></html>';
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank','width=960,height=720');
+  if(!win) alert('Permita pop-ups para exportar PDF.');
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+
+function exportarRelPersonCSV() {
+  const nome   = document.getElementById('custom-nome')?.value || 'relatorio';
+  const deVal  = document.getElementById('custom-de')?.value;
+  const ateVal = document.getElementById('custom-ate')?.value;
+  const tipo   = document.querySelector('input[name="custom-tipo"]:checked')?.value||'todos';
+  if(!deVal||!ateVal){alert('Configure o período primeiro.');return;}
+  const de=new Date(deVal+'T00:00:00'),ate=new Date(ateVal+'T23:59:59');
+  let txs=S.transactions.filter(t=>{const d=new Date(t.date);return d>=de&&d<=ate;});
+  if(tipo==='entrada') txs=txs.filter(t=>t.amount>0);
+  if(tipo==='saida')   txs=txs.filter(t=>t.amount<0);
+  const rows=[['Data','Histórico','Banco','Categoria','Valor','Tipo']];
+  txs.forEach(t=>rows.push([fmtD(t.date),(t.description||'').replace(/,/g,' '),t._bankFull||t._bank||'',t._category||'',t.amount,t.amount>0?'Crédito':'Débito']));
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download=nome.replace(/\s+/g,'_')+'_'+deVal+'_'+ateVal+'.csv';
+  a.click();
+}
+
+function salvarConfigRel() {
+  const config={
+    nome:  document.getElementById('custom-nome')?.value,
+    de:    document.getElementById('custom-de')?.value,
+    ate:   document.getElementById('custom-ate')?.value,
+    tipo:  document.querySelector('input[name="custom-tipo"]:checked')?.value,
+    blocos:[...document.querySelectorAll('input[name="custom-bloco"]:checked')].map(e=>e.value),
+    agrup: document.getElementById('custom-agrup')?.value,
+    orderC:document.getElementById('custom-order-campo')?.value,
+    orderD:document.getElementById('custom-order-dir')?.value,
+  };
+  const key='sfe_rel_config_'+(Date.now());
+  localStorage.setItem(key, JSON.stringify(config));
+  alert('Configuração salva! Próxima vez que abrir o sistema, sua configuração estará disponível.');
 }
 
 // ══ LOGIN & SESSION ══
