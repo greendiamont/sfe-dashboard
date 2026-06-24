@@ -2341,15 +2341,42 @@ body {
         <div style="margin-bottom:18px">
           <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">⑥ Blocos de Análise</div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            ${[
-              ['resumo','📋','Resumo Executivo','KPIs + resultado do período', true],
-              ['pizza','🥧','Gráfico de Categorias','Distribuição de gastos', true],
-              ['evolucao','📈','Evolução do Fluxo','Entradas vs saídas', true],
-              ['pareto','🎯','Pareto 80/20','Concentração de gastos', false],
-              ['lancamentos','📄','Extrato de Lançamentos','Lista completa filtrada', false],
-              ['cpcr','💰','Posição CP/CR','Contas a pagar e receber', false],
-              ['ia','🤖','Análise IA (Claude)','Diagnóstico inteligente', false],
-            ].map(([v,ic,nm,ds,ch]) => `<label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)"><input type="checkbox" name="custom-bloco" value="${v}" ${ch?'checked':''} style="accent-color:var(--gold);margin-top:2px;flex-shrink:0"><div><div style="font-weight:600;color:var(--tx1)">${ic} ${nm}</div><div style="font-size:10px;color:var(--tx4)">${ds}</div></div></label>`).join('')}
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="resumo" checked style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">📋 Resumo Executivo</div><div style="font-size:10px;color:var(--tx4)">KPIs + resultado do período</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="pizza" checked style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">🥧 Gráfico de Categorias</div><div style="font-size:10px;color:var(--tx4)">Distribuição de gastos</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="evolucao" checked style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">📈 Evolução do Fluxo</div><div style="font-size:10px;color:var(--tx4)">Entradas vs saídas</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="pareto" style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">🎯 Pareto 80/20</div><div style="font-size:10px;color:var(--tx4)">Concentração de gastos</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="lancamentos" style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">📄 Extrato de Lançamentos</div><div style="font-size:10px;color:var(--tx4)">Lista completa filtrada</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="cpcr" style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">💰 Posição CP/CR</div><div style="font-size:10px;color:var(--tx4)">Contas a pagar e receber</div></div>
+            </label>
+
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;background:var(--ink5);padding:8px 10px;border-radius:6px;border:1px solid var(--b1)">
+              <input type="checkbox" name="custom-bloco" value="ia" style="accent-color:var(--gold);margin-top:2px;flex-shrink:0">
+              <div><div style="font-weight:600;color:var(--tx1)">🤖 Análise IA (Claude)</div><div style="font-size:10px;color:var(--tx4)">Diagnóstico inteligente</div></div>
+            </label>
+
           </div>
         </div>
 
@@ -3064,6 +3091,12 @@ function navTo(page, navEl, sbEl) {
     const from = new Date(Date.now() - days * 86400000);
     const txs  = S.transactions.filter(t => new Date(t.date) >= from);
     if (page === 'relatorios') {
+      // Se não há dados, carregar demo automaticamente para visualizar relatórios
+      if (!S.transactions.length) {
+        buildDemo();
+        seedDemoData(); renderCP(); renderCR();
+        seedCadastros(); renderClientes(); renderFornecedores();
+      }
       renderRelatorios();
     } else if (page === 'fluxo') {
       renderCashflow(txs, days);
