@@ -2432,6 +2432,7 @@ body {
   </div>
 </div>
 
+
 <!-- ▸ IA -->
 <div id="page-ia" class="page">
   <div class="page-header">
@@ -5836,22 +5837,6 @@ function ofxConfirmarImport() {
 let _relTab = 'gastos';
 let _relCharts = {};
 
-function relSetTab(tab) {
-  _relTab = tab;
-  ['gastos','prev','pareto'].forEach(t => {
-    const btn   = document.getElementById('rel-tab-' + t);
-    const panel = document.getElementById('rel-panel-' + t);
-    const active = t === tab;
-    if(btn) {
-      btn.style.borderBottomColor = active ? 'var(--gold)' : 'transparent';
-      btn.style.color             = active ? 'var(--gold)' : 'var(--tx3)';
-      btn.style.fontWeight        = active ? '700' : '600';
-    }
-    if(panel) panel.style.display = active ? '' : 'none';
-  });
-  setTimeout(() => renderRelatorios(), 50);
-}
-
 function renderRelatorios() {
   const days = parseInt(document.getElementById('rel-period')?.value || 30);
   const from = new Date(Date.now() - days * 86400000);
@@ -6479,38 +6464,159 @@ function exportarRelPersonPDF() {
   if(!contentEl || contentEl.style.display==='none') { alert('Gere o relatório primeiro.'); return; }
   const nome = document.getElementById('custom-nome')?.value || 'Relatório';
   const co   = document.getElementById('tb-company')?.textContent || 'Empresa';
+  const cn   = document.getElementById('tb-cnpj')?.textContent || '';
   const ts   = new Date().toLocaleString('pt-BR');
 
-  const css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;background:#fff;color:#1a1a2e}@page{size:A4;margin:14mm 12mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}.hdr{background:#060d1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}.lm{width:14px;height:14px;background:#e8b020;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:inline-block;margin-right:6px;vertical-align:middle}.lt{font-size:13px;font-weight:800;letter-spacing:2px}.gb{height:3px;background:linear-gradient(90deg,#e8b020,#c8940a)}.body{padding:16px}';
+  // Converter gráficos Chart.js para imagens base64 ANTES de gerar o PDF
+  const canvases = contentEl.querySelectorAll('canvas');
+  canvases.forEach(canvas => {
+    try {
+      const img = document.createElement('img');
+      img.src   = canvas.toDataURL('image/png');
+      img.style.cssText = 'width:100%;height:auto;display:block';
+      canvas.parentNode.replaceChild(img, canvas);
+    } catch(e) { console.warn('canvas toDataURL:', e); }
+  });
 
-  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + nome + '</title><style>' + css + '</style></head><body>'
-    + '<div class="hdr"><div><span class="lm"></span><span class="lt">SFE</span></div><div style="text-align:right;font-size:10px;color:#9aaabf"><div style="color:#fff;font-weight:700">' + co + '</div><div>' + nome + '</div><div>' + ts + '</div></div></div>'
-    + '<div class="gb"></div><div class="body">' + contentEl.innerHTML + '</div>'
-    + '<script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body></html>';
+  const css = [
+    '*{box-sizing:border-box;margin:0;padding:0}',
+    'body{font-family:Arial,Helvetica,sans-serif;font-size:11px;background:#fff;color:#1a1a2e;line-height:1.5}',
+    '@page{size:A4;margin:14mm 12mm}',
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none}}',
+    '.hdr{background:#060d1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:0}',
+    '.lm{width:14px;height:14px;background:#e8b020;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:inline-block;margin-right:6px;vertical-align:middle}',
+    '.lt{font-size:14px;font-weight:800;letter-spacing:2px}',
+    '.gb{height:3px;background:linear-gradient(90deg,#e8b020,#c8940a);margin-bottom:16px}',
+    '.body{padding:0 16px 16px}',
+    // Adaptar cores escuras para branco (PDF é fundo branco)
+    'div[style*="background:var(--ink"]{background:#f8f8f8!important}',
+    'div[style*="color:var(--tx0"]{color:#111!important}',
+    'div[style*="color:var(--tx1"]{color:#222!important}',
+    'div[style*="color:var(--tx2"]{color:#444!important}',
+    'div[style*="color:var(--tx3"]{color:#666!important}',
+    'div[style*="color:var(--gold"]{color:#b07010!important}',
+    'div[style*="color:var(--pos"]{color:#16a34a!important}',
+    'div[style*="color:var(--neg"]{color:#dc2626!important}',
+    'div[style*="color:var(--t1"]{color:#0d7a6e!important}',
+    'div[style*="border:1px solid var(--b1"]{border-color:#ddd!important}',
+    'div[style*="background:var(--ink4"]{background:#f4f4f4!important}',
+    'div[style*="background:var(--ink5"]{background:#eee!important}',
+    '.tx-row{border-bottom:1px solid #eee!important}',
+    '.tx-date,.tx-bank,.tx-amt{color:#333!important}',
+    '.tx-desc{color:#111!important}',
+    'img{max-width:100%;height:auto}',
+  ].join('');
 
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const win=window.open(url,'_blank','width=960,height=720');
-  if(!win) alert('Permita pop-ups para exportar PDF.');
-  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  const bodyHTML = contentEl.innerHTML
+    // Substituir variáveis CSS por valores fixos para impressão
+    .replace(/var\(--ink[0-9]\)/g, '#f5f5f5')
+    .replace(/var\(--tx0\)/g, '#111')
+    .replace(/var\(--tx1\)/g, '#222')
+    .replace(/var\(--tx2\)/g, '#444')
+    .replace(/var\(--tx3\)/g, '#666')
+    .replace(/var\(--tx4\)/g, '#888')
+    .replace(/var\(--b1\)/g, '#ddd')
+    .replace(/var\(--b2\)/g, '#ccc')
+    .replace(/var\(--gold\)/g, '#b07010')
+    .replace(/var\(--pos\)/g, '#16a34a')
+    .replace(/var\(--neg\)/g, '#dc2626')
+    .replace(/var\(--t1\)/g, '#0d7a6e')
+    .replace(/var\(--warn\)/g, '#d97706')
+    .replace(/var\(--info\)/g, '#1d4ed8')
+    .replace(/var\(--radius\)/g, '8px')
+    .replace(/var\(--radius-sm\)/g, '6px')
+    .replace(/var\(--f-display\)/g, 'Arial')
+    .replace(/var\(--f-mono\)/g, 'monospace')
+    .replace(/var\(--f-body\)/g, 'Arial');
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head>'
+    + '<meta charset="UTF-8">'
+    + '<title>' + nome + '</title>'
+    + '<style>' + css + '</style>'
+    + '</head><body>'
+    + '<div class="hdr">'
+    +   '<div><span class="lm"></span><span class="lt">SFE</span><span style="font-size:9px;color:#6688aa;margin-left:8px;letter-spacing:1px">SISTEMA FINANCEIRO EMPRESARIAL</span></div>'
+    +   '<div style="text-align:right;font-size:10px;color:#9aaabf">'
+    +     '<div style="color:#fff;font-weight:700;font-size:12px">' + co + '</div>'
+    +     '<div style="margin-top:2px">' + cn + '</div>'
+    +     '<div style="margin-top:2px">' + nome + ' · ' + ts + '</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="gb"></div>'
+    + '<div class="body">' + bodyHTML + '</div>'
+    + '<script>window.onload=function(){setTimeout(function(){window.print();},800);}<\/script>'
+    + '</body></html>';
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank', 'width=960,height=780,scrollbars=yes');
+  if(!win) { alert('Permita pop-ups para exportar o PDF.'); }
+  setTimeout(() => URL.revokeObjectURL(url), 90000);
+
+  // Recriar os canvas (foram substituídos por img acima) — re-gerar o relatório
+  setTimeout(() => gerarRelatorioPersonalizado(), 500);
 }
 
 function exportarRelPersonCSV() {
   const nome   = document.getElementById('custom-nome')?.value || 'relatorio';
   const deVal  = document.getElementById('custom-de')?.value;
   const ateVal = document.getElementById('custom-ate')?.value;
-  const tipo   = document.querySelector('input[name="custom-tipo"]:checked')?.value||'todos';
-  if(!deVal||!ateVal){alert('Configure o período primeiro.');return;}
-  const de=new Date(deVal+'T00:00:00'),ate=new Date(ateVal+'T23:59:59');
-  let txs=S.transactions.filter(t=>{const d=new Date(t.date);return d>=de&&d<=ate;});
-  if(tipo==='entrada') txs=txs.filter(t=>t.amount>0);
-  if(tipo==='saida')   txs=txs.filter(t=>t.amount<0);
-  const rows=[['Data','Histórico','Banco','Categoria','Valor','Tipo']];
-  txs.forEach(t=>rows.push([fmtD(t.date),(t.description||'').replace(/,/g,' '),t._bankFull||t._bank||'',t._category||'',t.amount,t.amount>0?'Crédito':'Débito']));
-  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download=nome.replace(/\s+/g,'_')+'_'+deVal+'_'+ateVal+'.csv';
+  const tipo   = document.querySelector('input[name="custom-tipo"]:checked')?.value || 'todos';
+
+  if(!deVal || !ateVal) { alert('Configure o período primeiro.'); return; }
+
+  const de  = new Date(deVal + 'T00:00:00');
+  const ate = new Date(ateVal + 'T23:59:59');
+
+  let txs = S.transactions.filter(t => {
+    const d = new Date(t.date);
+    return d >= de && d <= ate;
+  });
+  if(tipo === 'entrada') txs = txs.filter(t => t.amount > 0);
+  if(tipo === 'saida')   txs = txs.filter(t => t.amount < 0);
+
+  // Função para escapar campo CSV (sem vírgulas dentro do valor)
+  const esc = v => {
+    const s = String(v === null || v === undefined ? '' : v);
+    // Se contém ; ou " ou quebra de linha, envolver em aspas
+    if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  };
+
+  // Usar ponto-e-vírgula como separador (padrão PT-BR — Excel abre corretamente)
+  const SEP = ';';
+
+  const rows = [
+    ['Data', 'Histórico', 'Banco', 'Banco Completo', 'Categoria', 'Valor', 'Tipo'],
+  ];
+
+  txs.forEach(t => rows.push([
+    fmtD(t.date),
+    t.description || '',
+    t._bank || '',
+    t._bankFull || t._bank || '',
+    t._category || 'Outros',
+    String(t.amount).replace('.', ','),   // vírgula decimal (padrão BR)
+    t.amount > 0 ? 'Crédito' : 'Débito',
+  ]));
+
+  // Resumo no final
+  rows.push([]);
+  const ent = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+  const sai = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
+  rows.push(['RESUMO', '', '', '', '', '', '']);
+  rows.push(['Total Lançamentos', txs.length, '', '', '', '', '']);
+  rows.push(['Total Entradas', '', '', '', '', String(ent).replace('.', ','), 'Crédito']);
+  rows.push(['Total Saídas',   '', '', '', '', String(sai).replace('.', ','), 'Débito']);
+  rows.push(['Resultado',      '', '', '', '', String(ent-sai).replace('.', ','), ent>=sai?'Positivo':'Negativo']);
+
+  const csv = '\uFEFF' + rows.map(r => r.map(esc).join(SEP)).join('\r\n');
+
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = nome.replace(/\s+/g, '_') + '_' + deVal + '_a_' + ateVal + '.csv';
   a.click();
 }
 
