@@ -249,30 +249,81 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <p>SISTEMA FINANCEIRO PESSOAL</p>
   </div>
   <div class="login-card">
-    <div class="login-tabs">
-      <button class="login-tab active" id="tab-cpf" onclick="setLoginTipo('cpf')">👤 CPF</button>
-      <button class="login-tab" id="tab-cnpj" onclick="setLoginTipo('cnpj')">🏢 CNPJ</button>
+
+    <!-- Tabs Login / Cadastro -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:24px">
+      <button class="login-tab active" id="tab-login" onclick="setFluxo('login')">Entrar</button>
+      <button class="login-tab" id="tab-cadastro" onclick="setFluxo('cadastro')" style="border-color:rgba(78,205,196,.3);color:var(--t1)">✨ Novo Usuário</button>
     </div>
-    <div class="input-group">
-      <label class="input-label" id="login-doc-label">CPF</label>
-      <input class="input" id="login-doc" type="text" placeholder="000.000.000-00" inputmode="numeric" oninput="maskDoc(this)">
-    </div>
-    <div class="input-group">
-      <label class="input-label">SENHA</label>
-      <div class="input-row">
-        <input class="input" id="login-senha" type="password" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
-        <button class="input-eye" id="btn-ver" onclick="toggleVer('login-senha','btn-ver')">👁</button>
+
+    <!-- PAINEL LOGIN -->
+    <div id="painel-login">
+      <div class="login-tabs">
+        <button class="login-tab active" id="tab-cpf" onclick="setLoginTipo('cpf')">👤 CPF</button>
+        <button class="login-tab" id="tab-cnpj" onclick="setLoginTipo('cnpj')">🏢 CNPJ</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label" id="login-doc-label">CPF</label>
+        <input class="input" id="login-doc" type="text" placeholder="000.000.000-00" inputmode="numeric" oninput="maskDoc(this)">
+      </div>
+      <div class="input-group">
+        <label class="input-label">SENHA</label>
+        <div class="input-row">
+          <input class="input" id="login-senha" type="password" placeholder="••••••••" onkeypress="if(event.key==='Enter')doLogin()">
+          <button class="input-eye" id="btn-ver" onclick="toggleVer('login-senha','btn-ver')">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="btn btn-gold btn-block" id="login-btn" onclick="doLogin()">Entrar</button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="abrirTrocarSenha()" style="background:none;border:none;color:var(--tx3);font-size:11px;cursor:pointer;text-decoration:underline">🔑 Alterar senha</button>
+      </div>
+      <div class="login-footer">
+        SFE Lite v1.0 · Dados protegidos · LGPD<br>
+        <button onclick="loginDemo()">▷ Entrar como Demo</button>
       </div>
     </div>
-    <div class="login-error" id="login-error"></div>
-    <button class="btn btn-gold btn-block" id="login-btn" onclick="doLogin()">Entrar</button>
-    <div style="text-align:center;margin-top:12px">
-      <button onclick="abrirTrocarSenha()" style="background:none;border:none;color:var(--tx3);font-size:11px;cursor:pointer;text-decoration:underline">🔑 Alterar senha</button>
+
+    <!-- PAINEL CADASTRO -->
+    <div id="painel-cadastro" style="display:none">
+      <div class="login-tabs" style="margin-bottom:16px">
+        <button class="login-tab active" id="cad-tab-cpf"  onclick="setCadTipo('cpf')">👤 Pessoa Física</button>
+        <button class="login-tab"        id="cad-tab-cnpj" onclick="setCadTipo('cnpj')">🏢 Empresa</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label" id="cad-doc-label">CPF</label>
+        <input class="input" id="cad-doc" type="text" placeholder="000.000.000-00" inputmode="numeric" oninput="maskDoc(this)">
+      </div>
+      <div class="input-group">
+        <label class="input-label">NOME COMPLETO</label>
+        <input class="input" id="cad-nome" type="text" placeholder="Seu nome completo">
+      </div>
+      <div class="input-group">
+        <label class="input-label">E-MAIL</label>
+        <input class="input" id="cad-email" type="email" placeholder="seu@email.com" inputmode="email">
+      </div>
+      <div class="input-group">
+        <label class="input-label">SENHA</label>
+        <div class="input-row">
+          <input class="input" id="cad-senha" type="password" placeholder="mínimo 6 caracteres">
+          <button class="input-eye" onclick="toggleVer('cad-senha','eye-cad1')" id="eye-cad1">👁</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">CONFIRMAR SENHA</label>
+        <div class="input-row">
+          <input class="input" id="cad-conf" type="password" placeholder="repita a senha" onkeypress="if(event.key==='Enter')doCadastro()">
+          <button class="input-eye" onclick="toggleVer('cad-conf','eye-cad2')" id="eye-cad2">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="cad-error"></div>
+      <div class="login-error" id="cad-ok" style="color:var(--pos);background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3)"></div>
+      <button class="btn btn-block" id="cad-btn" onclick="doCadastro()" style="background:linear-gradient(135deg,var(--t1),#0d9488);color:#000;border:none;font-size:13px;font-weight:700;padding:13px;border-radius:10px;cursor:pointer">✨ Criar Conta</button>
+      <div class="login-footer" style="margin-top:16px">
+        Ao criar uma conta você concorda com os<br>termos de uso do SFE · LGPD compliant
+      </div>
     </div>
-    <div class="login-footer">
-      SFE Lite v1.0 · Dados protegidos · LGPD<br>
-      <button onclick="loginDemo()">▷ Entrar como Demo</button>
-    </div>
+
   </div>
 </div>
 
@@ -1359,6 +1410,102 @@ function maskDoc(el) {
 }
 
 let _loginTipo = 'cpf';
+// ══ FLUXO LOGIN / CADASTRO ══
+let _fluxo   = 'login';
+let _cadTipo = 'cpf';
+
+function setFluxo(fluxo) {
+  _fluxo = fluxo;
+  const tabLogin    = document.getElementById('tab-login');
+  const tabCad      = document.getElementById('tab-cadastro');
+  const painelLogin = document.getElementById('painel-login');
+  const painelCad   = document.getElementById('painel-cadastro');
+  if(fluxo === 'login') {
+    if(tabLogin)    tabLogin.className    = 'login-tab active';
+    if(tabCad)      tabCad.className      = 'login-tab';
+    if(painelLogin) painelLogin.style.display = '';
+    if(painelCad)   painelCad.style.display   = 'none';
+  } else {
+    if(tabLogin)    tabLogin.className    = 'login-tab';
+    if(tabCad)      tabCad.className      = 'login-tab active';
+    if(painelLogin) painelLogin.style.display = 'none';
+    if(painelCad)   painelCad.style.display   = '';
+    ['cad-doc','cad-nome','cad-email','cad-senha','cad-conf'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    const ce=document.getElementById('cad-error'); if(ce) ce.style.display='none';
+    const co=document.getElementById('cad-ok');    if(co) co.style.display='none';
+  }
+}
+
+function setCadTipo(tipo) {
+  _cadTipo = tipo;
+  const t1 = document.getElementById('cad-tab-cpf');
+  const t2 = document.getElementById('cad-tab-cnpj');
+  if(t1) t1.className = 'login-tab' + (tipo==='cpf'?' active':'');
+  if(t2) t2.className = 'login-tab' + (tipo==='cnpj'?' active':'');
+  const lbl = document.getElementById('cad-doc-label');
+  const inp = document.getElementById('cad-doc');
+  if(lbl) lbl.textContent = tipo==='cpf' ? 'CPF' : 'CNPJ';
+  if(inp) { inp.placeholder=tipo==='cpf'?'000.000.000-00':'00.000.000/0001-00'; inp.value=''; }
+}
+
+async function doCadastro() {
+  const doc   = (document.getElementById('cad-doc')?.value  ||'').trim();
+  const nome  = (document.getElementById('cad-nome')?.value ||'').trim();
+  const email = (document.getElementById('cad-email')?.value||'').trim();
+  const senha = (document.getElementById('cad-senha')?.value||'').trim();
+  const conf  = (document.getElementById('cad-conf')?.value ||'').trim();
+  const errEl = document.getElementById('cad-error');
+  const okEl  = document.getElementById('cad-ok');
+  const btn   = document.getElementById('cad-btn');
+
+  const showE = m => { if(errEl){errEl.textContent=m;errEl.style.display='block';} if(okEl) okEl.style.display='none'; };
+  const showO = m => { if(okEl){okEl.textContent=m;okEl.style.display='block';}   if(errEl) errEl.style.display='none'; };
+
+  if(!doc)   return showE('Informe seu CPF ou CNPJ.');
+  const docLimpo = doc.replace(/\D/g,'');
+  if(docLimpo.length!==11 && docLimpo.length!==14) return showE('CPF (11 dígitos) ou CNPJ (14 dígitos) inválido.');
+  if(!nome || nome.length<3) return showE('Informe seu nome completo (mínimo 3 letras).');
+  if(!email||!email.includes('@')) return showE('Informe um e-mail válido.');
+  if(!senha||senha.length<6) return showE('Senha deve ter ao menos 6 caracteres.');
+  if(senha!==conf) return showE('As senhas não coincidem.');
+
+  btn.textContent='⏳ Criando conta...'; btn.disabled=true;
+
+  try {
+    const plano = docLimpo.length===11 ? 'lite' : 'pro';
+    const r = await fetch(BE_URL+'/api/empresa/criar',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({doc:docLimpo, razao:nome, fantasia:nome.split(' ')[0], email, senha, plano})
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||'Erro ao criar conta');
+
+    showO('✅ Conta criada com sucesso! Entrando...');
+
+    // Login automático
+    setTimeout(async () => {
+      try {
+        const lr = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({doc:docLimpo,senha})});
+        const ld = await lr.json();
+        if(!ld.ok) throw new Error(ld.error);
+        SESSION = ld;
+        localStorage.setItem('sfe_lite_session',JSON.stringify({token:ld.token,ts:Date.now(),empresa:ld.empresa}));
+        carregarLite();
+        iniciarApp();
+      } catch(e) {
+        showO('✅ Conta criada! Agora faça login.');
+        setTimeout(()=>setFluxo('login'),2000);
+      }
+    }, 1500);
+
+  } catch(e) {
+    showE(e.message);
+    btn.textContent='✨ Criar Conta'; btn.disabled=false;
+  }
+}
+
 function setLoginTipo(tipo) {
   _loginTipo = tipo;
   document.getElementById('tab-cpf').className  = 'login-tab' + (tipo==='cpf'?' active':'');
