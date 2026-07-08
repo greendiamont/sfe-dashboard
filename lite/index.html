@@ -1047,6 +1047,8 @@ function renderHome() {
   } else if(cartaoSec) {
     cartaoSec.style.display = 'none';
   }
+
+  const cpAberto = LITE.cp.filter(i=>!i.pago).reduce((s,i)=>s+i.val,0);
   const crAberto = LITE.cr.filter(i=>!i.recebido).reduce((s,i)=>s+i.val,0);
   document.getElementById('home-cp').textContent  = fmt(cpAberto);
   document.getElementById('home-cp-n').textContent= `${LITE.cp.filter(i=>!i.pago).length} títulos`;
