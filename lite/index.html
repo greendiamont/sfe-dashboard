@@ -1477,7 +1477,16 @@ async function doCadastro() {
     const plano = docLimpo.length===11 ? 'lite' : 'pro';
     const r = await fetch(BE_URL+'/api/empresa/criar',{
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({doc:docLimpo, razao:nome, fantasia:nome.split(' ')[0], email, senha, plano})
+      body:JSON.stringify({
+        doc:    docLimpo,
+        cnpj:   docLimpo,   // compatibilidade backend v2
+        cpf:    docLimpo,   // compatibilidade backend v2
+        razao:  nome,
+        fantasia: nome.split(' ')[0],
+        email,
+        senha,
+        plano
+      })
     });
     const d = await r.json();
     if(!r.ok) throw new Error(d.error||'Erro ao criar conta');
@@ -1487,7 +1496,7 @@ async function doCadastro() {
     // Login automático
     setTimeout(async () => {
       try {
-        const lr = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({doc:docLimpo,senha})});
+        const lr = await fetch(BE_URL+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({doc:docLimpo,cnpj:docLimpo,senha})});
         const ld = await lr.json();
         if(!ld.ok) throw new Error(ld.error);
         SESSION = ld;
