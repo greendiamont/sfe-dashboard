@@ -513,80 +513,102 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- ▸ HOME ── -->
     <div id="page-home" class="page active">
 
-      <!-- Saldo -->
-      <div class="saldo-card" id="home-saldo-card">
-        <div class="saldo-eyebrow"><span class="saldo-dot"></span>SALDO TOTAL</div>
-        <div class="saldo-valor" id="home-saldo">R$ 0,00</div>
-        <div class="saldo-periodo" id="home-periodo">Últimos 30 dias</div>
-        <div class="saldo-row">
-          <div>
-            <div class="saldo-item-lbl">↑ Entradas</div>
-            <div class="saldo-item-val" style="color:var(--pos)" id="home-ent">R$ 0</div>
+      <!-- ── PAINEL EXECUTIVO ── -->
+      <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:2px">Painel Executivo</div>
+          <div style="font-size:20px;font-weight:700;color:var(--tx0)" id="home-saudacao">Olá!</div>
+        </div>
+        <select id="home-period" onchange="renderHome()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
+          <option value="30">30 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+        </select>
+      </div>
+
+      <!-- KPIs principais -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;margin-bottom:12px">
+        <!-- Saldo total -->
+        <div style="background:linear-gradient(135deg,var(--ink4),#0d1f3a);border:1px solid var(--b2);border-radius:14px;padding:16px;grid-column:1/-1;position:relative;overflow:hidden">
+          <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(212,160,23,.12),transparent 70%);border-radius:50%"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--pos);box-shadow:0 0 8px var(--pos);animation:pulse 2s infinite"></span>
+            SALDO TOTAL CONSOLIDADO
           </div>
-          <div>
-            <div class="saldo-item-lbl">↓ Saídas</div>
-            <div class="saldo-item-val" style="color:var(--neg)" id="home-sai">R$ 0</div>
+          <div style="font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:4px" id="home-saldo">R$ 0,00</div>
+          <div style="font-size:11px;color:var(--tx4)" id="home-periodo">Últimos 30 dias</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid var(--b1);padding-top:12px;margin-top:12px">
+            <div>
+              <div style="font-size:9px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">↑ Entradas</div>
+              <div style="font-size:16px;font-weight:700;color:var(--pos)" id="home-ent">R$ 0</div>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">↓ Saídas</div>
+              <div style="font-size:16px;font-weight:700;color:var(--neg)" id="home-sai">R$ 0</div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Mini cards -->
-      <div class="grid2">
-        <div class="mini-card">
-          <div class="mini-lbl">A Pagar</div>
-          <div class="mini-val" style="color:var(--neg)" id="home-cp">R$ 0</div>
-          <div class="mini-sub" id="home-cp-n">0 títulos</div>
+        <!-- CP -->
+        <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--neg);border-radius:14px;padding:14px">
+          <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">A Pagar</div>
+          <div style="font-size:20px;font-weight:700;color:var(--neg)" id="home-cp">R$ 0</div>
+          <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="home-cp-n">0 títulos</div>
         </div>
-        <div class="mini-card">
-          <div class="mini-lbl">A Receber</div>
-          <div class="mini-val" style="color:var(--pos)" id="home-cr">R$ 0</div>
-          <div class="mini-sub" id="home-cr-n">0 títulos</div>
+        <!-- CR -->
+        <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--pos);border-radius:14px;padding:14px">
+          <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">A Receber</div>
+          <div style="font-size:20px;font-weight:700;color:var(--pos)" id="home-cr">R$ 0</div>
+          <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="home-cr-n">0 títulos</div>
         </div>
-      </div>
-
-      <!-- Bancos consolidados -->
-      <div id="home-bancos-sec" style="display:none">
-        <div class="sec-title">
-          <span>Meus Bancos</span>
-          <button class="sec-link" onclick="abrirImportOFX()">+ Importar</button>
-        </div>
-        <div id="home-bancos-list" style="padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-      </div>
-
-      <!-- Cartão de crédito -->
-      <div id="home-cartao-sec" style="display:none">
-        <div class="sec-title">
-          <span>💳 Cartões de Crédito</span>
-          <button class="sec-link" onclick="abrirImportOFX('cartao')">+ Fatura</button>
-        </div>
-        <div id="home-cartao-list" style="padding:0 16px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       </div>
 
       <!-- Gráfico fluxo -->
-      <div class="card" style="margin-top:0">
-        <div class="sec-title" style="padding:0 0 12px">
-          <span>Fluxo 30 dias</span>
-          <span class="chip chip-gold" id="home-chart-res">—</span>
+      <div class="card" style="margin-top:0;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2)">Evolução do Fluxo</div>
+          <span class="chip chip-gold" id="home-chart-res" style="font-size:11px">—</span>
         </div>
-        <div style="height:140px"><canvas id="home-chart"></canvas></div>
+        <div style="height:130px"><canvas id="home-chart"></canvas></div>
+      </div>
+
+      <!-- Posição Bancária -->
+      <div id="home-bancos-sec" style="display:none;margin-bottom:12px">
+        <div class="sec-title" style="padding-bottom:8px">
+          <span>🏦 Posição Bancária</span>
+          <button class="sec-link" onclick="abrirImportOFX()">+ Importar</button>
+        </div>
+        <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px" id="home-bancos-list"></div>
+      </div>
+
+      <!-- Cartão de crédito -->
+      <div id="home-cartao-sec" style="display:none;margin-bottom:12px">
+        <div class="sec-title" style="padding-bottom:8px">
+          <span>💳 Cartões de Crédito</span>
+          <button class="sec-link" onclick="abrirImportOFX('cartao')">+ Fatura</button>
+        </div>
+        <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px" id="home-cartao-list"></div>
       </div>
 
       <!-- Últimos lançamentos -->
-      <div class="sec-title">
+      <div class="sec-title" style="padding-bottom:8px">
         <span>Últimos Lançamentos</span>
         <button class="sec-link" onclick="navTo('lancamentos')">Ver todos →</button>
       </div>
-      <div class="card" style="padding:0">
+      <div class="card" style="padding:0;margin-bottom:12px">
         <div id="home-txs-list"></div>
-        <div style="padding:12px 16px;text-align:center">
+        <div style="padding:10px 16px">
           <button class="btn btn-ghost" style="font-size:12px;width:100%;padding:10px" onclick="abrirModalLanc()">+ Novo Lançamento</button>
         </div>
       </div>
 
-      <!-- Alerta IA rápida -->
-      <div class="card card-gold" id="home-ia-card" style="display:none">
-        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">🤖 Dica do Dia</div>
-        <div style="font-size:13px;color:var(--tx2);line-height:1.6" id="home-ia-txt">—</div>
+      <!-- Import prompt (quando não tem dados) -->
+      <div id="home-import-prompt" style="display:none;margin:0 16px 20px">
+        <div style="background:rgba(26,111,168,.08);border:1px dashed rgba(26,111,168,.3);border-radius:14px;padding:20px;text-align:center">
+          <div style="font-size:28px;margin-bottom:8px">📂</div>
+          <div style="font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:4px">Importe seus dados bancários</div>
+          <div style="font-size:12px;color:var(--tx4);margin-bottom:14px">Conecte seu extrato via OFX ou CSV</div>
+          <button class="btn btn-block" onclick="abrirImportOFX()" style="background:linear-gradient(135deg,#1a6fa8,#0d4f7a);color:#fff;border:none;font-size:13px;font-weight:600;padding:12px;border-radius:10px;cursor:pointer">⬆ Importar Extrato OFX / CSV</button>
+        </div>
       </div>
 
     </div>
@@ -1128,12 +1150,12 @@ function loadDemo() {
 // ══ INICIAR APP ══
 function iniciarApp() {
   const s = SESSION.empresa;
-  document.getElementById('tb-nome').textContent   = (s.fantasia||s.razao||'').slice(0,20);
-  document.getElementById('tb-doc').textContent    = s.doc_fmt || s.doc || '';
-  document.getElementById('tb-avatar').textContent = (s.razao||'?')[0].toUpperCase();
-  document.getElementById('cfg-nome').textContent  = s.razao || '—';
-  document.getElementById('cfg-doc').textContent   = s.doc_fmt || s.doc || '—';
-  document.getElementById('cfg-plano').textContent = (s.plano||'lite').toUpperCase();
+  const setEl = (id, val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  setEl('tb-nome',   (s.fantasia||s.razao||'').slice(0,20));
+  setEl('tb-doc',    s.doc_fmt || s.doc || '');
+  setEl('cfg-nome',  s.razao || '—');
+  setEl('cfg-doc',   s.doc_fmt || s.doc || '—');
+  setEl('cfg-plano', (s.plano||'lite').toUpperCase());
 
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
@@ -1144,7 +1166,7 @@ function iniciarApp() {
 
 // ══ RENDER HOME ══
 function renderHome() {
-  const days = 30;
+  const days = parseInt(document.getElementById('home-period')?.value || 30);
   const from = new Date(Date.now() - days*86400000);
   const txs  = LITE.txs.filter(t => new Date(t.data) >= from);
   const ent  = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
@@ -1152,11 +1174,24 @@ function renderHome() {
   const saldo= LITE.txs.reduce((s,t)=>s+t.val,0);
   const res  = ent - sai;
 
-  document.getElementById('home-saldo').textContent  = fmt(saldo);
-  document.getElementById('home-saldo').style.color  = saldo >= 0 ? 'var(--pos)' : 'var(--neg)';
-  document.getElementById('home-ent').textContent    = fmt(ent);
-  document.getElementById('home-sai').textContent    = fmt(sai);
-  document.getElementById('home-periodo').textContent= `Últimos ${days} dias`;
+  // Saudação
+  const hora = new Date().getHours();
+  const sauda = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  const nome  = (SESSION?.empresa?.fantasia||SESSION?.empresa?.razao||'').split(' ')[0];
+  const saudEl = document.getElementById('home-saudacao');
+  if(saudEl) saudEl.textContent = sauda + (nome ? ', ' + nome + '!' : '!');
+
+  // KPIs
+  const setSaldo = document.getElementById('home-saldo');
+  if(setSaldo) { setSaldo.textContent=fmt(saldo); setSaldo.style.color=saldo>=0?'var(--pos)':'var(--neg)'; }
+  const setEl = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  setEl('home-ent',    fmt(ent));
+  setEl('home-sai',    fmt(sai));
+  setEl('home-periodo','Últimos '+days+' dias');
+
+  // Import prompt — aparece quando não há lançamentos e não há bancos
+  const promptEl = document.getElementById('home-import-prompt');
+  if(promptEl) promptEl.style.display = (!LITE.txs.length && !LITE.bancos.length) ? '' : 'none';
 
   // Garantir arrays existem (compatibilidade com localStorage antigo)
   if(!LITE.bancos)  LITE.bancos  = [];
