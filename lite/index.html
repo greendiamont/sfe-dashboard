@@ -862,6 +862,12 @@ function carregarLite() {
     const s = localStorage.getItem(LITE_KEY);
     if (s) LITE = JSON.parse(s);
   } catch(e) {}
+  // Garantir arrays existem
+  if(!LITE.bancos)  LITE.bancos  = [];
+  if(!LITE.cartoes) LITE.cartoes = [];
+  if(!LITE.txs)     LITE.txs     = [];
+  if(!LITE.cp)      LITE.cp      = [];
+  if(!LITE.cr)      LITE.cr      = [];
 }
 
 // ══ FORMATAÇÃO ══
@@ -992,6 +998,10 @@ function renderHome() {
   document.getElementById('home-ent').textContent    = fmt(ent);
   document.getElementById('home-sai').textContent    = fmt(sai);
   document.getElementById('home-periodo').textContent= `Últimos ${days} dias`;
+
+  // Garantir arrays existem (compatibilidade com localStorage antigo)
+  if(!LITE.bancos)  LITE.bancos  = [];
+  if(!LITE.cartoes) LITE.cartoes = [];
 
   // Bancos consolidados
   const bancosSec = document.getElementById('home-bancos-sec');
