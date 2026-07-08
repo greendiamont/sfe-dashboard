@@ -41,6 +41,88 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ══ LAYOUT ══ */
 #app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;background:var(--ink2)}
 
+/* ══ DESKTOP LAYOUT (> 768px) ══ */
+@media (min-width: 768px) {
+  body { background: var(--ink); }
+  #login-screen { background: var(--ink); }
+  .login-card { max-width: 460px; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+
+  #app {
+    max-width: 100%;
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar desktop */
+  .bottom-nav {
+    width: 220px;
+    height: 100vh;
+    flex-direction: column;
+    border-top: none;
+    border-right: 1px solid var(--b1);
+    grid-template-columns: 1fr;
+    padding: 20px 0;
+    justify-content: flex-start;
+    gap: 4px;
+    order: -1;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin: 0 8px;
+  }
+  .nav-icon { font-size: 18px; }
+  .nav-label { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  .nav-item:nth-child(3) div { /* botão + centro */
+    width: 36px; height: 36px; margin-top: 0; font-size: 20px;
+    border-radius: 8px;
+  }
+
+  /* Topbar desktop */
+  .topbar { border-bottom: 1px solid var(--b1); }
+
+  /* Conteúdo desktop — ocupa resto */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 0;
+    max-height: 100vh;
+  }
+
+  /* Cards desktop mais largos */
+  .saldo-card { margin: 20px 24px 14px; }
+  .grid2 { margin: 0 24px 14px; }
+  .card  { margin-left: 24px; margin-right: 24px; }
+  .sec-title { padding-left: 24px; padding-right: 24px; }
+  #home-bancos-list, #home-cartao-list { padding: 0 24px; }
+
+  /* Modal desktop — centro em vez de bottom sheet */
+  .modal-overlay { align-items: center; }
+  .modal-sheet {
+    border-radius: 16px;
+    max-height: 85vh;
+    width: 520px;
+  }
+
+  /* 2 colunas no relatório */
+  #page-relatorio .content-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav { width: 260px; }
+  #app { max-width: 1200px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.4); }
+}
+
 /* ══ TOPBAR ══ */
 .topbar{
   height:var(--top-h);
@@ -237,6 +319,15 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .switch.on{background:var(--gold)}
 .switch::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s}
 .switch.on::after{transform:translateX(20px)}
+
+/* ══ MENU LATERAL HAMBÚRGUER ══ */
+.menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;border:none;background:transparent;color:var(--tx1);font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:background .12s;margin-bottom:2px}
+.menu-item:hover,.menu-item:active{background:var(--ink4)}
+.menu-item span{flex:1}
+.menu-item-gold{color:var(--gold);font-weight:600}
+.menu-item-blue{color:#4a9fd4;font-weight:600}
+.menu-item-purple{color:#a78bfa;font-weight:600}
+#menu-lateral.open{right:0}
 </style>
 </head>
 <body>
@@ -344,9 +435,75 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div class="tb-name" id="tb-nome">—</div>
         <div class="tb-cpf" id="tb-doc">—</div>
       </div>
-      <div class="tb-avatar" id="tb-avatar" onclick="navTo('config')">S
+      <!-- Botão hambúrguer -->
+      <button id="btn-hamburger" onclick="abrirMenuLateral()" style="width:38px;height:38px;border-radius:10px;background:var(--ink4);border:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0;position:relative">
+        <span style="width:18px;height:2px;background:var(--tx1);border-radius:1px;transition:all .2s"></span>
+        <span style="width:18px;height:2px;background:var(--tx1);border-radius:1px;transition:all .2s"></span>
+        <span style="width:12px;height:2px;background:var(--tx1);border-radius:1px;align-self:flex-start;margin-left:3px;transition:all .2s"></span>
         <div class="tb-badge" id="tb-badge" style="display:none">!</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- MENU LATERAL HAMBÚRGUER -->
+  <div id="menu-overlay" onclick="fecharMenuLateral()" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)"></div>
+  <div id="menu-lateral" style="position:fixed;top:0;right:-320px;width:300px;height:100vh;z-index:201;background:var(--ink2);border-left:1px solid var(--b1);display:flex;flex-direction:column;transition:right .25s ease;overflow-y:auto">
+
+    <!-- Header do menu -->
+    <div style="padding:20px;border-bottom:1px solid var(--b1);background:var(--ink);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--tx0)" id="menu-nome">—</div>
+        <div style="font-size:11px;color:var(--tx4);font-family:monospace;margin-top:2px" id="menu-doc">—</div>
+        <span id="menu-plano" style="display:inline-block;margin-top:6px;font-family:monospace;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.12);color:var(--gold)">LITE</span>
       </div>
+      <button onclick="fecharMenuLateral()" style="width:32px;height:32px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--tx3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+
+    <!-- Seção: Navegação -->
+    <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px">Navegação</div>
+    <div style="padding:0 10px">
+      <button onclick="navTo('home');fecharMenuLateral()" class="menu-item">🏠 <span>Início</span></button>
+      <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item">💳 <span>Lançamentos</span></button>
+      <button onclick="navTo('relatorio');fecharMenuLateral()" class="menu-item">📊 <span>Relatório Mensal</span></button>
+      <button onclick="navTo('ia');fecharMenuLateral()" class="menu-item">🤖 <span>Assistente IA</span></button>
+    </div>
+
+    <!-- Seção: Dados Bancários -->
+    <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Dados Bancários</div>
+    <div style="padding:0 10px">
+      <button onclick="abrirImportOFX('banco');fecharMenuLateral()" class="menu-item menu-item-blue">⬆ <span>Importar Extrato OFX / CSV</span></button>
+      <button onclick="abrirImportOFX('cartao');fecharMenuLateral()" class="menu-item menu-item-purple">💳 <span>Importar Fatura Cartão</span></button>
+      <button onclick="abrirModalLanc();fecharMenuLateral()" class="menu-item menu-item-gold">+ <span>Novo Lançamento</span></button>
+    </div>
+
+    <!-- Seção: Bancos conectados -->
+    <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Meus Bancos</div>
+    <div id="menu-bancos" style="padding:0 10px">
+      <div style="padding:12px;font-size:12px;color:var(--tx4);text-align:center">Nenhum banco importado</div>
+    </div>
+
+    <!-- Seção: Cartões -->
+    <div id="menu-cartoes-sec" style="display:none">
+      <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;border-top:1px solid var(--b1)">Cartões de Crédito</div>
+      <div id="menu-cartoes" style="padding:0 10px"></div>
+    </div>
+
+    <!-- Seção: Exportar -->
+    <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Exportar</div>
+    <div style="padding:0 10px">
+      <button onclick="exportCSVLite();fecharMenuLateral()" class="menu-item">📥 <span>Exportar CSV</span></button>
+    </div>
+
+    <!-- Seção: Conta -->
+    <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Conta</div>
+    <div style="padding:0 10px">
+      <button onclick="abrirTrocarSenha();fecharMenuLateral()" class="menu-item">🔑 <span>Alterar Senha</span></button>
+      <button onclick="if(confirm('Apagar TODOS os dados?')){LITE={txs:[],cp:[],cr:[],bancos:[],cartoes:[]};salvarLite();renderHome();fecharMenuLateral();alert('Dados apagados.')}" class="menu-item" style="color:var(--neg)">🗑 <span>Limpar Dados</span></button>
+    </div>
+
+    <!-- Sair -->
+    <div style="padding:16px;margin-top:auto;border-top:1px solid var(--b1)">
+      <button onclick="logout()" class="btn btn-neg btn-block" style="font-size:13px">⏏ Sair da Conta</button>
     </div>
   </div>
 
@@ -813,8 +970,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div style="font-size:48px;margin-bottom:12px">✅</div>
         <div style="font-size:18px;font-weight:700;color:var(--tx0);margin-bottom:6px" id="ofx-ok-title">Importação concluída!</div>
         <div style="font-size:13px;color:var(--tx3);margin-bottom:24px" id="ofx-ok-sub">—</div>
-        <button class="btn btn-gold btn-block" onclick="fecharImportOFX()">Ver meus dados</button>
-        <button class="btn btn-ghost btn-block" onclick="ofxNovoArquivo()" style="margin-top:8px">Importar outro arquivo</button>
+        <button class="btn btn-gold btn-block" onclick="fecharImportOFX()" style="margin-bottom:10px">✓ Ver meus dados</button>
+        <button class="btn btn-ghost btn-block" onclick="exportarOFXPDF()" style="margin-bottom:10px">📄 Exportar Relatório PDF</button>
+        <button class="btn btn-ghost btn-block" onclick="ofxNovoArquivo()">⬆ Importar outro arquivo</button>
       </div>
 
     </div>
@@ -981,6 +1139,7 @@ function iniciarApp() {
   document.getElementById('app').style.display = 'flex';
   renderHome();
   renderConfigBancos();
+  atualizarMenuLateral();
 }
 
 // ══ RENDER HOME ══
@@ -1009,19 +1168,30 @@ function renderHome() {
   if(LITE.bancos.length && bancosSec && bancosEl) {
     bancosSec.style.display = '';
     const saldoTotal = LITE.bancos.reduce((s,b)=>s+b.saldo,0);
-    bancosEl.innerHTML = LITE.bancos.map(b=>`
-      <div style="background:var(--ink3);border:1px solid var(--b1);border-left:3px solid ${b.cor};border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:9px;background:${b.cor}18;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:11px;font-weight:700;color:${b.cor}">${b.code}</div>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx1)">${b.nome}</div>
-            <div style="font-size:10px;color:var(--tx4)">${((b.saldo/saldoTotal)*100).toFixed(1)}% do total</div>
+    bancosEl.innerHTML = LITE.bancos.map(b=>{
+      const pct = saldoTotal > 0 ? ((b.saldo/saldoTotal)*100).toFixed(1) : '0';
+      return `<div style="background:var(--ink3);border:1px solid var(--b1);border-radius:14px;padding:16px;overflow:hidden;position:relative">
+        <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:${b.cor}"></div>
+        <div style="padding-left:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:9px;background:${b.cor}18;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:11px;font-weight:700;color:${b.cor}">${b.code}</div>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:var(--tx1)">${b.nome}</div>
+                <div style="font-size:10px;color:var(--tx4)">Conta corrente</div>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:17px;font-weight:700;color:${b.saldo>=0?'var(--pos)':'var(--neg)'}">${fmt(b.saldo)}</div>
+              <div style="font-size:10px;color:var(--tx4)">${pct}% do total</div>
+            </div>
+          </div>
+          <div style="height:4px;background:var(--ink5);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${b.cor};border-radius:2px;transition:width .8s ease"></div>
           </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:15px;font-weight:700;color:${b.saldo>=0?'var(--pos)':'var(--neg)'}">${fmt(b.saldo)}</div>
-        </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } else if(bancosSec) {
     bancosSec.style.display = 'none';
   }
@@ -1032,16 +1202,20 @@ function renderHome() {
   if(LITE.cartoes.length && cartaoSec && cartaoEl) {
     cartaoSec.style.display = '';
     cartaoEl.innerHTML = LITE.cartoes.map(c=>`
-      <div style="background:var(--ink3);border:1px solid var(--b1);border-left:3px solid ${c.cor};border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:36px;height:36px;border-radius:9px;background:${c.cor}18;display:flex;align-items:center;justify-content:center;font-size:18px">💳</div>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:var(--tx1)">${c.nome}</div>
-            <div style="font-size:10px;color:var(--tx4)">Fatura atual</div>
+      <div style="background:linear-gradient(135deg,var(--ink3),#1a1040);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.15),transparent 70%)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:16px">💳</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--tx1)">${c.nome}</div>
+              <div style="font-size:10px;color:var(--tx4)">Fatura atual</div>
+            </div>
           </div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:15px;font-weight:700;color:var(--neg)">${fmt(c.fatura)}</div>
+          <div style="text-align:right">
+            <div style="font-size:17px;font-weight:700;color:#f87171">${fmt(c.fatura)}</div>
+            <div style="font-size:10px;color:var(--tx4)">a vencer</div>
+          </div>
         </div>
       </div>`).join('');
   } else if(cartaoSec) {
@@ -1422,6 +1596,139 @@ function maskDoc(el) {
 }
 
 let _loginTipo = 'cpf';
+// ══ MENU LATERAL HAMBÚRGUER ══
+function abrirMenuLateral() {
+  const menu    = document.getElementById('menu-lateral');
+  const overlay = document.getElementById('menu-overlay');
+  if(menu)    menu.classList.add('open');
+  if(overlay) overlay.style.display = '';
+  atualizarMenuLateral();
+}
+
+function fecharMenuLateral() {
+  const menu    = document.getElementById('menu-lateral');
+  const overlay = document.getElementById('menu-overlay');
+  if(menu)    menu.classList.remove('open');
+  if(overlay) overlay.style.display = 'none';
+}
+
+function atualizarMenuLateral() {
+  // Dados do usuário
+  const s = SESSION?.empresa || {};
+  const nomeEl  = document.getElementById('menu-nome');
+  const docEl   = document.getElementById('menu-doc');
+  const planoEl = document.getElementById('menu-plano');
+  if(nomeEl)  nomeEl.textContent  = s.razao || s.fantasia || '—';
+  if(docEl)   docEl.textContent   = s.doc_fmt || s.doc || '—';
+  if(planoEl) planoEl.textContent = (s.plano||'lite').toUpperCase();
+
+  // Bancos
+  const bancosEl = document.getElementById('menu-bancos');
+  if(bancosEl) {
+    if(!LITE.bancos || !LITE.bancos.length) {
+      bancosEl.innerHTML = '<div style="padding:10px 12px;font-size:12px;color:var(--tx4);text-align:center">Nenhum banco importado<br><button onclick="abrirImportOFX(\'banco\');fecharMenuLateral()" style="background:none;border:none;color:#4a9fd4;font-size:11px;cursor:pointer;margin-top:4px;text-decoration:underline">+ Importar agora</button></div>';
+    } else {
+      bancosEl.innerHTML = LITE.bancos.map(b=>`
+        <div class="menu-banco-item">
+          <div style="width:30px;height:30px;border-radius:7px;background:${b.cor}18;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:10px;font-weight:700;color:${b.cor};flex-shrink:0">${b.code}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:500;color:var(--tx1)">${b.nome}</div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:${b.saldo>=0?'var(--pos)':'var(--neg)'}">${fmt(b.saldo)}</div>
+        </div>`).join('');
+    }
+  }
+
+  // Cartões
+  const cartoesSec = document.getElementById('menu-cartoes-sec');
+  const cartoesEl  = document.getElementById('menu-cartoes');
+  if(LITE.cartoes && LITE.cartoes.length) {
+    if(cartoesSec) cartoesSec.style.display = '';
+    if(cartoesEl) cartoesEl.innerHTML = LITE.cartoes.map(c=>`
+      <div class="menu-banco-item">
+        <div style="width:30px;height:30px;border-radius:7px;background:rgba(139,92,246,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💳</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:500;color:var(--tx1)">${c.nome}</div>
+          <div style="font-size:10px;color:var(--tx4)">Fatura</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--neg)">${fmt(c.fatura)}</div>
+      </div>`).join('');
+  } else {
+    if(cartoesSec) cartoesSec.style.display = 'none';
+  }
+}
+
+// ══ EXPORT PDF OFX ══
+function exportarOFXPDF() {
+  const txs   = _ofxTxsParsed;
+  if(!txs.length) { alert('Nenhum dado para exportar.'); return; }
+  const banco = OFX_BANCOS_INFO[txs[0]?.banco] || OFX_BANCOS_INFO['XX'];
+  const tipo  = txs[0]?.tipo === 'cartao' ? 'Cartão de Crédito' : 'Extrato Bancário';
+  const nome  = document.getElementById('tb-nome')?.textContent || 'Usuário';
+  const ts    = new Date().toLocaleString('pt-BR');
+  const ent   = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
+  const sai   = Math.abs(txs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
+
+  const rows = txs.map(t => {
+    const pos = t.val > 0;
+    return '<tr>'
+      + '<td style="font-family:monospace;font-size:10px;color:#555;padding:5px 8px;border-bottom:1px solid #eee">' + fmtD(t.data) + '</td>'
+      + '<td style="font-size:11px;padding:5px 8px;border-bottom:1px solid #eee;max-width:260px">' + (t.desc||'—') + '</td>'
+      + '<td style="padding:5px 8px;border-bottom:1px solid #eee"><span style="font-size:9px;font-family:monospace;font-weight:700;padding:2px 6px;border-radius:3px;background:' + (CAT_COLORS_LITE[t.cat]||'#445566') + '22;color:' + (CAT_COLORS_LITE[t.cat]||'#445566') + '">' + (t.cat||'') + '</span></td>'
+      + '<td style="font-family:monospace;font-size:11px;font-weight:700;text-align:right;padding:5px 8px;border-bottom:1px solid #eee;color:' + (pos?'#16a34a':'#dc2626') + '">' + (pos?'+':'') + fmt(t.val) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+    + '<title>' + tipo + ' — ' + banco.nome + '</title>'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:Arial,sans-serif;font-size:11px;background:#fff;color:#1a1a2e}'
+    + '@page{size:A4;margin:14mm 12mm}'
+    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    + '.hdr{background:#060d1a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}'
+    + '.lm{width:14px;height:14px;background:#e8b020;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:inline-block;margin-right:6px;vertical-align:middle}'
+    + '.gb{height:3px;background:linear-gradient(90deg,#e8b020,#c8940a)}'
+    + '.res{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid #ddd}'
+    + '.rb{text-align:center;padding:10px 8px;border-right:1px solid #ddd}'
+    + '.rl{font-family:monospace;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:3px}'
+    + '.rv{font-size:14px;font-weight:700}'
+    + 'table{width:100%;border-collapse:collapse;margin-top:12px}'
+    + 'thead tr{background:#060d1a}'
+    + 'thead th{font-family:monospace;font-size:8px;font-weight:700;text-transform:uppercase;color:#e8b020;padding:6px 8px;text-align:left}'
+    + 'thead th:last-child{text-align:right}'
+    + 'tbody tr:nth-child(even){background:#f9f9f9}'
+    + '.ft{margin-top:14px;padding-top:8px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:9px;color:#aaa}'
+    + '</style></head><body>'
+    + '<div class="hdr">'
+    +   '<div><span class="lm"></span><span style="font-size:14px;font-weight:800;letter-spacing:2px">SFE Lite</span></div>'
+    +   '<div style="text-align:right;font-size:10px;color:#9aaabf">'
+    +     '<div style="color:#fff;font-weight:700">' + nome + '</div>'
+    +     '<div>' + tipo + ' · ' + banco.nome + '</div>'
+    +     '<div>' + ts + '</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="gb"></div>'
+    + '<div class="res">'
+    +   '<div class="rb"><div class="rl">Lançamentos</div><div class="rv" style="color:#333">' + txs.length + '</div></div>'
+    +   '<div class="rb"><div class="rl">Total Entradas</div><div class="rv" style="color:#16a34a">' + fmt(ent) + '</div></div>'
+    +   '<div class="rb" style="border-right:none"><div class="rl">Total Saídas</div><div class="rv" style="color:#dc2626">' + fmt(sai) + '</div></div>'
+    + '</div>'
+    + '<table>'
+    +   '<thead><tr><th style="width:70px">Data</th><th>Histórico</th><th style="width:100px">Categoria</th><th style="width:100px;text-align:right">Valor (R$)</th></tr></thead>'
+    +   '<tbody>' + rows + '</tbody>'
+    + '</table>'
+    + '<div class="ft"><span>SFE Lite · Sistema Financeiro Pessoal</span><span>' + txs.length + ' lançamentos · ' + ts + '</span></div>'
+    + '<script>window.onload=function(){setTimeout(function(){window.print();},500);}<\/script>'
+    + '</body></html>';
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank', 'width=900,height=700');
+  if(!win) alert('Permita pop-ups para exportar PDF.');
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
 // ══ FLUXO LOGIN / CADASTRO ══
 let _fluxo   = 'login';
 let _cadTipo = 'cpf';
