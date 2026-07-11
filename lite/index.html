@@ -893,6 +893,26 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <button class="btn btn-block" style="border:1px solid var(--b1);background:var(--ink4);color:var(--tx2);font-size:12px" onclick="abrirModalGastoCartao()">+ Lançar Gasto no Cartão</button>
         </div>
 
+        <!-- Projeção da Fatura (só com um cartão específico selecionado, e que tenha dia de fechamento cadastrado) -->
+        <div id="ct-projecao-sec" class="card" style="display:none;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">📊 Projeção da Fatura</div>
+          <div style="font-size:11px;color:var(--tx4);margin-bottom:14px" id="ct-projecao-ciclo">—</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div>
+              <div style="font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px">Gasto até agora</div>
+              <div style="font-size:17px;font-weight:700;color:var(--tx1)" id="ct-projecao-atual">—</div>
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px">Projeção ao fechar</div>
+              <div style="font-size:17px;font-weight:700;color:var(--gold)" id="ct-projecao-total">—</div>
+            </div>
+          </div>
+          <div style="height:6px;background:var(--ink4);border-radius:3px;overflow:hidden;margin-bottom:12px">
+            <div id="ct-projecao-barra" style="height:100%;background:var(--gold);width:0%;transition:width .3s"></div>
+          </div>
+          <div id="ct-projecao-alertas"></div>
+        </div>
+
         <!-- Distribuição da fatura entre cartões (só Consolidado) -->
         <div id="ct-dist-sec" class="card" style="display:none;margin-bottom:12px">
           <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Distribuição da Fatura entre Cartões</div>
@@ -905,6 +925,14 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Pareto 80/20 — Onde Cortar no Próximo Mês</div>
           <div style="font-size:12px;color:var(--tx3);margin-bottom:10px" id="ct-pareto-txt">—</div>
           <div style="height:170px"><canvas id="ct-pareto-chart"></canvas></div>
+        </div>
+
+        <!-- Compromissos futuros (parcelamentos em aberto) -->
+        <div class="card" style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:4px">🔮 Compromissos Futuros</div>
+          <div style="font-size:11px;color:var(--tx4);margin-bottom:10px">Parcelas que ainda vão aparecer nas próximas faturas</div>
+          <div id="ct-futuros-list"></div>
+          <div id="ct-futuros-vazio" style="display:none;font-size:12px;color:var(--tx4);text-align:center;padding:10px 0">Nenhuma compra parcelada em aberto</div>
         </div>
 
         <!-- Extrato do cartão -->
@@ -1223,6 +1251,15 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <div class="input-group">
         <label class="input-label">Data</label>
         <input class="input" id="gc-data" type="date">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;margin-bottom:12px">
+        <input type="checkbox" id="gc-parcelado" onchange="document.getElementById('gc-parcelas-wrap').style.display=this.checked?'block':'none'">
+        Compra parcelada
+      </label>
+      <div class="input-group" id="gc-parcelas-wrap" style="display:none">
+        <label class="input-label">Total de Parcelas</label>
+        <input class="input" id="gc-parcelas-total" type="number" min="2" max="24" placeholder="Ex: 12">
+        <div style="font-size:10px;color:var(--tx4);margin-top:4px">Esse valor entra como parcela 1 — as próximas ficam previstas em "Compromissos Futuros"</div>
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarGastoCartao()" style="margin-top:4px">Salvar Gasto</button>
     </div>
@@ -1927,11 +1964,12 @@ function renderTxItem(t) {
   const col = CAT_COLORS_LITE[t.cat] || '#6688aa';
   const cats = pos ? CATS_ENTRADA : CATS_SAIDA;
   const catObj = cats.find(c=>c.v===t.cat) || {ic:'💸'};
+  const tagParcela = t.parcela ? ` · Parcela ${t.parcela.atual}/${t.parcela.total}` : '';
   return `<div class="tx-item" onclick="excluirTx('${t.id}')">
     <div class="tx-icon" style="background:${col}18">${catObj.ic}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.desc || t.cat}</div>
-      <div class="tx-meta">${t.cat} · ${fmtD(t.data)}</div>
+      <div class="tx-meta">${t.cat} · ${fmtD(t.data)}${tagParcela}</div>
     </div>
     <div class="tx-amt-col">
       <div class="tx-amt" style="color:${pos?'var(--pos)':'var(--neg)'}">${pos?'+':''}${fmt(t.val)}</div>
@@ -1943,8 +1981,10 @@ function excluirTx(id) {
   if (!confirm('Excluir este lançamento?')) return;
   LITE.txs = LITE.txs.filter(t => t.id !== id);
   salvarLite();
-  renderLancamentos();
   renderHome();
+  if (_paginaAtual === 'lancamentos') renderLancamentos();
+  if (_paginaAtual === 'relatorio')   renderRelatorio();
+  if (_paginaAtual === 'cartoes')     renderCartoes();
 }
 
 // ══ MODAL LANÇAMENTO ══
@@ -2050,6 +2090,72 @@ function cartaoSelecionar(codigo) {
   renderCartoes();
 }
 
+// Calcula o ciclo de fatura em aberto (atualmente acumulando) de um cartão, a partir do dia de fechamento
+function getCicloCartao(cartao, hoje) {
+  hoje = hoje || new Date();
+  if (!cartao || !cartao.fechamento) return null;
+  const diaFech = Math.min(28, cartao.fechamento); // evita problema com meses de 28/29/30/31 dias
+  const diaHoje = hoje.getDate();
+  let inicio, fim;
+  if (diaHoje <= diaFech) {
+    fim    = new Date(hoje.getFullYear(), hoje.getMonth(), diaFech);
+    inicio = new Date(hoje.getFullYear(), hoje.getMonth()-1, diaFech+1);
+  } else {
+    fim    = new Date(hoje.getFullYear(), hoje.getMonth()+1, diaFech);
+    inicio = new Date(hoje.getFullYear(), hoje.getMonth(), diaFech+1);
+  }
+  const diasTotais     = Math.round((fim-inicio)/86400000) + 1;
+  const diasDecorridos = Math.max(1, Math.min(diasTotais, Math.round((hoje-inicio)/86400000) + 1));
+  const diasRestantes  = Math.max(0, diasTotais - diasDecorridos);
+  return { inicio, fim, diasTotais, diasDecorridos, diasRestantes };
+}
+
+// Projeta o total da fatura em aberto de um cartão, pelo ritmo de gasto até agora, e gera alertas
+function calcularProjecaoCartao(cartao) {
+  const ciclo = getCicloCartao(cartao);
+  if (!ciclo) return null;
+  const hoje = new Date();
+  const ehGasto = t => t.tipo==='cartao' && t.banco===cartao.code && t.cat!=='Pagamento de Fatura' && t.val<0;
+
+  const txsCiclo = LITE.txs.filter(t => ehGasto(t) && new Date(t.data) >= ciclo.inicio && new Date(t.data) <= hoje);
+  const gastoAteAgora = txsCiclo.reduce((s,t)=>s+Math.abs(t.val),0);
+  const mediaDiaria   = gastoAteAgora / ciclo.diasDecorridos;
+  const projecao      = mediaDiaria * ciclo.diasTotais;
+
+  const inicioAnt = new Date(ciclo.inicio); inicioAnt.setMonth(inicioAnt.getMonth()-1);
+  const fimAnt     = new Date(ciclo.inicio); fimAnt.setDate(fimAnt.getDate()-1);
+  const gastoAnterior = LITE.txs.filter(t => ehGasto(t) && new Date(t.data)>=inicioAnt && new Date(t.data)<=fimAnt)
+                                 .reduce((s,t)=>s+Math.abs(t.val),0);
+
+  const alertas = [];
+  if (cartao.limite && projecao > cartao.limite) {
+    alertas.push({ tipo:'critico', msg:`⚠ Nesse ritmo, a fatura deve fechar em ${fmt(projecao)} — acima do limite de ${fmt(cartao.limite)}.` });
+  }
+  if (gastoAnterior > 0 && projecao > gastoAnterior * 1.15) {
+    const pct = Math.round((projecao/gastoAnterior - 1) * 100);
+    alertas.push({ tipo:'atencao', msg:`↑ Ritmo ${pct}% acima do ciclo anterior (${fmt(gastoAnterior)}).` });
+  }
+  if (!alertas.length && gastoAteAgora > 0) {
+    alertas.push({ tipo:'ok', msg:'✓ Ritmo de gasto dentro do esperado.' });
+  }
+  return { ciclo, gastoAteAgora, projecao, gastoAnterior, alertas };
+}
+
+// Soma, mês a mês, as parcelas futuras já comprometidas (ainda não cobradas) de compras parceladas
+function calcularCompromissosFuturos(poolTxs) {
+  const porMes = {};
+  poolTxs.filter(t => t.parcela && t.parcela.total > t.parcela.atual && t.val < 0).forEach(t => {
+    const restantes = t.parcela.total - t.parcela.atual;
+    const base = new Date(t.data);
+    for (let k = 1; k <= restantes; k++) {
+      const dMes  = new Date(base.getFullYear(), base.getMonth()+k, 1);
+      const chave = dMes.getFullYear() + '-' + String(dMes.getMonth()+1).padStart(2,'0');
+      porMes[chave] = (porMes[chave]||0) + Math.abs(t.val);
+    }
+  });
+  return Object.entries(porMes).sort((a,b)=> a[0]<b[0]?-1:1);
+}
+
 function renderCartoes() {
   if (!LITE.cartoes) LITE.cartoes = [];
   const vazioEl    = document.getElementById('ct-vazio-geral');
@@ -2101,6 +2207,32 @@ function renderCartoes() {
   } else {
     const cObj = LITE.cartoes.find(c=>c.code===_ctAtivo);
     limiteEl.textContent = (cObj && cObj.limite) ? fmt(cObj.limite - (cObj.fatura||0)) : 'Sem limite';
+  }
+
+  // Projeção da Fatura — só faz sentido com um cartão específico selecionado, e que tenha dia de fechamento cadastrado
+  const projSec = document.getElementById('ct-projecao-sec');
+  if (projSec) {
+    const cObjProj = !consolidado ? LITE.cartoes.find(c=>c.code===_ctAtivo) : null;
+    const projecao = cObjProj ? calcularProjecaoCartao(cObjProj) : null;
+    if (projecao) {
+      projSec.style.display = '';
+      const { ciclo, gastoAteAgora, projecao: totalProjetado, alertas } = projecao;
+      const fmtCurta = d => d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      document.getElementById('ct-projecao-ciclo').textContent =
+        `Ciclo ${fmtCurta(ciclo.inicio)} a ${fmtCurta(ciclo.fim)} — dia ${ciclo.diasDecorridos} de ${ciclo.diasTotais} (${ciclo.diasRestantes} restantes)`;
+      document.getElementById('ct-projecao-atual').textContent = fmt(gastoAteAgora);
+      document.getElementById('ct-projecao-total').textContent = fmt(totalProjetado);
+      const pctBarra = Math.min(100, Math.round((ciclo.diasDecorridos/ciclo.diasTotais)*100));
+      const barraEl = document.getElementById('ct-projecao-barra');
+      barraEl.style.width = pctBarra + '%';
+      barraEl.style.background = (cObjProj.limite && totalProjetado > cObjProj.limite) ? 'var(--neg)' : 'var(--gold)';
+      document.getElementById('ct-projecao-alertas').innerHTML = alertas.map(a => {
+        const cor = a.tipo==='critico' ? 'var(--neg)' : a.tipo==='atencao' ? '#fbbf24' : 'var(--pos)';
+        return `<div style="font-size:12px;color:${cor};padding:6px 0;border-top:1px solid var(--b1)">${a.msg}</div>`;
+      }).join('');
+    } else {
+      projSec.style.display = 'none';
+    }
   }
 
   // Gasto no período (exclui pagamentos/liquidação de fatura — isso não é gasto, é quitação da dívida)
@@ -2166,6 +2298,26 @@ function renderCartoes() {
         }
       }
     });
+  }
+
+  // Compromissos Futuros (parcelamentos em aberto, respeitando o cartão selecionado ou todos)
+  const futMeses = calcularCompromissosFuturos(poolTxs);
+  const futListEl  = document.getElementById('ct-futuros-list');
+  const futVazioEl = document.getElementById('ct-futuros-vazio');
+  if (!futMeses.length) {
+    futListEl.innerHTML = '';
+    futVazioEl.style.display = '';
+  } else {
+    futVazioEl.style.display = 'none';
+    const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    futListEl.innerHTML = futMeses.map(([chave, valor], idx) => {
+      const [ano, mes] = chave.split('-').map(Number);
+      const borda = idx < futMeses.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;${borda}">
+        <span style="font-size:13px;color:var(--tx2)">${nomesMes[mes-1]}/${ano}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--tx1)">${fmt(valor)}</span>
+      </div>`;
+    }).join('');
   }
 
   // Extrato do cartão
@@ -2257,6 +2409,9 @@ function abrirModalGastoCartao() {
   document.getElementById('gc-valor').value = '';
   document.getElementById('gc-desc').value  = '';
   document.getElementById('gc-data').value  = new Date().toISOString().split('T')[0];
+  document.getElementById('gc-parcelado').checked = false;
+  document.getElementById('gc-parcelas-total').value = '';
+  document.getElementById('gc-parcelas-wrap').style.display = 'none';
   document.getElementById('modal-gasto-cartao').classList.add('open');
 }
 function fecharModalGastoCartao() {
@@ -2271,7 +2426,12 @@ function salvarGastoCartao() {
   if (!val || val <= 0) { alert('Informe um valor válido.'); return; }
   if (!desc)            { alert('Informe a descrição.'); return; }
   if (!data)            { alert('Informe a data.'); return; }
-  LITE.txs.push({ id: 'txc_' + Date.now(), data, desc, cat, val: -Math.abs(val), tipo: 'cartao', banco: cardCode });
+  let parcela = null;
+  if (document.getElementById('gc-parcelado').checked) {
+    const total = parseInt(document.getElementById('gc-parcelas-total').value);
+    if (total && total >= 2) parcela = { atual: 1, total };
+  }
+  LITE.txs.push({ id: 'txc_' + Date.now(), data, desc, cat, val: -Math.abs(val), tipo: 'cartao', banco: cardCode, parcela });
   const cObj = LITE.cartoes.find(c=>c.code===cardCode);
   if (cObj) { cObj.fatura = (cObj.fatura||0) + Math.abs(val); cObj.updated = new Date().toISOString(); }
   salvarLite();
@@ -3258,6 +3418,7 @@ async function parsePDFLite(arrayBuffer) {
       banco: bankCode,
       bancoNome: banco.nome,
       tipo: _ofxTipo,
+      parcela: extrairParcela(desc),
     });
   });
 
@@ -3322,6 +3483,7 @@ function parseOFXLite(raw) {
       banco: bankCode,
       bancoNome: banco.nome,
       tipo: _ofxTipo,
+      parcela: extrairParcela(memo),
     });
   });
 
@@ -3445,6 +3607,7 @@ function parseCSVLite(raw) {
     // a categorização por palavra-chave da descrição quando o arquivo não traz essa coluna
     const catBanco = iCat>=0 ? mapCategoriaBanco(cols[iCat]) : null;
     const cat = ofxEhPagamentoFatura(desc) ? 'Pagamento de Fatura' : (catBanco || ofxCategoria(desc, amount, _ofxTipo));
+    const parcela = extrairParcela(iTp>=0 ? cols[iTp] : '') || extrairParcela(desc);
     txs.push({
       id:   'csv_'+i+'_'+dataStr.replace(/-/g,''),
       data: dataStr,
@@ -3454,6 +3617,7 @@ function parseCSVLite(raw) {
       banco: bankCode,
       bancoNome: banco.nome,
       tipo: _ofxTipo,
+      parcela,
     });
   }
   txs.sort((a,b)=>new Date(b.data)-new Date(a.data));
@@ -3472,6 +3636,16 @@ function ofxFmtDate(d8) {
 
 function ofxCleanMemo(memo) {
   return (memo||'').replace(/\s+/g,' ').replace(/^\d{6,}\s*/,'').trim().slice(0,60);
+}
+
+// Detecta "Parcela N/M" (ou variações) em qualquer texto — usado pra identificar compras
+// parceladas tanto na coluna "Tipo" (CSV do Inter, por ex.) quanto embutido na descrição
+function extrairParcela(texto) {
+  const m = (texto||'').match(/parcela\s*(\d{1,2})\s*(?:de|\/)\s*(\d{1,2})/i);
+  if (!m) return null;
+  const atual = parseInt(m[1]), total = parseInt(m[2]);
+  if (!atual || !total || atual > total) return null;
+  return { atual, total };
 }
 
 function ofxEhPagamentoFatura(desc) {
