@@ -1254,25 +1254,27 @@ function loadDemo() {
   SESSION = {demo:true, empresa:{razao:'João Carlos Demo', doc:'12345678909', doc_fmt:'123.456.789-09', tipo_doc:'cpf', plano:'lite'}};
   const hoje = new Date();
   LITE.txs = [];
-  const addTx = (dDelta, desc, cat, val) => {
+  const addTx = (dDelta, desc, cat, val, banco) => {
     const d = new Date(hoje); d.setDate(d.getDate() + dDelta);
-    LITE.txs.push({ id:'demo_'+Math.random().toString(36).slice(2), data:d.toISOString().split('T')[0], desc, cat, val });
+    const tx = { id:'demo_'+Math.random().toString(36).slice(2), data:d.toISOString().split('T')[0], desc, cat, val };
+    if (banco) tx.banco = banco;
+    LITE.txs.push(tx);
   };
   // Mês atual
-  addTx(0,  'Salário Junho/2026',          'Salário',     6800);
-  addTx(-1, 'Mercado São João',             'Mercado',     -280);
-  addTx(-2, 'Uber — deslocamento',          'Transporte',   -38);
-  addTx(-3, 'Conta de Luz — Celesc',        'Contas',      -180);
-  addTx(-4, 'iFood — almoço',               'Alimentação',  -52);
-  addTx(-5, 'Farmácia Saúde',               'Saúde',        -95);
-  addTx(-6, 'Netflix + Spotify',            'Assinaturas',  -65);
-  addTx(-7, 'Aluguel Junho',               'Moradia',    -1400);
-  addTx(-8, 'Freelance — site cliente',     'Freelance',   1200);
-  addTx(-9, 'Supermercado BIG',             'Mercado',     -320);
-  addTx(-10,'Combustível — posto SC',       'Transporte',   -95);
+  addTx(0,  'Salário Junho/2026',          'Salário',     6800, 'NU');
+  addTx(-1, 'Mercado São João',             'Mercado',     -280, 'NU');
+  addTx(-2, 'Uber — deslocamento',          'Transporte',   -38, 'NU');
+  addTx(-3, 'Conta de Luz — Celesc',        'Contas',      -180, 'IT');
+  addTx(-4, 'iFood — almoço',               'Alimentação',  -52, 'NU');
+  addTx(-5, 'Farmácia Saúde',               'Saúde',        -95, 'IT');
+  addTx(-6, 'Netflix + Spotify',            'Assinaturas',  -65, 'NU');
+  addTx(-7, 'Aluguel Junho',               'Moradia',    -1400, 'IT');
+  addTx(-8, 'Freelance — site cliente',     'Freelance',   1200, 'BB');
+  addTx(-9, 'Supermercado BIG',             'Mercado',     -320, 'NU');
+  addTx(-10,'Combustível — posto SC',       'Transporte',   -95, 'IT');
   addTx(-12,'Consulta Médica',              'Saúde',       -150);
   addTx(-14,'Curso Online — Udemy',         'Educação',    -130);
-  addTx(-15,'Salário Adiantamento',         'Salário',     2000);
+  addTx(-15,'Salário Adiantamento',         'Salário',     2000, 'BB');
   addTx(-16,'Restaurante Gaúcho',           'Alimentação',  -68);
   addTx(-18,'IPTU Parcela 06/2026',         'Impostos',    -210);
   addTx(-20,'Internet Fibra — Vivo',        'Contas',       -99);
@@ -1309,6 +1311,12 @@ function loadDemo() {
   ];
   LITE.cr = [
     {id:'cr1', desc:'Freelance — cliente A', val:1800, venc: new Date(hoje.getTime()+7*86400000).toISOString().split('T')[0], recebido:false},
+  ];
+
+  LITE.bancos = [
+    { code:'NU', nome:'Nubank',       cor:'#820ad1', saldo: 8420.50, updated: hoje.toISOString() },
+    { code:'IT', nome:'Itaú',         cor:'#ec7000', saldo: 6104.00, updated: hoje.toISOString() },
+    { code:'BB', nome:'Banco do Brasil', cor:'#1194F6', saldo: 3800.50, updated: hoje.toISOString() },
   ];
 
   salvarLite();
