@@ -2103,9 +2103,10 @@ function renderCartoes() {
     limiteEl.textContent = (cObj && cObj.limite) ? fmt(cObj.limite - (cObj.fatura||0)) : 'Sem limite';
   }
 
-  // Gasto no período
+  // Gasto no período (exclui pagamentos/liquidação de fatura — isso não é gasto, é quitação da dívida)
   const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from);
-  document.getElementById('ct-gasto').textContent = fmt(txsPeriodo.reduce((s,t)=>s+Math.abs(t.val),0));
+  const txsGasto   = txsPeriodo.filter(t => t.cat !== 'Pagamento de Fatura' && t.val < 0);
+  document.getElementById('ct-gasto').textContent = fmt(txsGasto.reduce((s,t)=>s+Math.abs(t.val),0));
 
   // Distribuição da fatura entre cartões (só Consolidado, com mais de 1 cartão)
   const distSec = document.getElementById('ct-dist-sec');
@@ -2132,9 +2133,9 @@ function renderCartoes() {
     distSec.style.display = 'none';
   }
 
-  // Pareto 80/20 por categoria, dentro do pool/período selecionado
+  // Pareto 80/20 por categoria, dentro do pool/período selecionado (exclui pagamentos de fatura)
   const map = {};
-  txsPeriodo.forEach(t => { map[t.cat] = (map[t.cat]||0) + Math.abs(t.val); });
+  txsGasto.forEach(t => { map[t.cat] = (map[t.cat]||0) + Math.abs(t.val); });
   const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
   const totalGasto = entries.reduce((s,e)=>s+e[1],0);
   let acum = 0;
@@ -3227,10 +3228,12 @@ async function parsePDFLite(arrayBuffer) {
     const valNum = parseFloat(valRaw.replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.').replace(/^-/,''));
     if (!valNum || isNaN(valNum)) return;
     let amount = negativo ? -valNum : valNum;
-    if (_ofxTipo === 'cartao' && amount > 0) amount = -amount; // fatura de cartão: linhas listadas são gastos
 
     const desc = ofxCleanMemo(descRaw.trim());
     if (!desc) return;
+
+    // Fatura de cartão: linhas sem sinal explícito são gastos (negativo) — exceto pagamento/liquidação da fatura, que fica positivo
+    if (_ofxTipo === 'cartao' && !negativo && amount > 0 && !ofxEhPagamentoFatura(desc)) amount = -amount;
 
     txs.push({
       id: 'pdf_' + i + '_' + dataStr.replace(/-/g,''),
@@ -3374,9 +3377,10 @@ function parseCSVLite(raw) {
       sinalExplicito = true;
     }
     if(amount===0) continue;
-    // Fatura de cartão: se o arquivo não trouxe nenhum sinal/coluna de tipo, assume que a linha é um gasto (negativo)
-    if (_ofxTipo === 'cartao' && !sinalExplicito && amount > 0) amount = -amount;
     const desc = iHst>=0 ? ofxCleanMemo(cols[iHst]||'') : 'Lançamento';
+    // Fatura de cartão: se o arquivo não trouxe sinal/coluna de tipo, assume gasto (negativo) —
+    // exceto quando a descrição indica pagamento/liquidação da fatura, que deve continuar positivo (crédito)
+    if (_ofxTipo === 'cartao' && !sinalExplicito && amount > 0 && !ofxEhPagamentoFatura(desc)) amount = -amount;
     txs.push({
       id:   'csv_'+i+'_'+dataStr.replace(/-/g,''),
       data: dataStr,
@@ -3406,9 +3410,18 @@ function ofxCleanMemo(memo) {
   return (memo||'').replace(/\s+/g,' ').replace(/^\d{6,}\s*/,'').trim().slice(0,60);
 }
 
+function ofxEhPagamentoFatura(desc) {
+  const d = (desc||'').toLowerCase();
+  return d.includes('pagamento')  || d.includes('pgto')      || d.includes('pagto')
+      || d.includes('debito aut') || d.includes('débito aut') || d.includes('deb aut')
+      || d.includes('liquidaç')   || d.includes('liquidac')
+      || d.includes('estorno')    || d.includes('credito de pagamento') || d.includes('crédito de pagamento');
+}
+
 function ofxCategoria(desc, amount, tipo) {
   if(tipo==='cartao') {
     const d=(desc||'').toLowerCase();
+    if(ofxEhPagamentoFatura(d)) return 'Pagamento de Fatura';
     if(d.includes('supermercado')||d.includes('mercado')||d.includes('atacadao')) return 'Mercado';
     if(d.includes('restaurante')||d.includes('burger')||d.includes('pizza')||d.includes('lanche')) return 'Alimentação';
     if(d.includes('uber')||d.includes('99')||d.includes('posto')||d.includes('combustivel')) return 'Transporte';
@@ -3418,6 +3431,7 @@ function ofxCategoria(desc, amount, tipo) {
     return 'Cartão';
   }
   const d=(desc||'').toLowerCase();
+  if(ofxEhPagamentoFatura(d)) return 'Pagamento de Fatura';
   if(amount>0) {
     if(d.includes('salario')||d.includes('salário')||d.includes('folha')) return 'Salário';
     if(d.includes('freela')||d.includes('servico')||d.includes('servico')) return 'Freelance';
