@@ -78,10 +78,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   }
   .nav-icon { font-size: 18px; }
   .nav-label { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
-  .nav-item:nth-child(3) div { /* botão + centro */
-    width: 36px; height: 36px; margin-top: 0; font-size: 20px;
-    border-radius: 8px;
+  .nav-add-circle {
+    width: 28px; height: 28px; margin-top: 0 !important; font-size: 16px !important;
+    border-radius: 8px !important;
   }
+
+  /* Cabeçalho e labels de seção da sidebar — só existem visualmente no desktop */
+  .sb-logo, .sb-section-label, .sb-divider { display: flex; }
 
   /* Topbar desktop */
   .topbar { border-bottom: 1px solid var(--b1); }
@@ -114,6 +117,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+    padding: 0 24px;
+  }
+
+  /* 2 colunas no painel executivo (categoria + comparativo mensal) */
+  .home-2col {
+    grid-template-columns: 1fr 1fr;
     padding: 0 24px;
   }
 }
@@ -168,8 +177,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .nav-label{font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
 .nav-dot{position:absolute;top:8px;right:calc(50% - 14px);width:7px;height:7px;border-radius:50%;background:var(--neg);border:2px solid var(--ink)}
 
+/* Cabeçalho/labels de seção da sidebar — só aparecem no desktop (ver media query >768px) */
+.sb-logo, .sb-section-label, .sb-divider { display: none; }
+
 /* ══ CARDS ══ */
 .card{background:var(--ink3);border:1px solid var(--b1);border-radius:var(--r);padding:20px;margin:0 16px 12px}
+.home-2col{display:grid;grid-template-columns:1fr;gap:12px;padding:0 16px;margin-bottom:12px}
+.home-2col .card{margin:0}
 .card-sm{padding:14px 16px;margin:0 16px 10px}
 .card-gold{border-color:rgba(212,160,23,.3);background:linear-gradient(135deg,rgba(212,160,23,.08),var(--ink3))}
 
@@ -562,6 +576,16 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
       </div>
 
+      <!-- Próximos Vencimentos -->
+      <div id="home-vencs-sec" style="display:none;margin-bottom:12px">
+        <div class="sec-title" style="padding-bottom:8px">
+          <span>⏰ Próximos Vencimentos</span>
+        </div>
+        <div class="card" style="padding:0;margin-top:0">
+          <div id="home-vencs-list"></div>
+        </div>
+      </div>
+
       <!-- Gráfico fluxo -->
       <div class="card" style="margin-top:0;margin-bottom:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -569,6 +593,22 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <span class="chip chip-gold" id="home-chart-res" style="font-size:11px">—</span>
         </div>
         <div style="height:130px"><canvas id="home-chart"></canvas></div>
+      </div>
+
+      <!-- Gastos por Categoria + Comparativo Mensal -->
+      <div class="home-2col">
+        <div class="card" style="margin:0">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Gastos por Categoria</div>
+          <div style="height:150px;position:relative" id="home-cat-wrap">
+            <canvas id="home-cat-chart"></canvas>
+          </div>
+          <div id="home-cat-list" style="margin-top:12px"></div>
+          <div id="home-cat-vazio" style="display:none;text-align:center;color:var(--tx4);font-size:12px;padding:20px 0">Sem gastos categorizados no período</div>
+        </div>
+        <div class="card" style="margin:0">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Comparativo Mensal</div>
+          <div style="height:150px"><canvas id="home-mensal-chart"></canvas></div>
+        </div>
       </div>
 
       <!-- Posição Bancária -->
@@ -802,8 +842,18 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
   </div><!-- /content -->
 
-  <!-- BOTTOM NAV -->
+  <!-- BOTTOM NAV / SIDEBAR (desktop) -->
   <div class="bottom-nav">
+    <!-- Logo (só desktop) -->
+    <div class="sb-logo" style="padding:4px 14px 16px;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#b07010);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);flex-shrink:0"></div>
+      <div>
+        <div style="font-size:13px;font-weight:800;letter-spacing:2px;color:var(--tx0)">SFE <span style="color:var(--gold);font-size:10px">Lite</span></div>
+        <div style="font-size:8px;color:var(--tx4);letter-spacing:1px">FINANCEIRO PESSOAL</div>
+      </div>
+    </div>
+
+    <div class="sb-section-label" style="font-family:monospace;font-size:8px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:2px;padding:0 14px 5px">Principal</div>
     <button class="nav-item active" id="nav-home" onclick="navTo('home')">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">Início</span>
@@ -813,16 +863,19 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <span class="nav-label">Lançamentos</span>
     </button>
     <button class="nav-item" id="nav-add" onclick="abrirModalLanc()" style="position:relative">
-      <div style="width:48px;height:48px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#000;margin-top:-16px;box-shadow:0 4px 16px rgba(212,160,23,.4)">+</div>
+      <div class="nav-add-circle" style="width:48px;height:48px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#000;margin-top:-16px;box-shadow:0 4px 16px rgba(212,160,23,.4)">+</div>
       <span class="nav-label" style="margin-top:2px">Novo</span>
     </button>
     <button class="nav-item" id="nav-relatorio" onclick="navTo('relatorio')">
       <span class="nav-icon">📊</span>
       <span class="nav-label">Relatório</span>
     </button>
+
+    <div class="sb-divider" style="height:1px;background:var(--b1);margin:8px 14px"></div>
+    <div class="sb-section-label" style="font-family:monospace;font-size:8px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:2px;padding:8px 14px 5px">Inteligência</div>
     <button class="nav-item" id="nav-ia" onclick="navTo('ia')">
       <span class="nav-icon">🤖</span>
-      <span class="nav-label">IA</span>
+      <span class="nav-label">Assistente IA</span>
     </button>
   </div>
 
@@ -1296,6 +1349,104 @@ function renderHome() {
     listaEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--tx4);font-size:13px">Nenhum lançamento ainda<br><span style="font-size:12px">Clique em + para adicionar</span></div>';
   } else {
     listaEl.innerHTML = recentes.map(t => renderTxItem(t)).join('');
+  }
+
+  // ── Próximos Vencimentos (CP + CR pendentes, ordenados por data) ──
+  const vencsSec  = document.getElementById('home-vencs-sec');
+  const vencsList = document.getElementById('home-vencs-list');
+  if (vencsSec && vencsList) {
+    const hojeV = new Date(); hojeV.setHours(0,0,0,0);
+    const pendCP = (LITE.cp||[]).filter(i=>!i.pago).map(i=>({...i, tipo:'pagar'}));
+    const pendCR = (LITE.cr||[]).filter(i=>!i.recebido).map(i=>({...i, tipo:'receber'}));
+    const todos = [...pendCP, ...pendCR].sort((a,b)=>new Date(a.venc)-new Date(b.venc)).slice(0,6);
+    if (todos.length) {
+      vencsSec.style.display = '';
+      vencsList.innerHTML = todos.map((i,idx)=>{
+        const dVenc = new Date(i.venc); dVenc.setHours(0,0,0,0);
+        const diffDias = Math.round((dVenc - hojeV) / 86400000);
+        const vencido = diffDias < 0;
+        const hoje = diffDias === 0;
+        let tag, tagCor;
+        if (vencido)      { tag = `Vencido há ${Math.abs(diffDias)}d`; tagCor = 'var(--neg)'; }
+        else if (hoje)    { tag = 'Vence hoje'; tagCor = 'var(--warn)'; }
+        else              { tag = `Em ${diffDias}d`; tagCor = 'var(--tx4)'; }
+        const cor = i.tipo === 'pagar' ? 'var(--neg)' : 'var(--pos)';
+        const sinal = i.tipo === 'pagar' ? '↓' : '↑';
+        const borda = idx < todos.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+          <div style="width:32px;height:32px;border-radius:9px;background:${cor}18;display:flex;align-items:center;justify-content:center;font-size:14px;color:${cor};flex-shrink:0">${sinal}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.desc}</div>
+            <div style="font-size:10px;color:${tagCor};font-weight:600">${tag}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:${cor};flex-shrink:0">${fmt(i.val)}</div>
+        </div>`;
+      }).join('');
+    } else {
+      vencsSec.style.display = 'none';
+    }
+  }
+
+  // ── Gastos por Categoria (doughnut, período selecionado) ──
+  const mapCat = {};
+  txs.filter(t=>t.val<0).forEach(t => { mapCat[t.cat]=(mapCat[t.cat]||0)+Math.abs(t.val); });
+  const entriesCat = Object.entries(mapCat).sort((a,b)=>b[1]-a[1]);
+  const totalCat = entriesCat.reduce((s,e)=>s+e[1],0);
+
+  if (_relCharts['homeCat']) _relCharts['homeCat'].destroy();
+  const catEl  = document.getElementById('home-cat-chart');
+  const catVazioEl = document.getElementById('home-cat-vazio');
+  const catWrapEl = document.getElementById('home-cat-wrap');
+  if (catEl) {
+    if (entriesCat.length) {
+      if (catWrapEl) catWrapEl.style.display = '';
+      if (catVazioEl) catVazioEl.style.display = 'none';
+      _relCharts['homeCat'] = new Chart(catEl, {
+        type:'doughnut',
+        data:{labels:entriesCat.map(e=>e[0]),datasets:[{data:entriesCat.map(e=>e[1]),backgroundColor:entriesCat.map(e=>(CAT_COLORS_LITE[e[0]]||'#445566')+'44'),borderColor:entriesCat.map(e=>CAT_COLORS_LITE[e[0]]||'#445566'),borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+      });
+    } else {
+      if (catWrapEl) catWrapEl.style.display = 'none';
+      if (catVazioEl) catVazioEl.style.display = '';
+    }
+  }
+  const catListEl = document.getElementById('home-cat-list');
+  if (catListEl) {
+    catListEl.innerHTML = entriesCat.slice(0,5).map(([c,v]) => {
+      const col = CAT_COLORS_LITE[c] || '#445566';
+      const pct = totalCat ? (v/totalCat*100).toFixed(1) : '0';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:8px;height:8px;border-radius:2px;background:${col};flex-shrink:0"></div>
+        <span style="flex:1;font-size:12px;color:var(--tx2)">${c}</span>
+        <span style="font-size:12px;font-weight:600;color:${col}">${pct}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Comparativo Mensal (últimos 6 meses, entradas vs saídas) ──
+  if (_relCharts['homeMensal']) _relCharts['homeMensal'].destroy();
+  const mesEl = document.getElementById('home-mensal-chart');
+  if (mesEl) {
+    const lbM = [], entM = [], saiM = [];
+    for (let i=5; i>=0; i--) {
+      const ref = new Date(); ref.setDate(1); ref.setMonth(ref.getMonth() - i);
+      const mesTxs = LITE.txs.filter(t => {
+        const d = new Date(t.data);
+        return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+      });
+      lbM.push(ref.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''));
+      entM.push(mesTxs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
+      saiM.push(Math.abs(mesTxs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+    }
+    _relCharts['homeMensal'] = new Chart(mesEl, {
+      type:'bar',
+      data:{labels:lbM,datasets:[
+        {label:'Entradas',data:entM,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
+        {label:'Saídas',data:saiM,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+    });
   }
 }
 
