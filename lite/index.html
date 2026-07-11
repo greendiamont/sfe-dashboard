@@ -62,6 +62,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .tb-cpf{font-size:9px;color:var(--tx4);font-family:monospace;letter-spacing:.5px}
 .tb-avatar{width:34px;height:34px;border-radius:50%;background:var(--ink4);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--gold);cursor:pointer}
 .tb-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--neg);border-radius:50%;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink)}
+.hamburger-btn{width:38px;height:38px;border-radius:10px;background:var(--ink4);border:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0}
 
 /* ══ CONTEÚDO ══ */
 .content{flex:1;overflow-y:auto;padding-bottom:calc(var(--nav-h) + 16px);-webkit-overflow-scrolling:touch}
@@ -306,8 +307,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     border-radius: 8px;
     margin: 0 8px;
   }
-  .nav-icon { font-size: 16px; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
   .nav-label { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  #nav-add { display: none; }
   .nav-add-circle {
     width: 26px; height: 26px; margin-top: 0 !important; font-size: 14px !important;
     border-radius: 7px !important;
@@ -467,7 +469,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
       </div>
       <div class="topbar-breadcrumb" style="align-items:center;gap:6px;font-family:monospace;font-size:11px;color:var(--tx4);letter-spacing:.5px">
-        <span>SFE Lite</span><span style="color:var(--tx4)">/</span><span style="color:var(--tx1);font-weight:600" id="tb-breadcrumb-page">Início</span>
+        <span>SFE Lite</span><span style="color:var(--tx4)">/</span><span style="color:var(--tx1);font-weight:600" id="tb-breadcrumb-page">Painel Geral</span>
       </div>
     </div>
     <div class="topbar-right">
@@ -476,7 +478,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div class="tb-cpf" id="tb-doc">—</div>
       </div>
       <!-- Botão hambúrguer (some no desktop — opções ficam na sidebar) -->
-      <button id="btn-hamburger" onclick="abrirMenuLateral()" style="width:38px;height:38px;border-radius:10px;background:var(--ink4);border:1px solid var(--b1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0;position:relative">
+      <button id="btn-hamburger" class="hamburger-btn" onclick="abrirMenuLateral()" style="position:relative">
         <span style="width:18px;height:2px;background:var(--tx1);border-radius:1px;transition:all .2s"></span>
         <span style="width:18px;height:2px;background:var(--tx1);border-radius:1px;transition:all .2s"></span>
         <span style="width:12px;height:2px;background:var(--tx1);border-radius:1px;align-self:flex-start;margin-left:3px;transition:all .2s"></span>
@@ -503,8 +505,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- Seção: Navegação -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px">Navegação</div>
     <div style="padding:0 10px">
-      <button onclick="navTo('home');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏠</span><span class="menu-label">Início</span></button>
-      <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item"><span class="menu-icon">💳</span><span class="menu-label">Lançamentos</span></button>
+      <button onclick="navTo('home');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏠</span><span class="menu-label">Painel Geral</span></button>
+      <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏦</span><span class="menu-label">Posição Bancária</span></button>
       <button onclick="navTo('relatorio');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📊</span><span class="menu-label">Relatório Mensal</span></button>
       <button onclick="navTo('ia');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🤖</span><span class="menu-label">Assistente IA</span></button>
     </div>
@@ -512,7 +514,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- Seção: Dados Bancários -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Dados Bancários</div>
     <div style="padding:0 10px">
-      <button onclick="abrirImportOFX('banco');fecharMenuLateral()" class="menu-item menu-item-blue"><span class="menu-icon">⬆</span><span class="menu-label">Importar Extrato OFX / CSV</span></button>
+      <button onclick="abrirImportOFX('banco');fecharMenuLateral()" class="menu-item menu-item-blue"><span class="menu-icon">📤</span><span class="menu-label">Importar Extrato OFX / CSV</span></button>
       <button onclick="abrirImportOFX('cartao');fecharMenuLateral()" class="menu-item menu-item-purple"><span class="menu-icon">💳</span><span class="menu-label">Importar Fatura Cartão</span></button>
     </div>
 
@@ -556,7 +558,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <!-- ── PAINEL EXECUTIVO ── -->
       <div style="padding:16px 16px 10px;display:flex;align-items:center;justify-content:space-between">
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:2px">Painel Executivo</div>
+          <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:2px">Painel Geral</div>
           <div style="font-size:20px;font-weight:700;color:var(--tx0)" id="home-saudacao">Olá!</div>
         </div>
         <select id="home-period" onchange="renderHome()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
@@ -688,7 +690,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- ▸ LANÇAMENTOS ── -->
     <div id="page-lancamentos" class="page">
       <div style="padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center">
-        <div style="font-size:18px;font-weight:700;color:var(--tx0)">Lançamentos</div>
+        <div style="font-size:18px;font-weight:700;color:var(--tx0)">Posição Bancária</div>
         <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="abrirModalLanc()">+ Novo</button>
       </div>
 
@@ -888,11 +890,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="sb-section-label" style="font-family:monospace;font-size:8px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:2px;padding:0 14px 5px">Principal</div>
     <button class="nav-item active" id="nav-home" onclick="navTo('home')">
       <span class="nav-icon">🏠</span>
-      <span class="nav-label">Início</span>
+      <span class="nav-label">Painel Geral</span>
     </button>
     <button class="nav-item" id="nav-lancamentos" onclick="navTo('lancamentos')">
-      <span class="nav-icon">💳</span>
-      <span class="nav-label">Lançamentos</span>
+      <span class="nav-icon">🏦</span>
+      <span class="nav-label">Posição Bancária</span>
     </button>
     <button class="nav-item" id="nav-add" onclick="abrirModalLanc()" style="position:relative">
       <div class="nav-add-circle" style="width:48px;height:48px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#000;margin-top:-16px;box-shadow:0 4px 16px rgba(212,160,23,.4)">+</div>
@@ -913,7 +915,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="sb-divider" style="height:1px;background:var(--b1);margin:8px 14px"></div>
     <div class="sb-section-label" style="font-family:monospace;font-size:8px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:2px;padding:8px 14px 5px">Dados Bancários</div>
     <button class="nav-item sb-extra" onclick="abrirImportOFX('banco')">
-      <span class="nav-icon">⬆</span><span class="nav-label">Importar Extrato</span>
+      <span class="nav-icon">📤</span><span class="nav-label">Importar Extrato</span>
     </button>
     <button class="nav-item sb-extra" onclick="abrirImportOFX('cartao')">
       <span class="nav-icon">💳</span><span class="nav-label">Importar Fatura</span>
@@ -928,7 +930,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <span class="nav-icon">🔑</span><span class="nav-label">Alterar Senha</span>
     </button>
     <button class="nav-item sb-extra" onclick="logout()" style="color:var(--neg)">
-      <span class="nav-icon">⏏</span><span class="nav-label" style="color:var(--neg)">Sair da Conta</span>
+      <span class="nav-icon">🚪</span><span class="nav-label" style="color:var(--neg)">Sair da Conta</span>
     </button>
   </div>
 
@@ -1209,8 +1211,8 @@ function navTo(page) {
   _paginaAtual = page;
   const bcEl = document.getElementById('tb-breadcrumb-page');
   if (bcEl) {
-    const nomes = {home:'Início', lancamentos:'Lançamentos', relatorio:'Relatório', ia:'Assistente IA'};
-    bcEl.textContent = nomes[page] || 'Início';
+    const nomes = {home:'Painel Geral', lancamentos:'Posição Bancária', relatorio:'Relatório', ia:'Assistente IA'};
+    bcEl.textContent = nomes[page] || 'Painel Geral';
   }
   setTimeout(() => {
     if (page === 'home')       renderHome();
