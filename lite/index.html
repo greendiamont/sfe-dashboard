@@ -246,12 +246,20 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .switch.on::after{transform:translateX(20px)}
 
 /* ══ MENU LATERAL HAMBÚRGUER ══ */
-.menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;border:none;background:transparent;color:var(--tx1);font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:background .12s;margin-bottom:2px}
-.menu-item:hover,.menu-item:active{background:var(--ink4)}
-.menu-item span{flex:1}
+.menu-item{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border-radius:10px;border:none;background:transparent;color:var(--tx1);font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;margin-bottom:2px}
+.menu-item:hover,.menu-item:active{background:var(--ink4);transform:translateX(2px)}
+.menu-icon{width:32px;height:32px;border-radius:9px;background:var(--ink4);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;transition:background .15s}
+.menu-item:hover .menu-icon{background:var(--ink5)}
+.menu-label{flex:1}
 .menu-item-gold{color:var(--gold);font-weight:600}
+.menu-item-gold .menu-icon{background:rgba(212,160,23,.14);color:var(--gold)}
 .menu-item-blue{color:#4a9fd4;font-weight:600}
+.menu-item-blue .menu-icon{background:rgba(74,159,212,.14);color:#4a9fd4}
 .menu-item-purple{color:#a78bfa;font-weight:600}
+.menu-item-purple .menu-icon{background:rgba(167,139,250,.14);color:#a78bfa}
+.menu-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#b07010);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#000;flex-shrink:0}
+.menu-banco-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;transition:background .15s;margin-bottom:2px}
+.menu-banco-item:hover{background:var(--ink4)}
 #menu-lateral.open{right:0}
 
 /* ══ DESKTOP LAYOUT (> 768px) ══ */
@@ -482,30 +490,30 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <div id="menu-lateral" style="position:fixed;top:0;right:-320px;width:300px;height:100vh;z-index:201;background:var(--ink2);border-left:1px solid var(--b1);display:flex;flex-direction:column;transition:right .25s ease;overflow-y:auto">
 
     <!-- Header do menu -->
-    <div style="padding:20px;border-bottom:1px solid var(--b1);background:var(--ink);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:16px;font-weight:700;color:var(--tx0)" id="menu-nome">—</div>
+    <div style="padding:20px;border-bottom:1px solid var(--b1);background:var(--ink);display:flex;align-items:center;gap:12px">
+      <div class="menu-avatar" id="menu-avatar">—</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:var(--tx0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="menu-nome">—</div>
         <div style="font-size:11px;color:var(--tx4);font-family:monospace;margin-top:2px" id="menu-doc">—</div>
         <span id="menu-plano" style="display:inline-block;margin-top:6px;font-family:monospace;font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(212,160,23,.12);color:var(--gold)">LITE</span>
       </div>
-      <button onclick="fecharMenuLateral()" style="width:32px;height:32px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--tx3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      <button onclick="fecharMenuLateral()" style="width:32px;height:32px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--tx3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
     </div>
 
     <!-- Seção: Navegação -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px">Navegação</div>
     <div style="padding:0 10px">
-      <button onclick="navTo('home');fecharMenuLateral()" class="menu-item">🏠 <span>Início</span></button>
-      <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item">💳 <span>Lançamentos</span></button>
-      <button onclick="navTo('relatorio');fecharMenuLateral()" class="menu-item">📊 <span>Relatório Mensal</span></button>
-      <button onclick="navTo('ia');fecharMenuLateral()" class="menu-item">🤖 <span>Assistente IA</span></button>
+      <button onclick="navTo('home');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏠</span><span class="menu-label">Início</span></button>
+      <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item"><span class="menu-icon">💳</span><span class="menu-label">Lançamentos</span></button>
+      <button onclick="navTo('relatorio');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📊</span><span class="menu-label">Relatório Mensal</span></button>
+      <button onclick="navTo('ia');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🤖</span><span class="menu-label">Assistente IA</span></button>
     </div>
 
     <!-- Seção: Dados Bancários -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Dados Bancários</div>
     <div style="padding:0 10px">
-      <button onclick="abrirImportOFX('banco');fecharMenuLateral()" class="menu-item menu-item-blue">⬆ <span>Importar Extrato OFX / CSV</span></button>
-      <button onclick="abrirImportOFX('cartao');fecharMenuLateral()" class="menu-item menu-item-purple">💳 <span>Importar Fatura Cartão</span></button>
-      <button onclick="abrirModalLanc();fecharMenuLateral()" class="menu-item menu-item-gold">+ <span>Novo Lançamento</span></button>
+      <button onclick="abrirImportOFX('banco');fecharMenuLateral()" class="menu-item menu-item-blue"><span class="menu-icon">⬆</span><span class="menu-label">Importar Extrato OFX / CSV</span></button>
+      <button onclick="abrirImportOFX('cartao');fecharMenuLateral()" class="menu-item menu-item-purple"><span class="menu-icon">💳</span><span class="menu-label">Importar Fatura Cartão</span></button>
     </div>
 
     <!-- Seção: Bancos conectados -->
@@ -523,14 +531,14 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- Seção: Exportar -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Exportar</div>
     <div style="padding:0 10px">
-      <button onclick="exportCSVLite();fecharMenuLateral()" class="menu-item">📥 <span>Exportar CSV</span></button>
+      <button onclick="exportCSVLite();fecharMenuLateral()" class="menu-item"><span class="menu-icon">📥</span><span class="menu-label">Exportar CSV</span></button>
     </div>
 
     <!-- Seção: Conta -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Conta</div>
     <div style="padding:0 10px">
-      <button onclick="abrirTrocarSenha();fecharMenuLateral()" class="menu-item">🔑 <span>Alterar Senha</span></button>
-      <button onclick="if(confirm('Apagar TODOS os dados?')){LITE={txs:[],cp:[],cr:[],bancos:[],cartoes:[]};salvarLite();renderHome();fecharMenuLateral();alert('Dados apagados.')}" class="menu-item" style="color:var(--neg)">🗑 <span>Limpar Dados</span></button>
+      <button onclick="abrirTrocarSenha();fecharMenuLateral()" class="menu-item"><span class="menu-icon">🔑</span><span class="menu-label">Alterar Senha</span></button>
+      <button onclick="if(confirm('Apagar TODOS os dados?')){LITE={txs:[],cp:[],cr:[],bancos:[],cartoes:[]};salvarLite();renderHome();fecharMenuLateral();alert('Dados apagados.')}" class="menu-item" style="color:var(--neg)"><span class="menu-icon" style="background:rgba(248,113,113,.14);color:var(--neg)">🗑</span><span class="menu-label">Limpar Dados</span></button>
     </div>
 
     <!-- Sair -->
@@ -582,13 +590,19 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
         <!-- CP -->
         <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--neg);border-radius:14px;padding:14px">
-          <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">A Pagar</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px">A Pagar</div>
+            <button onclick="abrirModalConta('pagar')" title="Nova conta a pagar" style="width:20px;height:20px;border-radius:6px;background:rgba(248,113,113,.15);border:none;color:var(--neg);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0">+</button>
+          </div>
           <div style="font-size:20px;font-weight:700;color:var(--neg)" id="home-cp">R$ 0</div>
           <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="home-cp-n">0 títulos</div>
         </div>
         <!-- CR -->
         <div style="background:var(--ink3);border:1px solid var(--b1);border-top:2px solid var(--pos);border-radius:14px;padding:14px">
-          <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">A Receber</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1px">A Receber</div>
+            <button onclick="abrirModalConta('receber')" title="Nova conta a receber" style="width:20px;height:20px;border-radius:6px;background:rgba(74,222,128,.15);border:none;color:var(--pos);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0">+</button>
+          </div>
           <div style="font-size:20px;font-weight:700;color:var(--pos)" id="home-cr">R$ 0</div>
           <div style="font-size:10px;color:var(--tx4);margin-top:3px" id="home-cr-n">0 títulos</div>
         </div>
@@ -947,6 +961,33 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div class="cat-grid" id="cat-grid"></div>
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarLancamento()" style="margin-top:4px">Salvar Lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NOVA CONTA (A PAGAR / A RECEBER) ══ -->
+<div class="modal-overlay" id="modal-conta" onclick="if(event.target===this)fecharModalConta()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-conta-title">Nova Conta</div>
+    <div class="modal-body">
+      <div class="tipo-toggle">
+        <button class="tipo-btn" id="conta-tipo-pagar" onclick="setTipoConta('pagar')">↓ A Pagar</button>
+        <button class="tipo-btn" id="conta-tipo-receber" onclick="setTipoConta('receber')">↑ A Receber</button>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Valor (R$)</label>
+        <input class="input" id="conta-valor" type="number" inputmode="decimal" placeholder="0,00" step="0.01" style="font-size:24px;font-weight:700">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Descrição</label>
+        <input class="input" id="conta-desc" type="text" placeholder="Ex: Aluguel, Cliente X, IPTU...">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Data de Vencimento</label>
+        <input class="input" id="conta-venc" type="date">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="salvarConta()" style="margin-top:4px">Salvar Conta</button>
     </div>
   </div>
 </div>
@@ -1607,6 +1648,50 @@ function salvarLancamento() {
   renderLancamentos();
 }
 
+// ══ MODAL NOVA CONTA (A PAGAR / A RECEBER) ══
+let _contaTipo = 'pagar';
+
+function abrirModalConta(tipo) {
+  _contaTipo = tipo || 'pagar';
+  document.getElementById('conta-venc').value  = new Date().toISOString().split('T')[0];
+  document.getElementById('conta-valor').value = '';
+  document.getElementById('conta-desc').value  = '';
+  setTipoConta(_contaTipo);
+  document.getElementById('modal-conta').classList.add('open');
+}
+
+function fecharModalConta() {
+  document.getElementById('modal-conta').classList.remove('open');
+}
+
+function setTipoConta(tipo) {
+  _contaTipo = tipo;
+  const btnP = document.getElementById('conta-tipo-pagar');
+  const btnR = document.getElementById('conta-tipo-receber');
+  btnP.className = 'tipo-btn' + (tipo==='pagar'?' sel-neg':'');
+  btnR.className = 'tipo-btn' + (tipo==='receber'?' sel-pos':'');
+  document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber';
+}
+
+function salvarConta() {
+  const val  = parseFloat(document.getElementById('conta-valor').value);
+  const desc = document.getElementById('conta-desc').value.trim();
+  const venc = document.getElementById('conta-venc').value;
+  if (!val || val <= 0) { alert('Informe um valor válido.'); return; }
+  if (!desc)            { alert('Informe a descrição.'); return; }
+  if (!venc)            { alert('Informe a data de vencimento.'); return; }
+  if (!LITE.cp) LITE.cp = [];
+  if (!LITE.cr) LITE.cr = [];
+  if (_contaTipo === 'pagar') {
+    LITE.cp.push({ id: 'cp_' + Date.now(), desc, val, venc, pago: false });
+  } else {
+    LITE.cr.push({ id: 'cr_' + Date.now(), desc, val, venc, recebido: false });
+  }
+  salvarLite();
+  fecharModalConta();
+  renderHome();
+}
+
 // ══ RENDER RELATÓRIO ══
 function renderRelatorio() {
   const days = parseInt(document.getElementById('rel-period')?.value || 30);
@@ -1848,9 +1933,12 @@ function atualizarMenuLateral() {
   const nomeEl  = document.getElementById('menu-nome');
   const docEl   = document.getElementById('menu-doc');
   const planoEl = document.getElementById('menu-plano');
-  if(nomeEl)  nomeEl.textContent  = s.razao || s.fantasia || '—';
+  const avatarEl= document.getElementById('menu-avatar');
+  const nomeCompleto = s.razao || s.fantasia || '';
+  if(nomeEl)  nomeEl.textContent  = nomeCompleto || '—';
   if(docEl)   docEl.textContent   = s.doc_fmt || s.doc || '—';
   if(planoEl) planoEl.textContent = (s.plano||'lite').toUpperCase();
+  if(avatarEl) avatarEl.textContent = nomeCompleto ? nomeCompleto.trim().charAt(0).toUpperCase() : '—';
 
   // Bancos
   const bancosEl = document.getElementById('menu-bancos');
