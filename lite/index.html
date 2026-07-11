@@ -687,11 +687,44 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
     </div>
 
-    <!-- ▸ LANÇAMENTOS ── -->
+    <!-- ▸ POSIÇÃO BANCÁRIA ── -->
     <div id="page-lancamentos" class="page">
       <div style="padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center">
         <div style="font-size:18px;font-weight:700;color:var(--tx0)">Posição Bancária</div>
-        <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="abrirModalLanc()">+ Novo</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="ln-period" onchange="renderLancamentos()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
+            <option value="30">30 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+          </select>
+          <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="abrirModalLanc()">+ Novo</button>
+        </div>
+      </div>
+
+      <!-- Seletor de banco -->
+      <div id="ln-banco-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+
+      <!-- Resumo do banco/consolidado selecionado -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px">
+        <div class="mini-card"><div class="mini-lbl">Saldo</div><div class="mini-val" style="font-size:16px" id="ln-saldo">—</div></div>
+        <div class="mini-card"><div class="mini-lbl">Entradas</div><div class="mini-val" style="color:var(--pos);font-size:16px" id="ln-ent">—</div></div>
+        <div class="mini-card"><div class="mini-lbl">Saídas</div><div class="mini-val" style="color:var(--neg);font-size:16px" id="ln-sai">—</div></div>
+      </div>
+
+      <!-- Distribuição de saldo entre bancos (só aparece no Consolidado) -->
+      <div id="ln-dist-sec" class="card" style="display:none;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Distribuição do Saldo entre Bancos</div>
+        <div style="height:140px"><canvas id="ln-dist-chart"></canvas></div>
+        <div id="ln-dist-list" style="margin-top:12px"></div>
+      </div>
+
+      <!-- Evolução do caixa (consolidado ou do banco selecionado) -->
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2)" id="ln-evo-titulo">Evolução do Caixa — Consolidado</div>
+          <span class="chip chip-gold" id="ln-evo-res" style="font-size:11px">—</span>
+        </div>
+        <div style="height:130px"><canvas id="ln-evo-chart"></canvas></div>
       </div>
 
       <!-- Filtros tipo -->
@@ -699,12 +732,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <button class="chip chip-gold" id="lf-todos" onclick="lnFiltrar('todos')" style="padding:7px 14px;cursor:pointer;border:1px solid rgba(212,160,23,.4)">Todos</button>
         <button class="chip" id="lf-entrada" onclick="lnFiltrar('entrada')" style="padding:7px 14px;cursor:pointer;border:1px solid var(--b1);color:var(--pos)">↑ Entradas</button>
         <button class="chip" id="lf-saida" onclick="lnFiltrar('saida')" style="padding:7px 14px;cursor:pointer;border:1px solid var(--b1);color:var(--neg)">↓ Saídas</button>
-      </div>
-
-      <!-- Resumo -->
-      <div class="grid2" style="margin-bottom:0">
-        <div class="mini-card"><div class="mini-lbl">Entradas</div><div class="mini-val" style="color:var(--pos);font-size:16px" id="ln-ent">—</div></div>
-        <div class="mini-card"><div class="mini-lbl">Saídas</div><div class="mini-val" style="color:var(--neg);font-size:16px" id="ln-sai">—</div></div>
       </div>
 
       <!-- Lista -->
@@ -1144,6 +1171,7 @@ let SESSION   = null;
 // ══ ESTADO LOCAL ══
 let LITE = { txs: [], cp: [], cr: [], bancos: [], cartoes: [] };
 let _lnFiltroAtivo = 'todos';
+let _lnBancoAtivo = '_consolidado';
 let _lncTipo = 'entrada';
 let _lncCat  = 'Outros';
 let _relCharts = {};
@@ -1554,14 +1582,116 @@ function lnFiltrar(f) {
   renderLancamentos();
 }
 
+function lnSelecionarBanco(codigo) {
+  _lnBancoAtivo = codigo;
+  renderLancamentos();
+}
+
 function renderLancamentos() {
-  let txs = [...LITE.txs].sort((a,b)=>new Date(b.data)-new Date(a.data));
-  if (_lnFiltroAtivo === 'entrada') txs = txs.filter(t=>t.val>0);
-  if (_lnFiltroAtivo === 'saida')   txs = txs.filter(t=>t.val<0);
-  const ent = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
-  const sai = Math.abs(txs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
+  if (!LITE.bancos) LITE.bancos = [];
+  const days = parseInt(document.getElementById('ln-period')?.value || 30);
+  const from = new Date(Date.now() - days*86400000);
+
+  // ── Chips de banco (Consolidado + um por banco importado) ──
+  const chipsEl = document.getElementById('ln-banco-chips');
+  if (chipsEl) {
+    const consolidadoAtivo = _lnBancoAtivo === '_consolidado';
+    let html = `<button class="chip${consolidadoAtivo?' chip-gold':''}" onclick="lnSelecionarBanco('_consolidado')" style="padding:7px 14px;cursor:pointer;border:1px solid ${consolidadoAtivo?'rgba(212,160,23,.4)':'var(--b1)'};white-space:nowrap">🏦 Consolidado</button>`;
+    html += LITE.bancos.map(b => {
+      const ativo = _lnBancoAtivo === b.code;
+      return `<button class="chip" onclick="lnSelecionarBanco('${b.code}')" style="padding:7px 14px;cursor:pointer;border:1px solid ${ativo?b.cor:'var(--b1)'};background:${ativo?b.cor+'18':''};color:${ativo?b.cor:'var(--tx3)'};white-space:nowrap">${b.nome}</button>`;
+    }).join('');
+    chipsEl.innerHTML = html;
+    chipsEl.style.display = LITE.bancos.length ? 'flex' : 'none';
+  }
+
+  // ── Pool de lançamentos: consolidado = todos (soltos + de todos os bancos); banco específico = só os daquele banco ──
+  const consolidado = _lnBancoAtivo === '_consolidado';
+  let poolTxs = consolidado ? LITE.txs : LITE.txs.filter(t => t.banco === _lnBancoAtivo);
+
+  // ── Saldo do cabeçalho ──
+  const saldoEl = document.getElementById('ln-saldo');
+  if (saldoEl) {
+    let saldo;
+    if (consolidado) {
+      saldo = LITE.bancos.length ? LITE.bancos.reduce((s,b)=>s+b.saldo,0) : LITE.txs.reduce((s,t)=>s+t.val,0);
+    } else {
+      const bancoObj = LITE.bancos.find(b=>b.code===_lnBancoAtivo);
+      saldo = bancoObj ? bancoObj.saldo : 0;
+    }
+    saldoEl.textContent = fmt(saldo);
+    saldoEl.style.color = saldo >= 0 ? 'var(--pos)' : 'var(--neg)';
+  }
+
+  // ── Entradas/Saídas do período, dentro do pool selecionado ──
+  const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from);
+  const ent = txsPeriodo.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
+  const sai = Math.abs(txsPeriodo.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
   document.getElementById('ln-ent').textContent = fmt(ent);
   document.getElementById('ln-sai').textContent = fmt(sai);
+
+  // ── Distribuição do saldo entre bancos (só no Consolidado) ──
+  const distSec = document.getElementById('ln-dist-sec');
+  if (distSec) {
+    if (consolidado && LITE.bancos.length) {
+      distSec.style.display = '';
+      const totalBancos = LITE.bancos.reduce((s,b)=>s+b.saldo,0);
+      if (_relCharts['lnDist']) _relCharts['lnDist'].destroy();
+      const distEl = document.getElementById('ln-dist-chart');
+      if (distEl) _relCharts['lnDist'] = new Chart(distEl, {
+        type:'doughnut',
+        data:{labels:LITE.bancos.map(b=>b.nome),datasets:[{data:LITE.bancos.map(b=>Math.max(b.saldo,0)),backgroundColor:LITE.bancos.map(b=>b.cor+'44'),borderColor:LITE.bancos.map(b=>b.cor),borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+      });
+      const distListEl = document.getElementById('ln-dist-list');
+      if (distListEl) distListEl.innerHTML = LITE.bancos.map(b=>{
+        const pct = totalBancos ? (b.saldo/totalBancos*100).toFixed(1) : '0';
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:2px;background:${b.cor};flex-shrink:0"></div>
+          <span style="flex:1;font-size:12px;color:var(--tx2)">${b.nome}</span>
+          <span style="font-size:12px;font-weight:600;color:${b.cor}">${pct}%</span>
+        </div>`;
+      }).join('');
+    } else {
+      distSec.style.display = 'none';
+    }
+  }
+
+  // ── Evolução do caixa (15 dias) — consolidado ou do banco selecionado ──
+  const evoTituloEl = document.getElementById('ln-evo-titulo');
+  if (evoTituloEl) {
+    const bancoNome = consolidado ? 'Consolidado' : (LITE.bancos.find(b=>b.code===_lnBancoAtivo)?.nome || _lnBancoAtivo);
+    evoTituloEl.textContent = 'Evolução do Caixa — ' + bancoNome;
+  }
+  if (_relCharts['lnEvo']) _relCharts['lnEvo'].destroy();
+  const lbE=[], insE=[], outsE=[];
+  for (let i=14; i>=0; i--) {
+    const d = new Date(Date.now() - i*86400000);
+    lbE.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+    const slc = poolTxs.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+    insE.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
+    outsE.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+  }
+  const resEvo = insE.reduce((s,v)=>s+v,0) - outsE.reduce((s,v)=>s+v,0);
+  const evoResEl = document.getElementById('ln-evo-res');
+  if (evoResEl) {
+    evoResEl.textContent = (resEvo >= 0 ? '+' : '') + fmt(resEvo);
+    evoResEl.className = 'chip ' + (resEvo >= 0 ? 'chip-pos' : 'chip-neg');
+  }
+  const evoEl = document.getElementById('ln-evo-chart');
+  if (evoEl) _relCharts['lnEvo'] = new Chart(evoEl, {
+    type:'bar',
+    data:{labels:lbE,datasets:[
+      {label:'Entradas',data:insE,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
+      {label:'Saídas',data:outsE,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+  });
+
+  // ── Lista de lançamentos (banco selecionado + filtro tipo) ──
+  let txs = [...poolTxs].sort((a,b)=>new Date(b.data)-new Date(a.data));
+  if (_lnFiltroAtivo === 'entrada') txs = txs.filter(t=>t.val>0);
+  if (_lnFiltroAtivo === 'saida')   txs = txs.filter(t=>t.val<0);
   const listEl = document.getElementById('ln-list');
   const vazioEl = document.getElementById('ln-vazio');
   if (!txs.length) {
