@@ -3166,9 +3166,10 @@ function ofxHandleFile(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
+      const texto = decodificarTextoArquivo(e.target.result);
       let txs = [];
-      if(['ofx','qfx','ofc'].includes(ext)) txs = parseOFXLite(e.target.result);
-      else if(['csv','txt'].includes(ext))   txs = parseCSVLite(e.target.result);
+      if(['ofx','qfx','ofc'].includes(ext)) txs = parseOFXLite(texto);
+      else if(['csv','txt'].includes(ext))   txs = parseCSVLite(texto);
       else throw new Error('Formato não suportado: .' + ext);
       if(!txs.length) throw new Error('Nenhum lançamento encontrado no arquivo');
       _ofxTxsParsed = txs;
@@ -3180,7 +3181,19 @@ function ofxHandleFile(file) {
       dz.onclick = () => { const i=document.createElement('input');i.type='file';i.accept='.ofx,.qfx,.ofc,.csv,.txt,.pdf';i.onchange=e=>ofxHandleFile(e.target.files[0]);i.click(); };
     }
   };
-  reader.readAsText(file, 'latin1');
+  reader.readAsArrayBuffer(file);
+}
+
+// Decodifica o texto tentando UTF-8 primeiro (com validação estrita); se o arquivo não for UTF-8
+// válido, cai pra windows-1252 (compatível com latin1/ISO-8859-1, usado por sistemas legados BR).
+// Ler o encoding certo importa: adivinhar errado troca "ç"/"ã"/"õ" por caracteres ilegíveis,
+// o que quebra a detecção de colunas por nome de cabeçalho (ex: "Lançamento").
+function decodificarTextoArquivo(arrayBuffer) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(arrayBuffer).replace(/^\uFEFF/, '');
+  } catch (e) {
+    return new TextDecoder('windows-1252').decode(arrayBuffer);
+  }
 }
 
 async function parsePDFLite(arrayBuffer) {
@@ -3232,8 +3245,9 @@ async function parsePDFLite(arrayBuffer) {
     const desc = ofxCleanMemo(descRaw.trim());
     if (!desc) return;
 
-    // Fatura de cartão: linhas sem sinal explícito são gastos (negativo) — exceto pagamento/liquidação da fatura, que fica positivo
-    if (_ofxTipo === 'cartao' && !negativo && amount > 0 && !ofxEhPagamentoFatura(desc)) amount = -amount;
+    // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento), não pelo
+    // sinal que o arquivo trouxe — bancos diferentes usam convenções opostas
+    if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, desc);
 
     txs.push({
       id: 'pdf_' + i + '_' + dataStr.replace(/-/g,''),
@@ -3294,8 +3308,11 @@ function parseOFXLite(raw) {
     const memo     = get('MEMO')||get('NAME')||'';
     const fitid    = get('FITID')||'';
     if(!dtposted||!trnamt) return;
-    const amount = parseFloat(trnamt.replace(',','.'));
+    let amount = parseFloat(trnamt.replace(',','.'));
     if(isNaN(amount)) return;
+    // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento) — algumas
+    // instituições exportam OFX de cartão com a mesma convenção invertida do CSV/PDF
+    if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, memo);
     txs.push({
       id:   'ofx_'+fitid+'_'+dtposted.slice(0,8)+'_'+Math.random().toString(36).slice(2,5),
       data: ofxParseDate(dtposted.slice(0,8)),
@@ -3312,6 +3329,48 @@ function parseOFXLite(raw) {
   return txs;
 }
 
+// Split de linha CSV respeitando aspas — vírgulas DENTRO de campos entre aspas não contam como separador
+// (ex: "R$ 1,19" é um único campo, não dois). Sem isso, valores em R$ com vírgula decimal quebram a coluna.
+function csvSplitLine(line, sep) {
+  const result = [];
+  let cur = '', inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === sep && !inQuotes) {
+      result.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+// Mapeia categorias já vindas do próprio banco/cartão pra taxonomia do app
+function mapCategoriaBanco(catRaw) {
+  const c = (catRaw||'').trim().toUpperCase();
+  const mapa = {
+    'SUPERMERCADO':'Mercado', 'MERCADO':'Mercado',
+    'RESTAURANTES':'Alimentação', 'ALIMENTACAO':'Alimentação', 'ALIMENTAÇÃO':'Alimentação',
+    'TRANSPORTE':'Transporte', 'POSTO':'Transporte',
+    'DROGARIA':'Saúde', 'FARMACIA':'Saúde', 'SAUDE':'Saúde', 'SAÚDE':'Saúde',
+    'COMPRAS':'Compras',
+    'SERVICOS':'Serviços', 'SERVIÇOS':'Serviços',
+    'HOSPEDAGEM':'Hospedagem', 'VIAGEM':'Hospedagem',
+    'ENSINO':'Educação', 'EDUCACAO':'Educação', 'EDUCAÇÃO':'Educação',
+    'ENTRETENIMENTO':'Lazer', 'LAZER':'Lazer',
+    'VESTUARIO':'Roupas', 'VESTUÁRIO':'Roupas', 'ROUPAS':'Roupas',
+    'ASSINATURAS':'Assinaturas',
+    'IMPOSTOS':'Impostos', 'TAXAS':'Impostos',
+    'OUTROS':'Outros',
+  };
+  return mapa[c] || null;
+}
+
 function parseCSVLite(raw) {
   const txs   = [];
   const lines = raw.split(/\r?\n/).filter(l=>l.trim());
@@ -3319,26 +3378,27 @@ function parseCSVLite(raw) {
   const bankCode = document.getElementById('ofx-banco').value || 'XX';
   const banco    = OFX_BANCOS_INFO[bankCode] || OFX_BANCOS_INFO['XX'];
   const sep  = lines[0].includes(';') ? ';' : ',';
-  const hdr  = lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/["']/g,''));
+  const hdr  = csvSplitLine(lines[0], sep).map(h=>h.trim().toLowerCase().replace(/["']/g,''));
   const iDt  = hdr.findIndex(h=>['data','date','data lançamento','data lanc','dtposted','data mov'].includes(h));
   let   iHst = hdr.findIndex(h=>['histórico','historico','descrição','descricao','lançamento','lancamento','estabelecimento','local','title','item','transação','transacao','detalhe','detalhes','observação','observacao','memo','description','complement'].includes(h));
   const iVal = hdr.findIndex(h=>['valor','value','trnamt','amount','montante'].includes(h));
   const iTp  = hdr.findIndex(h=>['tipo','type','trntype','dc','d/c','natureza'].includes(h));
   const iCr  = hdr.findIndex(h=>['crédito','credito','entrada','credit'].includes(h));
   const iDb  = hdr.findIndex(h=>['débito','debito','saída','saida','debit'].includes(h));
+  const iCat = hdr.findIndex(h=>['categoria','category'].includes(h));
   if(iDt < 0) throw new Error('Coluna de data não encontrada. Colunas: '+hdr.join(', '));
 
   // Fallback: nenhuma coluna de descrição reconhecida por nome — acha a melhor coluna de texto
   // olhando as primeiras linhas de dados e escolhendo a coluna (fora de data/valor/tipo) com mais letras.
   if (iHst < 0) {
-    const usadas = new Set([iDt, iVal, iTp, iCr, iDb].filter(i=>i>=0));
+    const usadas = new Set([iDt, iVal, iTp, iCr, iDb, iCat].filter(i=>i>=0));
     const numCols = hdr.length;
     let melhorIdx = -1, melhorScore = 0;
     for (let c = 0; c < numCols; c++) {
       if (usadas.has(c)) continue;
       let score = 0, amostras = 0;
       for (let i = 1; i < Math.min(lines.length, 8); i++) {
-        const cols = lines[i].split(sep);
+        const cols = csvSplitLine(lines[i], sep);
         const val  = (cols[c]||'').trim().replace(/^["']|["']$/g,'');
         if (!val) continue;
         amostras++;
@@ -3350,7 +3410,7 @@ function parseCSVLite(raw) {
   }
 
   for(let i=1;i<lines.length;i++){
-    const cols = lines[i].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,''));
+    const cols = csvSplitLine(lines[i], sep).map(c=>c.trim().replace(/^["']|["']$/g,''));
     if(!cols[iDt]) continue;
     // Data
     let dataStr;
@@ -3378,14 +3438,18 @@ function parseCSVLite(raw) {
     }
     if(amount===0) continue;
     const desc = iHst>=0 ? ofxCleanMemo(cols[iHst]||'') : 'Lançamento';
-    // Fatura de cartão: se o arquivo não trouxe sinal/coluna de tipo, assume gasto (negativo) —
-    // exceto quando a descrição indica pagamento/liquidação da fatura, que deve continuar positivo (crédito)
-    if (_ofxTipo === 'cartao' && !sinalExplicito && amount > 0 && !ofxEhPagamentoFatura(desc)) amount = -amount;
+    // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento), não pelo
+    // sinal que o arquivo trouxe — bancos diferentes usam convenções opostas
+    if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, desc);
+    // Categoria: prioriza a categoria que já vem do próprio banco/cartão no arquivo; só usa
+    // a categorização por palavra-chave da descrição quando o arquivo não traz essa coluna
+    const catBanco = iCat>=0 ? mapCategoriaBanco(cols[iCat]) : null;
+    const cat = ofxEhPagamentoFatura(desc) ? 'Pagamento de Fatura' : (catBanco || ofxCategoria(desc, amount, _ofxTipo));
     txs.push({
       id:   'csv_'+i+'_'+dataStr.replace(/-/g,''),
       data: dataStr,
       desc,
-      cat:  ofxCategoria(desc, amount, _ofxTipo),
+      cat,
       val:  amount,
       banco: bankCode,
       bancoNome: banco.nome,
@@ -3416,6 +3480,17 @@ function ofxEhPagamentoFatura(desc) {
       || d.includes('debito aut') || d.includes('débito aut') || d.includes('deb aut')
       || d.includes('liquidaç')   || d.includes('liquidac')
       || d.includes('estorno')    || d.includes('credito de pagamento') || d.includes('crédito de pagamento');
+}
+
+// Normaliza o sinal de lançamentos de fatura de cartão pelo QUE a linha é, não pelo sinal que o
+// arquivo trouxe — bancos diferentes usam convenções opostas (ex: Banco Inter marca compra como
+// positivo e pagamento da fatura como negativo, o oposto do que este app usa internamente).
+// Regra final sempre igual: compra = negativo (gasto), pagamento/estorno = positivo (credita a fatura).
+function ajustarSinalCartao(amount, desc) {
+  const ehPagamento = ofxEhPagamentoFatura(desc);
+  if (ehPagamento && amount < 0) return -amount;
+  if (!ehPagamento && amount > 0) return -amount;
+  return amount;
 }
 
 function ofxCategoria(desc, amount, tipo) {
