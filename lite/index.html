@@ -857,6 +857,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
             <option value="60">60 dias</option>
             <option value="90">90 dias</option>
           </select>
+          <button class="btn" style="padding:8px 14px;font-size:12px;border:1px solid var(--b1);background:var(--ink4);color:var(--tx2)" onclick="abrirImportOFX('cartao')">⬆ Importar</button>
           <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="abrirModalCartao()">+ Cartão</button>
         </div>
       </div>
@@ -864,12 +865,20 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <!-- Seletor de cartão -->
       <div id="ct-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
 
+      <!-- Editar cartão selecionado -->
+      <div id="ct-editar-row" style="display:none;padding:0 16px 12px;text-align:right">
+        <button class="sec-link" onclick="editarCartaoAtual()">✎ Editar Cartão</button>
+      </div>
+
       <!-- Vazio -->
       <div id="ct-vazio-geral" style="display:none;padding:40px 24px;text-align:center">
         <div style="font-size:32px;margin-bottom:10px">💳</div>
         <div style="font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:6px">Nenhum cartão cadastrado</div>
         <div style="font-size:12px;color:var(--tx4);margin-bottom:16px">Cadastre um cartão manualmente ou importe uma fatura</div>
-        <button class="btn btn-gold" onclick="abrirModalCartao()">+ Cadastrar Cartão</button>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn" style="border:1px solid var(--b1);background:var(--ink4);color:var(--tx2)" onclick="abrirImportOFX('cartao')">⬆ Importar Fatura</button>
+          <button class="btn btn-gold" onclick="abrirModalCartao()">+ Cadastrar Cartão</button>
+        </div>
       </div>
 
       <div id="ct-conteudo">
@@ -1153,7 +1162,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <div class="modal-overlay" id="modal-cartao" onclick="if(event.target===this)fecharModalCartao()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Cadastrar Cartão</div>
+    <div class="modal-title" id="ctm-titulo">Cadastrar Cartão</div>
     <div class="modal-body">
       <div class="input-group">
         <label class="input-label">Nome do Cartão</label>
@@ -1184,6 +1193,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarCartao()" style="margin-top:4px">Salvar Cartão</button>
+      <button class="btn btn-block" id="ctm-excluir-btn" style="display:none;margin-top:8px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:var(--neg)" onclick="excluirCartaoAtual()">🗑 Excluir Cartão</button>
     </div>
   </div>
 </div>
@@ -2066,6 +2076,9 @@ function renderCartoes() {
   }).join('');
   chipsEl.innerHTML = html;
 
+  const editarRow = document.getElementById('ct-editar-row');
+  if (editarRow) editarRow.style.display = consolidadoAtivo ? 'none' : '';
+
   const consolidado = _ctAtivo === '_consolidado';
   const poolTxs = LITE.txs.filter(t => t.tipo === 'cartao' && (consolidado || t.banco === _ctAtivo));
 
@@ -2168,15 +2181,41 @@ function renderCartoes() {
 }
 
 // ── Modal: Cadastrar Cartão ──
-function abrirModalCartao() {
-  document.getElementById('ctm-nome').value = '';
-  document.getElementById('ctm-limite').value = '';
-  document.getElementById('ctm-fechamento').value = '';
-  document.getElementById('ctm-vencimento').value = '';
+let _cartaoEditando = null;
+
+function abrirModalCartao(codigo) {
+  _cartaoEditando = codigo || null;
+  const cObj = _cartaoEditando ? LITE.cartoes.find(c=>c.code===_cartaoEditando) : null;
+  document.getElementById('ctm-titulo').textContent = cObj ? 'Editar Cartão' : 'Cadastrar Cartão';
+  document.getElementById('ctm-nome').value       = cObj ? cObj.nome : '';
+  document.getElementById('ctm-bandeira').value   = cObj ? (cObj.bandeira || 'Visa') : 'Visa';
+  document.getElementById('ctm-limite').value     = cObj && cObj.limite ? cObj.limite : '';
+  document.getElementById('ctm-fechamento').value = cObj && cObj.fechamento ? cObj.fechamento : '';
+  document.getElementById('ctm-vencimento').value = cObj && cObj.vencimento ? cObj.vencimento : '';
+  document.getElementById('ctm-excluir-btn').style.display = cObj ? '' : 'none';
   document.getElementById('modal-cartao').classList.add('open');
 }
 function fecharModalCartao() {
   document.getElementById('modal-cartao').classList.remove('open');
+  _cartaoEditando = null;
+}
+function editarCartaoAtual() {
+  if (_ctAtivo === '_consolidado') return;
+  abrirModalCartao(_ctAtivo);
+}
+function excluirCartaoAtual() {
+  if (!_cartaoEditando) return;
+  const cObj = LITE.cartoes.find(c=>c.code===_cartaoEditando);
+  if (!cObj) return;
+  if (!confirm(`Excluir o cartão "${cObj.nome}"? Isso também apaga todos os lançamentos associados a ele.`)) return;
+  LITE.cartoes = LITE.cartoes.filter(c=>c.code!==_cartaoEditando);
+  LITE.txs     = LITE.txs.filter(t=>!(t.tipo==='cartao' && t.banco===_cartaoEditando));
+  _ctAtivo = '_consolidado';
+  salvarLite();
+  fecharModalCartao();
+  renderHome();
+  renderCartoes();
+  atualizarMenuLateral();
 }
 function salvarCartao() {
   const nome       = document.getElementById('ctm-nome').value.trim();
@@ -2186,9 +2225,19 @@ function salvarCartao() {
   const vencimento = parseInt(document.getElementById('ctm-vencimento').value) || null;
   if (!nome) { alert('Informe o nome do cartão.'); return; }
   if (!LITE.cartoes) LITE.cartoes = [];
-  const code = 'card_' + Date.now();
-  const cor  = CARD_CORES[LITE.cartoes.length % CARD_CORES.length];
-  LITE.cartoes.push({ code, nome, bandeira, limite, fechamento, vencimento, cor, fatura: 0, updated: new Date().toISOString() });
+
+  if (_cartaoEditando) {
+    const cObj = LITE.cartoes.find(c=>c.code===_cartaoEditando);
+    if (cObj) {
+      cObj.nome = nome; cObj.bandeira = bandeira; cObj.limite = limite;
+      cObj.fechamento = fechamento; cObj.vencimento = vencimento;
+      cObj.updated = new Date().toISOString();
+    }
+  } else {
+    const code = 'card_' + Date.now();
+    const cor  = CARD_CORES[LITE.cartoes.length % CARD_CORES.length];
+    LITE.cartoes.push({ code, nome, bandeira, limite, fechamento, vencimento, cor, fatura: 0, updated: new Date().toISOString() });
+  }
   salvarLite();
   fecharModalCartao();
   renderHome();
@@ -3269,12 +3318,33 @@ function parseCSVLite(raw) {
   const sep  = lines[0].includes(';') ? ';' : ',';
   const hdr  = lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/["']/g,''));
   const iDt  = hdr.findIndex(h=>['data','date','data lançamento','data lanc','dtposted','data mov'].includes(h));
-  const iHst = hdr.findIndex(h=>['histórico','historico','descrição','descricao','memo','description','complement'].includes(h));
+  let   iHst = hdr.findIndex(h=>['histórico','historico','descrição','descricao','lançamento','lancamento','estabelecimento','local','title','item','transação','transacao','detalhe','detalhes','observação','observacao','memo','description','complement'].includes(h));
   const iVal = hdr.findIndex(h=>['valor','value','trnamt','amount','montante'].includes(h));
   const iTp  = hdr.findIndex(h=>['tipo','type','trntype','dc','d/c','natureza'].includes(h));
   const iCr  = hdr.findIndex(h=>['crédito','credito','entrada','credit'].includes(h));
   const iDb  = hdr.findIndex(h=>['débito','debito','saída','saida','debit'].includes(h));
   if(iDt < 0) throw new Error('Coluna de data não encontrada. Colunas: '+hdr.join(', '));
+
+  // Fallback: nenhuma coluna de descrição reconhecida por nome — acha a melhor coluna de texto
+  // olhando as primeiras linhas de dados e escolhendo a coluna (fora de data/valor/tipo) com mais letras.
+  if (iHst < 0) {
+    const usadas = new Set([iDt, iVal, iTp, iCr, iDb].filter(i=>i>=0));
+    const numCols = hdr.length;
+    let melhorIdx = -1, melhorScore = 0;
+    for (let c = 0; c < numCols; c++) {
+      if (usadas.has(c)) continue;
+      let score = 0, amostras = 0;
+      for (let i = 1; i < Math.min(lines.length, 8); i++) {
+        const cols = lines[i].split(sep);
+        const val  = (cols[c]||'').trim().replace(/^["']|["']$/g,'');
+        if (!val) continue;
+        amostras++;
+        if (/[a-zA-ZÀ-ÿ]{3,}/.test(val)) score++;
+      }
+      if (amostras && score > melhorScore) { melhorScore = score; melhorIdx = c; }
+    }
+    if (melhorIdx >= 0) iHst = melhorIdx;
+  }
 
   for(let i=1;i<lines.length;i++){
     const cols = lines[i].split(sep).map(c=>c.trim().replace(/^["']|["']$/g,''));
@@ -3287,20 +3357,25 @@ function parseCSVLite(raw) {
     else continue;
     // Valor
     let amount = 0;
+    let sinalExplicito = false;
     if(iVal>=0 && cols[iVal]) {
       const vr = cols[iVal].replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,'');
       amount = parseFloat(vr)||0;
+      if (cols[iVal].trim().startsWith('-')) sinalExplicito = true;
       if(iTp>=0 && cols[iTp]) {
         const tp=(cols[iTp]||'').toUpperCase();
-        if(['D','DEBITO','DÉBITO','DEBIT','DB','SAIDA','SAÍDA'].includes(tp) && amount>0) amount=-amount;
-        if(['C','CREDITO','CRÉDITO','CREDIT','CR','ENTRADA'].includes(tp) && amount<0) amount=-amount;
+        if(['D','DEBITO','DÉBITO','DEBIT','DB','SAIDA','SAÍDA'].includes(tp) && amount>0) { amount=-amount; sinalExplicito = true; }
+        if(['C','CREDITO','CRÉDITO','CREDIT','CR','ENTRADA'].includes(tp) && amount<0) { amount=-amount; sinalExplicito = true; }
       }
     } else if(iCr>=0 && iDb>=0) {
       const cv=parseFloat((cols[iCr]||'').replace(/\./g,'').replace(',','.'))||0;
       const dv=parseFloat((cols[iDb]||'').replace(/\./g,'').replace(',','.'))||0;
       amount = cv>0 ? cv : (dv>0 ? -dv : 0);
+      sinalExplicito = true;
     }
     if(amount===0) continue;
+    // Fatura de cartão: se o arquivo não trouxe nenhum sinal/coluna de tipo, assume que a linha é um gasto (negativo)
+    if (_ofxTipo === 'cartao' && !sinalExplicito && amount > 0) amount = -amount;
     const desc = iHst>=0 ? ofxCleanMemo(cols[iHst]||'') : 'Lançamento';
     txs.push({
       id:   'csv_'+i+'_'+dataStr.replace(/-/g,''),
