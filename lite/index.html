@@ -41,97 +41,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ══ LAYOUT ══ */
 #app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;background:var(--ink2)}
 
-/* ══ DESKTOP LAYOUT (> 768px) ══ */
-@media (min-width: 768px) {
-  body { background: var(--ink); }
-  #login-screen { background: var(--ink); }
-  .login-card { max-width: 460px; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
-
-  #app {
-    max-width: 100%;
-    flex-direction: row;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* Sidebar desktop */
-  .bottom-nav {
-    width: 220px;
-    height: 100vh;
-    flex-direction: column;
-    border-top: none;
-    border-right: 1px solid var(--b1);
-    grid-template-columns: 1fr;
-    padding: 20px 0;
-    justify-content: flex-start;
-    gap: 4px;
-    order: -1;
-    flex-shrink: 0;
-  }
-  .nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    margin: 0 8px;
-  }
-  .nav-icon { font-size: 18px; }
-  .nav-label { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
-  .nav-add-circle {
-    width: 28px; height: 28px; margin-top: 0 !important; font-size: 16px !important;
-    border-radius: 8px !important;
-  }
-
-  /* Cabeçalho e labels de seção da sidebar — só existem visualmente no desktop */
-  .sb-logo, .sb-section-label, .sb-divider { display: flex; }
-
-  /* Topbar desktop */
-  .topbar { border-bottom: 1px solid var(--b1); }
-
-  /* Conteúdo desktop — ocupa resto */
-  .content {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 0;
-    max-height: 100vh;
-  }
-
-  /* Cards desktop mais largos */
-  .saldo-card { margin: 20px 24px 14px; }
-  .grid2 { margin: 0 24px 14px; }
-  .card  { margin-left: 24px; margin-right: 24px; }
-  .sec-title { padding-left: 24px; padding-right: 24px; }
-  #home-bancos-list, #home-cartao-list { padding: 0 24px; }
-
-  /* Modal desktop — centro em vez de bottom sheet */
-  .modal-overlay { align-items: center; }
-  .modal-sheet {
-    border-radius: 16px;
-    max-height: 85vh;
-    width: 520px;
-  }
-
-  /* 2 colunas no relatório */
-  #page-relatorio .content-2col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    padding: 0 24px;
-  }
-
-  /* 2 colunas no painel executivo (categoria + comparativo mensal) */
-  .home-2col {
-    grid-template-columns: 1fr 1fr;
-    padding: 0 24px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .bottom-nav { width: 260px; }
-  #app { max-width: 1200px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.4); }
-}
-
 /* ══ TOPBAR ══ */
 .topbar{
   height:var(--top-h);
@@ -342,6 +251,101 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .menu-item-blue{color:#4a9fd4;font-weight:600}
 .menu-item-purple{color:#a78bfa;font-weight:600}
 #menu-lateral.open{right:0}
+
+/* ══ DESKTOP LAYOUT (> 768px) ══ */
+/* Posicionado no FINAL do bloco de estilos de propósito: em CSS, com mesma especificidade,
+   quem vem depois no código vence — mesmo dentro de media query. Estas regras
+   precisam vir depois das regras base (.bottom-nav, .nav-item, .card, etc.)
+   para realmente sobrescrevê-las no desktop. NÃO mover para o topo do arquivo. */
+@media (min-width: 768px) {
+  body { background: var(--ink); }
+  #login-screen { background: var(--ink); }
+  .login-card { max-width: 460px; box-shadow: 0 24px 60px rgba(0,0,0,.5); }
+
+  #app {
+    max-width: 100%;
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Sidebar desktop */
+  .bottom-nav {
+    display: flex;
+    width: 220px;
+    height: 100vh;
+    flex-direction: column;
+    border-top: none;
+    border-right: 1px solid var(--b1);
+    padding: 20px 0;
+    justify-content: flex-start;
+    gap: 4px;
+    order: -1;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin: 0 8px;
+  }
+  .nav-icon { font-size: 18px; }
+  .nav-label { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  .nav-add-circle {
+    width: 28px; height: 28px; margin-top: 0 !important; font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Cabeçalho e labels de seção da sidebar — só existem visualmente no desktop */
+  .sb-logo, .sb-section-label, .sb-divider { display: flex; }
+
+  /* Topbar desktop */
+  .topbar { border-bottom: 1px solid var(--b1); }
+
+  /* Conteúdo desktop — ocupa resto */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 0;
+    max-height: 100vh;
+  }
+
+  /* Cards desktop mais largos */
+  .saldo-card { margin: 20px 24px 14px; }
+  .grid2 { margin: 0 24px 14px; }
+  .card  { margin-left: 24px; margin-right: 24px; }
+  .sec-title { padding-left: 24px; padding-right: 24px; }
+  #home-bancos-list, #home-cartao-list { padding: 0 24px; }
+
+  /* Modal desktop — centro em vez de bottom sheet */
+  .modal-overlay { align-items: center; }
+  .modal-sheet {
+    border-radius: 16px;
+    max-height: 85vh;
+    width: 520px;
+  }
+
+  /* 2 colunas no relatório */
+  #page-relatorio .content-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 0 24px;
+  }
+
+  /* 2 colunas no painel executivo (categoria + comparativo mensal) */
+  .home-2col {
+    grid-template-columns: 1fr 1fr;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav { width: 260px; }
+  #app { max-width: 1200px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.4); }
+}
 </style>
 </head>
 <body>
