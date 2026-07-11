@@ -529,6 +529,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;border-top:1px solid var(--b1)">Cartões de Crédito</div>
       <div id="menu-cartoes" style="padding:0 10px"></div>
     </div>
+    <div style="padding:0 10px 4px">
+      <button onclick="navTo('cartoes');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📇</span><span class="menu-label">Gerenciar Cartões</span></button>
+    </div>
 
     <!-- Seção: Exportar -->
     <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;margin-top:6px;border-top:1px solid var(--b1)">Exportar</div>
@@ -840,6 +843,66 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       </div>
     </div>
 
+    <!-- ▸ CARTÕES DE CRÉDITO ── -->
+    <div id="page-cartoes" class="page">
+      <div style="padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:18px;font-weight:700;color:var(--tx0)">Cartões de Crédito</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="ct-period" onchange="renderCartoes()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
+            <option value="30">30 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+          </select>
+          <button class="btn btn-gold" style="padding:8px 16px;font-size:12px" onclick="abrirModalCartao()">+ Cartão</button>
+        </div>
+      </div>
+
+      <!-- Seletor de cartão -->
+      <div id="ct-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+
+      <!-- Vazio -->
+      <div id="ct-vazio-geral" style="display:none;padding:40px 24px;text-align:center">
+        <div style="font-size:32px;margin-bottom:10px">💳</div>
+        <div style="font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:6px">Nenhum cartão cadastrado</div>
+        <div style="font-size:12px;color:var(--tx4);margin-bottom:16px">Cadastre um cartão manualmente ou importe uma fatura</div>
+        <button class="btn btn-gold" onclick="abrirModalCartao()">+ Cadastrar Cartão</button>
+      </div>
+
+      <div id="ct-conteudo">
+        <!-- KPIs -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px">
+          <div class="mini-card"><div class="mini-lbl">Fatura</div><div class="mini-val" style="color:#f87171;font-size:16px" id="ct-fatura">—</div></div>
+          <div class="mini-card"><div class="mini-lbl">Limite Disp.</div><div class="mini-val" style="font-size:16px" id="ct-limite">—</div></div>
+          <div class="mini-card"><div class="mini-lbl">Gasto no Período</div><div class="mini-val" style="font-size:16px" id="ct-gasto">—</div></div>
+        </div>
+
+        <div style="padding:0 16px 12px">
+          <button class="btn btn-block" style="border:1px solid var(--b1);background:var(--ink4);color:var(--tx2);font-size:12px" onclick="abrirModalGastoCartao()">+ Lançar Gasto no Cartão</button>
+        </div>
+
+        <!-- Distribuição da fatura entre cartões (só Consolidado) -->
+        <div id="ct-dist-sec" class="card" style="display:none;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Distribuição da Fatura entre Cartões</div>
+          <div style="height:140px"><canvas id="ct-dist-chart"></canvas></div>
+          <div id="ct-dist-list" style="margin-top:12px"></div>
+        </div>
+
+        <!-- Pareto de gastos do cartão -->
+        <div class="card" style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:10px">Pareto 80/20 — Onde Cortar no Próximo Mês</div>
+          <div style="font-size:12px;color:var(--tx3);margin-bottom:10px" id="ct-pareto-txt">—</div>
+          <div style="height:170px"><canvas id="ct-pareto-chart"></canvas></div>
+        </div>
+
+        <!-- Extrato do cartão -->
+        <div class="sec-title"><span>Extrato do Cartão</span></div>
+        <div class="card" style="padding:0;margin-bottom:16px">
+          <div id="ct-list"></div>
+          <div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px;display:none" id="ct-list-vazio">Nenhum gasto no período</div>
+        </div>
+      </div>
+    </div>
+
     <!-- ▸ IA ── -->
     <div id="page-ia" class="page" style="display:flex;flex-direction:column;height:calc(100vh - var(--top-h) - var(--nav-h))">
       <div style="padding:16px 16px 8px">
@@ -1004,6 +1067,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <button class="nav-item sb-extra" onclick="abrirImportOFX('cartao')">
       <span class="nav-icon">💳</span><span class="nav-label">Importar Fatura</span>
     </button>
+    <button class="nav-item sb-extra" onclick="navTo('cartoes')">
+      <span class="nav-icon">📇</span><span class="nav-label">Gerenciar Cartões</span>
+    </button>
     <button class="nav-item sb-extra" onclick="exportCSVLite()">
       <span class="nav-icon">📥</span><span class="nav-label">Exportar CSV</span>
     </button>
@@ -1074,6 +1140,76 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <input class="input" id="conta-venc" type="date">
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarConta()" style="margin-top:4px">Salvar Conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL CADASTRAR CARTÃO ══ -->
+<div class="modal-overlay" id="modal-cartao" onclick="if(event.target===this)fecharModalCartao()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Cadastrar Cartão</div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Nome do Cartão</label>
+        <input class="input" id="ctm-nome" type="text" placeholder="Ex: Nubank Roxinho, Itaú Click...">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Bandeira</label>
+        <select class="input" id="ctm-bandeira">
+          <option value="Visa">Visa</option>
+          <option value="Mastercard">Mastercard</option>
+          <option value="Elo">Elo</option>
+          <option value="American Express">American Express</option>
+          <option value="Outra">Outra</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Limite Total (R$) — opcional</label>
+        <input class="input" id="ctm-limite" type="number" inputmode="decimal" placeholder="0,00" step="0.01">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="input-group">
+          <label class="input-label">Dia de Fechamento</label>
+          <input class="input" id="ctm-fechamento" type="number" min="1" max="31" placeholder="Ex: 20">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Dia de Vencimento</label>
+          <input class="input" id="ctm-vencimento" type="number" min="1" max="31" placeholder="Ex: 28">
+        </div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="salvarCartao()" style="margin-top:4px">Salvar Cartão</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL LANÇAR GASTO NO CARTÃO ══ -->
+<div class="modal-overlay" id="modal-gasto-cartao" onclick="if(event.target===this)fecharModalGastoCartao()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Lançar Gasto no Cartão</div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Cartão</label>
+        <select class="input" id="gc-cartao"></select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Valor (R$)</label>
+        <input class="input" id="gc-valor" type="number" inputmode="decimal" placeholder="0,00" step="0.01" style="font-size:24px;font-weight:700">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Descrição</label>
+        <input class="input" id="gc-desc" type="text" placeholder="Ex: Compra online, Restaurante...">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Categoria</label>
+        <select class="input" id="gc-cat"></select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Data</label>
+        <input class="input" id="gc-data" type="date">
+      </div>
+      <button class="btn btn-gold btn-block" onclick="salvarGastoCartao()" style="margin-top:4px">Salvar Gasto</button>
     </div>
   </div>
 </div>
@@ -1296,13 +1432,14 @@ function navTo(page) {
   _paginaAtual = page;
   const bcEl = document.getElementById('tb-breadcrumb-page');
   if (bcEl) {
-    const nomes = {home:'Painel Geral', lancamentos:'Posição Bancária', relatorio:'Relatório', ia:'Assistente IA'};
+    const nomes = {home:'Painel Geral', lancamentos:'Posição Bancária', relatorio:'Relatório', ia:'Assistente IA', cartoes:'Cartões de Crédito'};
     bcEl.textContent = nomes[page] || 'Painel Geral';
   }
   setTimeout(() => {
     if (page === 'home')       renderHome();
     if (page === 'lancamentos') renderLancamentos();
     if (page === 'relatorio')  renderRelatorio();
+    if (page === 'cartoes')    renderCartoes();
   }, 50);
 }
 
@@ -1887,6 +2024,205 @@ function salvarConta() {
   salvarLite();
   fecharModalConta();
   renderHome();
+}
+
+// ══ CARTÕES DE CRÉDITO ══
+let _ctAtivo = '_consolidado';
+const CARD_CORES = ['#820ad1','#ec7000','#1194F6','#e5173f','#00e6a0','#cc0000','#296fa7','#242424'];
+
+function cartaoSelecionar(codigo) {
+  _ctAtivo = codigo;
+  renderCartoes();
+}
+
+function renderCartoes() {
+  if (!LITE.cartoes) LITE.cartoes = [];
+  const vazioEl    = document.getElementById('ct-vazio-geral');
+  const conteudoEl = document.getElementById('ct-conteudo');
+  if (!LITE.cartoes.length) {
+    vazioEl.style.display = '';
+    conteudoEl.style.display = 'none';
+    document.getElementById('ct-chips').innerHTML = '';
+    return;
+  }
+  vazioEl.style.display = 'none';
+  conteudoEl.style.display = '';
+
+  const days = parseInt(document.getElementById('ct-period')?.value || 30);
+  const from = new Date(Date.now() - days*86400000);
+
+  // Chips de cartão
+  const chipsEl = document.getElementById('ct-chips');
+  const consolidadoAtivo = _ctAtivo === '_consolidado';
+  let html = `<button class="chip${consolidadoAtivo?' chip-gold':''}" onclick="cartaoSelecionar('_consolidado')" style="padding:7px 14px;cursor:pointer;border:1px solid ${consolidadoAtivo?'rgba(212,160,23,.4)':'var(--b1)'};white-space:nowrap">💳 Consolidado</button>`;
+  html += LITE.cartoes.map(c => {
+    const ativo = _ctAtivo === c.code;
+    return `<button class="chip" onclick="cartaoSelecionar('${c.code}')" style="padding:7px 14px;cursor:pointer;border:1px solid ${ativo?c.cor:'var(--b1)'};background:${ativo?c.cor+'18':''};color:${ativo?c.cor:'var(--tx3)'};white-space:nowrap">${c.nome}</button>`;
+  }).join('');
+  chipsEl.innerHTML = html;
+
+  const consolidado = _ctAtivo === '_consolidado';
+  const poolTxs = LITE.txs.filter(t => t.tipo === 'cartao' && (consolidado || t.banco === _ctAtivo));
+
+  // Fatura
+  const faturaEl = document.getElementById('ct-fatura');
+  if (consolidado) {
+    faturaEl.textContent = fmt(LITE.cartoes.reduce((s,c)=>s+(c.fatura||0),0));
+  } else {
+    const cObj = LITE.cartoes.find(c=>c.code===_ctAtivo);
+    faturaEl.textContent = fmt(cObj ? (cObj.fatura||0) : 0);
+  }
+
+  // Limite disponível
+  const limiteEl = document.getElementById('ct-limite');
+  if (consolidado) {
+    const comLimite = LITE.cartoes.filter(c=>c.limite);
+    limiteEl.textContent = comLimite.length
+      ? fmt(comLimite.reduce((s,c)=>s+c.limite,0) - comLimite.reduce((s,c)=>s+(c.fatura||0),0))
+      : '—';
+  } else {
+    const cObj = LITE.cartoes.find(c=>c.code===_ctAtivo);
+    limiteEl.textContent = (cObj && cObj.limite) ? fmt(cObj.limite - (cObj.fatura||0)) : 'Sem limite';
+  }
+
+  // Gasto no período
+  const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from);
+  document.getElementById('ct-gasto').textContent = fmt(txsPeriodo.reduce((s,t)=>s+Math.abs(t.val),0));
+
+  // Distribuição da fatura entre cartões (só Consolidado, com mais de 1 cartão)
+  const distSec = document.getElementById('ct-dist-sec');
+  if (consolidado && LITE.cartoes.length > 1) {
+    distSec.style.display = '';
+    const totalFat = LITE.cartoes.reduce((s,c)=>s+(c.fatura||0),0);
+    if (_relCharts['ctDist']) _relCharts['ctDist'].destroy();
+    const distEl = document.getElementById('ct-dist-chart');
+    if (distEl) _relCharts['ctDist'] = new Chart(distEl, {
+      type:'doughnut',
+      data:{labels:LITE.cartoes.map(c=>c.nome),datasets:[{data:LITE.cartoes.map(c=>Math.max(c.fatura||0,0)),backgroundColor:LITE.cartoes.map(c=>c.cor+'44'),borderColor:LITE.cartoes.map(c=>c.cor),borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+    });
+    const distListEl = document.getElementById('ct-dist-list');
+    distListEl.innerHTML = LITE.cartoes.map(c=>{
+      const pct = totalFat ? ((c.fatura||0)/totalFat*100).toFixed(1) : '0';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:8px;height:8px;border-radius:2px;background:${c.cor};flex-shrink:0"></div>
+        <span style="flex:1;font-size:12px;color:var(--tx2)">${c.nome}</span>
+        <span style="font-size:12px;font-weight:600;color:${c.cor}">${pct}%</span>
+      </div>`;
+    }).join('');
+  } else {
+    distSec.style.display = 'none';
+  }
+
+  // Pareto 80/20 por categoria, dentro do pool/período selecionado
+  const map = {};
+  txsPeriodo.forEach(t => { map[t.cat] = (map[t.cat]||0) + Math.abs(t.val); });
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const totalGasto = entries.reduce((s,e)=>s+e[1],0);
+  let acum = 0;
+  const cumPct = entries.map(([c,v]) => { acum += v; return totalGasto ? (acum/totalGasto*100) : 0; });
+  const idx80 = cumPct.findIndex(p => p >= 80);
+  const n80 = idx80 >= 0 ? idx80+1 : entries.length;
+  const paretoTxtEl = document.getElementById('ct-pareto-txt');
+  paretoTxtEl.innerHTML = entries.length
+    ? `<strong style="color:var(--gold)">${n80} categoria${n80>1?'s':''}</strong> concentra${n80>1?'m':''} 80% dos gastos no cartão — corte aí primeiro no próximo mês.`
+    : 'Sem gastos no período para calcular o Pareto.';
+  if (_relCharts['ctPareto']) _relCharts['ctPareto'].destroy();
+  const parEl = document.getElementById('ct-pareto-chart');
+  if (parEl && entries.length) {
+    _relCharts['ctPareto'] = new Chart(parEl, {
+      data:{
+        labels: entries.map(e=>e[0]),
+        datasets:[
+          {type:'bar',label:'Gasto',data:entries.map(e=>e[1]),backgroundColor:entries.map((e,i)=>i<n80?'rgba(248,113,113,.5)':'rgba(255,255,255,.12)'),borderColor:entries.map((e,i)=>i<n80?'#f87171':'rgba(255,255,255,.3)'),borderWidth:1,borderRadius:3,yAxisID:'y'},
+          {type:'line',label:'% Acumulado',data:cumPct,borderColor:'#4ecdc4',backgroundColor:'#4ecdc4',borderWidth:2,pointRadius:2,yAxisID:'y1',tension:.2},
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>c.dataset.type==='line'?` Acumulado: ${c.raw.toFixed(1)}%`:` ${c.label}: ${fmt(c.raw)}`}}},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},
+          y:{position:'left',grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}},
+          y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{color:'#4ecdc4',font:{size:8},callback:v=>v+'%'}}
+        }
+      }
+    });
+  }
+
+  // Extrato do cartão
+  const listEl = document.getElementById('ct-list');
+  const listVazioEl = document.getElementById('ct-list-vazio');
+  const ordenados = [...txsPeriodo].sort((a,b)=>new Date(b.data)-new Date(a.data));
+  if (!ordenados.length) {
+    listEl.innerHTML = '';
+    listVazioEl.style.display = 'block';
+  } else {
+    listVazioEl.style.display = 'none';
+    listEl.innerHTML = ordenados.map(t => renderTxItem(t)).join('');
+  }
+}
+
+// ── Modal: Cadastrar Cartão ──
+function abrirModalCartao() {
+  document.getElementById('ctm-nome').value = '';
+  document.getElementById('ctm-limite').value = '';
+  document.getElementById('ctm-fechamento').value = '';
+  document.getElementById('ctm-vencimento').value = '';
+  document.getElementById('modal-cartao').classList.add('open');
+}
+function fecharModalCartao() {
+  document.getElementById('modal-cartao').classList.remove('open');
+}
+function salvarCartao() {
+  const nome       = document.getElementById('ctm-nome').value.trim();
+  const bandeira   = document.getElementById('ctm-bandeira').value;
+  const limite     = parseFloat(document.getElementById('ctm-limite').value) || null;
+  const fechamento = parseInt(document.getElementById('ctm-fechamento').value) || null;
+  const vencimento = parseInt(document.getElementById('ctm-vencimento').value) || null;
+  if (!nome) { alert('Informe o nome do cartão.'); return; }
+  if (!LITE.cartoes) LITE.cartoes = [];
+  const code = 'card_' + Date.now();
+  const cor  = CARD_CORES[LITE.cartoes.length % CARD_CORES.length];
+  LITE.cartoes.push({ code, nome, bandeira, limite, fechamento, vencimento, cor, fatura: 0, updated: new Date().toISOString() });
+  salvarLite();
+  fecharModalCartao();
+  renderHome();
+  renderCartoes();
+  atualizarMenuLateral();
+}
+
+// ── Modal: Lançar Gasto no Cartão ──
+function abrirModalGastoCartao() {
+  if (!LITE.cartoes || !LITE.cartoes.length) { alert('Cadastre um cartão primeiro.'); return; }
+  const selCartao = document.getElementById('gc-cartao');
+  selCartao.innerHTML = LITE.cartoes.map(c => `<option value="${c.code}">${c.nome}</option>`).join('');
+  if (_ctAtivo !== '_consolidado') selCartao.value = _ctAtivo;
+  const selCat = document.getElementById('gc-cat');
+  selCat.innerHTML = CATS_SAIDA.map(c => `<option value="${c.v}">${c.ic} ${c.v}</option>`).join('');
+  document.getElementById('gc-valor').value = '';
+  document.getElementById('gc-desc').value  = '';
+  document.getElementById('gc-data').value  = new Date().toISOString().split('T')[0];
+  document.getElementById('modal-gasto-cartao').classList.add('open');
+}
+function fecharModalGastoCartao() {
+  document.getElementById('modal-gasto-cartao').classList.remove('open');
+}
+function salvarGastoCartao() {
+  const cardCode = document.getElementById('gc-cartao').value;
+  const val  = parseFloat(document.getElementById('gc-valor').value);
+  const desc = document.getElementById('gc-desc').value.trim();
+  const cat  = document.getElementById('gc-cat').value;
+  const data = document.getElementById('gc-data').value;
+  if (!val || val <= 0) { alert('Informe um valor válido.'); return; }
+  if (!desc)            { alert('Informe a descrição.'); return; }
+  if (!data)            { alert('Informe a data.'); return; }
+  LITE.txs.push({ id: 'txc_' + Date.now(), data, desc, cat, val: -Math.abs(val), tipo: 'cartao', banco: cardCode });
+  const cObj = LITE.cartoes.find(c=>c.code===cardCode);
+  if (cObj) { cObj.fatura = (cObj.fatura||0) + Math.abs(val); cObj.updated = new Date().toISOString(); }
+  salvarLite();
+  fecharModalGastoCartao();
+  renderHome();
+  renderCartoes();
 }
 
 // ══ RENDER RELATÓRIO ══
