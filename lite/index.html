@@ -7,6 +7,12 @@
 <meta name="theme-color" content="#0a0e1a">
 <title>SFE Lite — Sistema Financeiro Pessoal</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+</script>
 <style>
 /* ══ RESET & BASE ══ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -75,16 +81,16 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   height:var(--nav-h);
   background:var(--ink);
   border-top:1px solid var(--b1);
-  display:grid;grid-template-columns:repeat(5,1fr);
+  display:grid;grid-template-columns:repeat(6,1fr);
   flex-shrink:0;
   position:relative;z-index:10;
 }
-.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .15s;padding:8px 4px;border:none;background:none;color:var(--tx4);position:relative}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .15s;padding:8px 2px;border:none;background:none;color:var(--tx4);position:relative}
 .nav-item.active{color:var(--gold)}
 .nav-item.active .nav-icon{color:var(--gold)}
-.nav-icon{font-size:20px;transition:transform .15s}
+.nav-icon{font-size:17px;transition:transform .15s}
 .nav-item.active .nav-icon{transform:scale(1.15)}
-.nav-label{font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.nav-label{font-size:8px;font-weight:600;letter-spacing:.2px;text-transform:uppercase}
 .nav-dot{position:absolute;top:8px;right:calc(50% - 14px);width:7px;height:7px;border-radius:50%;background:var(--neg);border:2px solid var(--ink)}
 
 /* Cabeçalho/labels de seção da sidebar — só aparecem no desktop (ver media query >768px) */
@@ -508,6 +514,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <button onclick="navTo('home');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏠</span><span class="menu-label">Painel Geral</span></button>
       <button onclick="navTo('lancamentos');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🏦</span><span class="menu-label">Posição Bancária</span></button>
       <button onclick="navTo('relatorio');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📊</span><span class="menu-label">Relatório Mensal</span></button>
+      <button onclick="navTo('cartoes');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📇</span><span class="menu-label">Cartões de Crédito</span></button>
       <button onclick="navTo('ia');fecharMenuLateral()" class="menu-item"><span class="menu-icon">🤖</span><span class="menu-label">Assistente IA</span></button>
     </div>
 
@@ -528,9 +535,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div id="menu-cartoes-sec" style="display:none">
       <div style="padding:12px 16px 6px;font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px;border-top:1px solid var(--b1)">Cartões de Crédito</div>
       <div id="menu-cartoes" style="padding:0 10px"></div>
-    </div>
-    <div style="padding:0 10px 4px">
-      <button onclick="navTo('cartoes');fecharMenuLateral()" class="menu-item"><span class="menu-icon">📇</span><span class="menu-label">Gerenciar Cartões</span></button>
     </div>
 
     <!-- Seção: Exportar -->
@@ -1051,6 +1055,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <span class="nav-icon">📊</span>
       <span class="nav-label">Relatório</span>
     </button>
+    <button class="nav-item" id="nav-cartoes" onclick="navTo('cartoes')">
+      <span class="nav-icon">📇</span>
+      <span class="nav-label">Cartões</span>
+    </button>
 
     <div class="sb-divider" style="height:1px;background:var(--b1);margin:8px 14px"></div>
     <div class="sb-section-label" style="font-family:monospace;font-size:8px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:2px;padding:8px 14px 5px">Inteligência</div>
@@ -1066,9 +1074,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     </button>
     <button class="nav-item sb-extra" onclick="abrirImportOFX('cartao')">
       <span class="nav-icon">💳</span><span class="nav-label">Importar Fatura</span>
-    </button>
-    <button class="nav-item sb-extra" onclick="navTo('cartoes')">
-      <span class="nav-icon">📇</span><span class="nav-label">Gerenciar Cartões</span>
     </button>
     <button class="nav-item sb-extra" onclick="exportCSVLite()">
       <span class="nav-icon">📥</span><span class="nav-label">Exportar CSV</span>
@@ -1291,8 +1296,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           ondrop="event.preventDefault();this.style.borderColor='var(--b2)';ofxHandleFile(event.dataTransfer.files[0])">
           <div style="font-size:36px;margin-bottom:8px">📂</div>
           <div style="font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:4px">Toque ou arraste o arquivo</div>
-          <div style="font-size:11px;color:var(--tx4)">OFX · QFX · OFC · CSV</div>
-          <input type="file" id="ofx-file" accept=".ofx,.qfx,.ofc,.csv,.txt" style="display:none" onchange="ofxHandleFile(this.files[0])">
+          <div style="font-size:11px;color:var(--tx4)">OFX · QFX · OFC · CSV · PDF</div>
+          <input type="file" id="ofx-file" accept=".ofx,.qfx,.ofc,.csv,.txt,.pdf" style="display:none" onchange="ofxHandleFile(this.files[0])">
         </div>
       </div>
 
@@ -3062,8 +3067,8 @@ function ofxReset() {
   document.getElementById('ofx-dropzone').innerHTML =
     '<div style="font-size:36px;margin-bottom:8px">📂</div>'
     +'<div style="font-size:14px;font-weight:600;color:var(--tx1);margin-bottom:4px">Toque ou arraste o arquivo</div>'
-    +'<div style="font-size:11px;color:var(--tx4)">OFX · QFX · OFC · CSV</div>'
-    +'<input type="file" id="ofx-file" accept=".ofx,.qfx,.ofc,.csv,.txt" style="display:none" onchange="ofxHandleFile(this.files[0])">';
+    +'<div style="font-size:11px;color:var(--tx4)">OFX · QFX · OFC · CSV · PDF</div>'
+    +'<input type="file" id="ofx-file" accept=".ofx,.qfx,.ofc,.csv,.txt,.pdf" style="display:none" onchange="ofxHandleFile(this.files[0])">';
   document.getElementById('ofx-dropzone').onclick = () => document.getElementById('ofx-file').click();
   document.getElementById('ofx-instrucao').style.display = 'none';
 }
@@ -3086,8 +3091,28 @@ function ofxHandleFile(file) {
   if(!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
   const dz  = document.getElementById('ofx-dropzone');
-  dz.innerHTML = '<div style="font-size:24px;margin-bottom:6px">⏳</div><div style="font-size:12px;color:var(--gold)">Processando '+file.name+'...</div>';
 
+  if (ext === 'pdf') {
+    dz.innerHTML = '<div style="font-size:24px;margin-bottom:6px">⏳</div><div style="font-size:12px;color:var(--gold)">Lendo '+file.name+'...</div><div style="font-size:10px;color:var(--tx4);margin-top:4px">Extração de PDF é menos precisa — revise os lançamentos antes de confirmar</div>';
+    const readerPdf = new FileReader();
+    readerPdf.onload = async function(e) {
+      try {
+        const txs = await parsePDFLite(e.target.result);
+        if(!txs.length) throw new Error('Nenhum lançamento reconhecido no PDF. Se possível, prefira OFX ou CSV.');
+        _ofxTxsParsed = txs;
+        ofxMostrarPreview(txs);
+      } catch(err) {
+        dz.innerHTML = '<div style="font-size:24px;margin-bottom:6px">⚠</div>'
+          +'<div style="font-size:12px;color:var(--neg);margin-bottom:6px">'+err.message+'</div>'
+          +'<div style="font-size:11px;color:var(--tx4)">Toque para tentar outro arquivo</div>';
+        dz.onclick = () => { const i=document.createElement('input');i.type='file';i.accept='.ofx,.qfx,.ofc,.csv,.txt,.pdf';i.onchange=e=>ofxHandleFile(e.target.files[0]);i.click(); };
+      }
+    };
+    readerPdf.readAsArrayBuffer(file);
+    return;
+  }
+
+  dz.innerHTML = '<div style="font-size:24px;margin-bottom:6px">⏳</div><div style="font-size:12px;color:var(--gold)">Processando '+file.name+'...</div>';
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
@@ -3102,10 +3127,76 @@ function ofxHandleFile(file) {
       dz.innerHTML = '<div style="font-size:24px;margin-bottom:6px">⚠</div>'
         +'<div style="font-size:12px;color:var(--neg);margin-bottom:6px">'+err.message+'</div>'
         +'<div style="font-size:11px;color:var(--tx4)">Toque para tentar outro arquivo</div>';
-      dz.onclick = () => { const i=document.createElement('input');i.type='file';i.accept='.ofx,.qfx,.ofc,.csv,.txt';i.onchange=e=>ofxHandleFile(e.target.files[0]);i.click(); };
+      dz.onclick = () => { const i=document.createElement('input');i.type='file';i.accept='.ofx,.qfx,.ofc,.csv,.txt,.pdf';i.onchange=e=>ofxHandleFile(e.target.files[0]);i.click(); };
     }
   };
   reader.readAsText(file, 'latin1');
+}
+
+async function parsePDFLite(arrayBuffer) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('Leitor de PDF não carregou. Verifique sua conexão e tente novamente.');
+  const bankCode = document.getElementById('ofx-banco').value || 'XX';
+  const banco    = OFX_BANCOS_INFO[bankCode] || OFX_BANCOS_INFO['XX'];
+
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page    = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    let lastY = null, linha = '';
+    content.items.forEach(item => {
+      if (lastY !== null && Math.abs(item.transform[5] - lastY) > 2) {
+        fullText += linha.trim() + '\n';
+        linha = '';
+      }
+      linha += item.str + ' ';
+      lastY = item.transform[5];
+    });
+    fullText += linha.trim() + '\n';
+  }
+
+  // Heurística: DD/MM ou DD/MM/AAAA ... descrição ... valor em formato BR (1.234,56), com sinal opcional
+  const re = /(\d{2}\/\d{2}(?:\/\d{2,4})?)\s+(.+?)\s+(-?\s?R?\$?\s?\d{1,3}(?:\.\d{3})*,\d{2})\s*(-)?\s*$/;
+  const txs = [];
+  fullText.split('\n').forEach((linhaTxt, i) => {
+    const m = linhaTxt.match(re);
+    if (!m) return;
+    const dataRaw = m[1], descRaw = m[2], valRaw = m[3], negSuf = m[4];
+
+    // Data
+    const partes = dataRaw.split('/');
+    let dataStr;
+    if (partes.length === 2) {
+      dataStr = new Date().getFullYear() + '-' + partes[1].padStart(2,'0') + '-' + partes[0].padStart(2,'0');
+    } else {
+      const ano = partes[2].length === 2 ? '20'+partes[2] : partes[2];
+      dataStr = ano + '-' + partes[1].padStart(2,'0') + '-' + partes[0].padStart(2,'0');
+    }
+
+    // Valor (formato BR: ponto de milhar, vírgula decimal)
+    const negativo = /^-/.test(valRaw.trim()) || !!negSuf;
+    const valNum = parseFloat(valRaw.replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.').replace(/^-/,''));
+    if (!valNum || isNaN(valNum)) return;
+    let amount = negativo ? -valNum : valNum;
+    if (_ofxTipo === 'cartao' && amount > 0) amount = -amount; // fatura de cartão: linhas listadas são gastos
+
+    const desc = ofxCleanMemo(descRaw.trim());
+    if (!desc) return;
+
+    txs.push({
+      id: 'pdf_' + i + '_' + dataStr.replace(/-/g,''),
+      data: dataStr,
+      desc,
+      cat: ofxCategoria(desc, amount, _ofxTipo),
+      val: amount,
+      banco: bankCode,
+      bancoNome: banco.nome,
+      tipo: _ofxTipo,
+    });
+  });
+
+  txs.sort((a,b)=>new Date(b.data)-new Date(a.data));
+  return txs;
 }
 
 function parseOFXLite(raw) {
