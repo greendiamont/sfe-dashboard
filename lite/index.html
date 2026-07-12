@@ -742,7 +742,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       </div>
 
       <!-- Lista -->
-      <div style="margin:10px 0">
+      <div style="display:flex;justify-content:flex-end;padding:0 16px 4px">
+        <button class="sec-link" onclick="lnAlternarOrdem()" id="ln-ordem-btn">↓ Recentes</button>
+      </div>
+      <div style="margin:0 0 10px">
         <div id="ln-list"></div>
         <div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px;display:none" id="ln-vazio">Nenhum lançamento ainda</div>
       </div>
@@ -865,6 +868,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <!-- Seletor de cartão -->
       <div id="ct-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
 
+      <!-- Seletor de mês/fatura (só aparece com um cartão específico selecionado) -->
+      <div id="ct-mes-chips" style="display:none;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
+
       <!-- Editar cartão selecionado -->
       <div id="ct-editar-row" style="display:none;padding:0 16px 12px;text-align:right">
         <button class="sec-link" onclick="editarCartaoAtual()">✎ Editar Cartão</button>
@@ -936,7 +942,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
 
         <!-- Extrato do cartão -->
-        <div class="sec-title"><span>Extrato do Cartão</span></div>
+        <div class="sec-title">
+          <span>Extrato do Cartão</span>
+          <button class="sec-link" onclick="ctAlternarOrdem()" id="ct-ordem-btn">↓ Mais recentes</button>
+        </div>
         <div class="card" style="padding:0;margin-bottom:16px">
           <div id="ct-list"></div>
           <div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px;display:none" id="ct-list-vazio">Nenhum gasto no período</div>
@@ -1334,6 +1343,12 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
         <div id="ofx-instrucao" style="display:none;background:var(--ink4);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--tx3);line-height:1.6"></div>
 
+        <!-- Cartão de destino (só quando importando fatura de cartão) — evita criar um cartão duplicado -->
+        <div class="input-group" id="ofx-cartao-destino-wrap" style="display:none">
+          <label class="input-label">Essa fatura é de qual cartão?</label>
+          <select class="input" id="ofx-cartao-destino" style="font-size:14px"></select>
+        </div>
+
         <!-- Drop zone -->
         <div id="ofx-dropzone"
           style="border:2px dashed var(--b2);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--ink4);margin-bottom:16px"
@@ -1417,6 +1432,12 @@ let SESSION   = null;
 let LITE = { txs: [], cp: [], cr: [], bancos: [], cartoes: [] };
 let _lnFiltroAtivo = 'todos';
 let _lnBancoAtivo = '_consolidado';
+let _lnOrdem = 'desc';
+
+function lnAlternarOrdem() {
+  _lnOrdem = _lnOrdem === 'desc' ? 'asc' : 'desc';
+  renderLancamentos();
+}
 let _lncTipo = 'entrada';
 let _lncCat  = 'Outros';
 let _relCharts = {};
@@ -1943,9 +1964,13 @@ function renderLancamentos() {
   });
 
   // ── Lista de lançamentos (banco selecionado + filtro tipo) ──
-  let txs = [...poolTxs].sort((a,b)=>new Date(b.data)-new Date(a.data));
+  let txs = [...poolTxs].sort((a,b)=> _lnOrdem === 'desc'
+    ? new Date(b.data)-new Date(a.data)
+    : new Date(a.data)-new Date(b.data));
   if (_lnFiltroAtivo === 'entrada') txs = txs.filter(t=>t.val>0);
   if (_lnFiltroAtivo === 'saida')   txs = txs.filter(t=>t.val<0);
+  const ordemBtnLn = document.getElementById('ln-ordem-btn');
+  if (ordemBtnLn) ordemBtnLn.textContent = _lnOrdem === 'desc' ? '↓ Recentes' : '↑ Antigos';
   const listEl = document.getElementById('ln-list');
   const vazioEl = document.getElementById('ln-vazio');
   if (!txs.length) {
@@ -2083,10 +2108,26 @@ function salvarConta() {
 
 // ══ CARTÕES DE CRÉDITO ══
 let _ctAtivo = '_consolidado';
+let _ctOrdem = 'desc'; // 'desc' = mais recentes primeiro, 'asc' = mais antigos primeiro
+
+function ctAlternarOrdem() {
+  _ctOrdem = _ctOrdem === 'desc' ? 'asc' : 'desc';
+  renderCartoes();
+}
 const CARD_CORES = ['#820ad1','#ec7000','#1194F6','#e5173f','#00e6a0','#cc0000','#296fa7','#242424'];
+let _ctMesSelecionado = null;
 
 function cartaoSelecionar(codigo) {
   _ctAtivo = codigo;
+  if (codigo !== '_consolidado') {
+    const meses = listarMesesCartao(codigo);
+    _ctMesSelecionado = meses.length ? meses[0].chave : null;
+  }
+  renderCartoes();
+}
+
+function ctSelecionarMes(chave) {
+  _ctMesSelecionado = chave;
   renderCartoes();
 }
 
@@ -2108,6 +2149,47 @@ function getCicloCartao(cartao, hoje) {
   const diasDecorridos = Math.max(1, Math.min(diasTotais, Math.round((hoje-inicio)/86400000) + 1));
   const diasRestantes  = Math.max(0, diasTotais - diasDecorridos);
   return { inicio, fim, diasTotais, diasDecorridos, diasRestantes };
+}
+
+// Chave do ciclo de fatura (ex: "2026-07") a que uma data pertence, dado o dia de fechamento do cartão.
+// Sem dia de fechamento cadastrado, cai pro mês-calendário simples da própria data (fallback razoável).
+function getCicloChave(dataStr, diaFechamento) {
+  const d = new Date(dataStr);
+  let ano = d.getFullYear(), mes = d.getMonth(); // mes 0-indexado
+  if (diaFechamento) {
+    const diaFech = Math.min(28, diaFechamento);
+    if (d.getDate() > diaFech) { mes += 1; if (mes > 11) { mes = 0; ano += 1; } }
+  }
+  return ano + '-' + String(mes+1).padStart(2,'0');
+}
+
+// Limites de início/fim de um ciclo de fatura a partir da sua chave (ex: "2026-07")
+function getCicloBoundsPorChave(chave, diaFechamento) {
+  const [ano, mes] = chave.split('-').map(Number); // mes 1-indexado na chave
+  if (diaFechamento) {
+    const diaFech = Math.min(28, diaFechamento);
+    const fim    = new Date(ano, mes-1, diaFech);
+    const inicio = new Date(ano, mes-2, diaFech+1);
+    return { inicio, fim };
+  }
+  const inicio = new Date(ano, mes-1, 1);
+  const fim    = new Date(ano, mes, 0);
+  return { inicio, fim };
+}
+
+// Lista, mais recente primeiro, todos os meses/faturas que existem no histórico de um cartão
+// (inclui o ciclo atual em aberto mesmo sem nenhum gasto ainda, pra sempre ter uma opção pra ver)
+function listarMesesCartao(cartaoCode) {
+  const cartao   = LITE.cartoes.find(c=>c.code===cartaoCode);
+  const diaFech  = cartao ? cartao.fechamento : null;
+  const chaves   = new Set();
+  LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chaves.add(getCicloChave(t.data, diaFech)));
+  chaves.add(getCicloChave(new Date().toISOString().split('T')[0], diaFech));
+  const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return Array.from(chaves).sort().reverse().map(chave => {
+    const [ano, mes] = chave.split('-').map(Number);
+    return { chave, label: nomesMes[mes-1] + '/' + ano };
+  });
 }
 
 // Projeta o total da fatura em aberto de um cartão, pelo ritmo de gasto até agora, e gera alertas
@@ -2169,9 +2251,6 @@ function renderCartoes() {
   vazioEl.style.display = 'none';
   conteudoEl.style.display = '';
 
-  const days = parseInt(document.getElementById('ct-period')?.value || 30);
-  const from = new Date(Date.now() - days*86400000);
-
   // Chips de cartão
   const chipsEl = document.getElementById('ct-chips');
   const consolidadoAtivo = _ctAtivo === '_consolidado';
@@ -2187,14 +2266,50 @@ function renderCartoes() {
 
   const consolidado = _ctAtivo === '_consolidado';
   const poolTxs = LITE.txs.filter(t => t.tipo === 'cartao' && (consolidado || t.banco === _ctAtivo));
+  const cartaoObj = !consolidado ? LITE.cartoes.find(c=>c.code===_ctAtivo) : null;
 
-  // Fatura
+  // Período: Consolidado usa dias (30/60/90); um cartão específico navega mês a mês pela fatura
+  const periodoEl  = document.getElementById('ct-period');
+  const mesChipsEl = document.getElementById('ct-mes-chips');
+  let from, until = new Date();
+  let chaveCicloAtual = null;
+  if (consolidado) {
+    if (periodoEl)  periodoEl.style.display  = '';
+    if (mesChipsEl) mesChipsEl.style.display = 'none';
+    const days = parseInt(periodoEl?.value || 30);
+    from = new Date(Date.now() - days*86400000);
+  } else {
+    if (periodoEl) periodoEl.style.display = 'none';
+    const meses = listarMesesCartao(_ctAtivo);
+    if (!_ctMesSelecionado || !meses.find(m=>m.chave===_ctMesSelecionado)) {
+      _ctMesSelecionado = meses.length ? meses[0].chave : null;
+    }
+    if (mesChipsEl) {
+      mesChipsEl.style.display = 'flex';
+      mesChipsEl.innerHTML = meses.map(m => {
+        const ativo = m.chave === _ctMesSelecionado;
+        return `<button class="chip${ativo?' chip-gold':''}" onclick="ctSelecionarMes('${m.chave}')" style="padding:7px 14px;cursor:pointer;border:1px solid ${ativo?'rgba(212,160,23,.4)':'var(--b1)'};white-space:nowrap">${m.label}</button>`;
+      }).join('');
+    }
+    if (_ctMesSelecionado) {
+      const bounds = getCicloBoundsPorChave(_ctMesSelecionado, cartaoObj?.fechamento);
+      from  = bounds.inicio;
+      until = bounds.fim;
+    } else {
+      from = new Date(0);
+    }
+    if (cartaoObj) chaveCicloAtual = getCicloChave(new Date().toISOString().split('T')[0], cartaoObj.fechamento);
+  }
+
+  // Fatura — no Consolidado usa o total já conhecido de cada cartão; com um cartão específico,
+  // soma os gastos do MÊS/FATURA selecionado (não o valor estático da última importação)
   const faturaEl = document.getElementById('ct-fatura');
   if (consolidado) {
     faturaEl.textContent = fmt(LITE.cartoes.reduce((s,c)=>s+(c.fatura||0),0));
   } else {
-    const cObj = LITE.cartoes.find(c=>c.code===_ctAtivo);
-    faturaEl.textContent = fmt(cObj ? (cObj.fatura||0) : 0);
+    const totalMes = poolTxs.filter(t => t.cat !== 'Pagamento de Fatura' && t.val < 0 && new Date(t.data) >= from && new Date(t.data) <= until)
+                             .reduce((s,t)=>s+Math.abs(t.val), 0);
+    faturaEl.textContent = fmt(totalMes);
   }
 
   // Limite disponível
@@ -2209,11 +2324,13 @@ function renderCartoes() {
     limiteEl.textContent = (cObj && cObj.limite) ? fmt(cObj.limite - (cObj.fatura||0)) : 'Sem limite';
   }
 
-  // Projeção da Fatura — só faz sentido com um cartão específico selecionado, e que tenha dia de fechamento cadastrado
+  // Projeção da Fatura — só faz sentido com um cartão específico selecionado, com dia de fechamento
+  // cadastrado, E olhando o ciclo atualmente em aberto (não uma fatura de mês passado já fechada)
   const projSec = document.getElementById('ct-projecao-sec');
   if (projSec) {
     const cObjProj = !consolidado ? LITE.cartoes.find(c=>c.code===_ctAtivo) : null;
-    const projecao = cObjProj ? calcularProjecaoCartao(cObjProj) : null;
+    const vendoMesAtual = cObjProj && chaveCicloAtual && _ctMesSelecionado === chaveCicloAtual;
+    const projecao = (cObjProj && vendoMesAtual) ? calcularProjecaoCartao(cObjProj) : null;
     if (projecao) {
       projSec.style.display = '';
       const { ciclo, gastoAteAgora, projecao: totalProjetado, alertas } = projecao;
@@ -2236,7 +2353,7 @@ function renderCartoes() {
   }
 
   // Gasto no período (exclui pagamentos/liquidação de fatura — isso não é gasto, é quitação da dívida)
-  const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from);
+  const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from && new Date(t.data) <= until);
   const txsGasto   = txsPeriodo.filter(t => t.cat !== 'Pagamento de Fatura' && t.val < 0);
   document.getElementById('ct-gasto').textContent = fmt(txsGasto.reduce((s,t)=>s+Math.abs(t.val),0));
 
@@ -2323,7 +2440,11 @@ function renderCartoes() {
   // Extrato do cartão
   const listEl = document.getElementById('ct-list');
   const listVazioEl = document.getElementById('ct-list-vazio');
-  const ordenados = [...txsPeriodo].sort((a,b)=>new Date(b.data)-new Date(a.data));
+  const ordemBtn = document.getElementById('ct-ordem-btn');
+  if (ordemBtn) ordemBtn.textContent = _ctOrdem === 'desc' ? '↓ Mais recentes' : '↑ Mais antigos';
+  const ordenados = [...txsPeriodo].sort((a,b)=> _ctOrdem === 'desc'
+    ? new Date(b.data)-new Date(a.data)
+    : new Date(a.data)-new Date(b.data));
   if (!ordenados.length) {
     listEl.innerHTML = '';
     listVazioEl.style.display = 'block';
@@ -3260,13 +3381,37 @@ function abrirImportOFX(tipo) {
   const titulo = document.getElementById('ofx-titulo');
   if(titulo) titulo.textContent = _ofxTipo === 'cartao' ? '💳 Importar Fatura Cartão' : '⬆ Importar Dados Bancários';
   ofxReset();
+
+  const destinoWrap = document.getElementById('ofx-cartao-destino-wrap');
+  if (_ofxTipo === 'cartao') {
+    destinoWrap.style.display = '';
+    const sel = document.getElementById('ofx-cartao-destino');
+    const opcoesExistentes = (LITE.cartoes||[]).map(c => `<option value="${c.code}">${c.nome}</option>`).join('');
+    sel.innerHTML = `<option value="">+ Criar novo cartão</option>` + opcoesExistentes;
+    // Se veio de "Editar Cartão" > "Importar" com um cartão específico já selecionado, pré-seleciona ele
+    if (_ctAtivo && _ctAtivo !== '_consolidado' && LITE.cartoes.find(c=>c.code===_ctAtivo)) {
+      sel.value = _ctAtivo;
+    }
+  } else {
+    destinoWrap.style.display = 'none';
+  }
+
   document.getElementById('modal-ofx').classList.add('open');
 }
+
+let _ultimoImportCartao = null;
 
 function fecharImportOFX() {
   document.getElementById('modal-ofx').classList.remove('open');
   renderHome();
   renderConfigBancos();
+  if (_ultimoImportCartao) {
+    const { bankCode, chave } = _ultimoImportCartao;
+    _ultimoImportCartao = null;
+    _ctAtivo = bankCode;
+    _ctMesSelecionado = chave;
+    navTo('cartoes');
+  }
 }
 
 function ofxReset() {
@@ -3297,6 +3442,19 @@ function ofxBancoChanged() {
   }
 }
 
+// Se o usuário escolheu um cartão JÁ EXISTENTE como destino (em vez de "+ Criar novo cartão"),
+// remapeia todos os lançamentos pra usar o código daquele cartão — evita criar um cartão duplicado
+// só porque o código do banco no arquivo não bate com o código de um cartão cadastrado manualmente.
+function remapearParaCartaoDestino(txs) {
+  if (_ofxTipo !== 'cartao') return txs;
+  const destino = document.getElementById('ofx-cartao-destino')?.value;
+  if (!destino) return txs;
+  const cartaoDestino = (LITE.cartoes||[]).find(c=>c.code===destino);
+  if (!cartaoDestino) return txs;
+  txs.forEach(t => { t.banco = cartaoDestino.code; t.bancoNome = cartaoDestino.nome; });
+  return txs;
+}
+
 function ofxHandleFile(file) {
   if(!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
@@ -3307,8 +3465,9 @@ function ofxHandleFile(file) {
     const readerPdf = new FileReader();
     readerPdf.onload = async function(e) {
       try {
-        const txs = await parsePDFLite(e.target.result);
+        let txs = await parsePDFLite(e.target.result);
         if(!txs.length) throw new Error('Nenhum lançamento reconhecido no PDF. Se possível, prefira OFX ou CSV.');
+        txs = remapearParaCartaoDestino(txs);
         _ofxTxsParsed = txs;
         ofxMostrarPreview(txs);
       } catch(err) {
@@ -3332,6 +3491,7 @@ function ofxHandleFile(file) {
       else if(['csv','txt'].includes(ext))   txs = parseCSVLite(texto);
       else throw new Error('Formato não suportado: .' + ext);
       if(!txs.length) throw new Error('Nenhum lançamento encontrado no arquivo');
+      txs = remapearParaCartaoDestino(txs);
       _ofxTxsParsed = txs;
       ofxMostrarPreview(txs);
     } catch(err) {
@@ -3771,11 +3931,26 @@ function ofxConfirmar() {
   LITE.txs.sort((a,b)=>new Date(b.data)-new Date(a.data));
   salvarLite();
 
+  // Guarda o cartão/mês importado pra abrir automaticamente na página de Cartões ao fechar o modal
+  if (_ofxTipo === 'cartao') {
+    const cObjImp = LITE.cartoes.find(c=>c.code===bankCode);
+    const tally = {};
+    _ofxTxsParsed.forEach(t => {
+      const chave = getCicloChave(t.data, cObjImp?.fechamento);
+      tally[chave] = (tally[chave]||0) + 1;
+    });
+    const chaveMaisComum = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    _ultimoImportCartao = { bankCode, chave: chaveMaisComum };
+  }
+
   // Mostrar resultado
   document.getElementById('ofx-step2').style.display = 'none';
   document.getElementById('ofx-step3').style.display = '';
   document.getElementById('ofx-ok-title').textContent = novas+' lançamentos importados!';
-  document.getElementById('ofx-ok-sub').textContent   = (duplas?duplas+' duplicatas ignoradas · ':'') + 'Banco: ' + banco.nome;
+  const nomeDestino = _ofxTipo === 'cartao'
+    ? (LITE.cartoes.find(c=>c.code===bankCode)?.nome || banco.nome)
+    : banco.nome;
+  document.getElementById('ofx-ok-sub').textContent = (duplas?duplas+' duplicatas ignoradas · ':'') + (_ofxTipo==='cartao' ? 'Cartão: ' : 'Banco: ') + nomeDestino;
 }
 
 function renderConfigBancos() {
