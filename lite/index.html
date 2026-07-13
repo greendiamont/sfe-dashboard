@@ -1211,10 +1211,20 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <label class="input-label">Nome do Banco</label>
         <input class="input" id="bcm-nome" type="text">
       </div>
-      <div class="input-group">
-        <label class="input-label">Saldo</label>
-        <input class="input" id="bcm-saldo" type="number" step="0.01">
-        <div style="font-size:10px;color:var(--tx4);margin-top:4px">Normalmente atualizado sozinho ao importar um extrato novo — mude aqui só se precisar de um ajuste manual.</div>
+      <div style="background:var(--ink4);border:1px solid var(--b1);border-radius:10px;padding:12px;margin-bottom:16px">
+        <div style="font-size:9px;color:var(--tx4);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Saldo atual (calculado)</div>
+        <div style="font-size:20px;font-weight:700" id="bcm-saldo-atual">—</div>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:10px">O saldo é calculado a partir de um ponto de partida — não dá pra saber o saldo certo sem saber quanto você tinha em algum dia específico. Ajuste esse ponto de partida se o saldo atual estiver errado:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="input-group">
+          <label class="input-label">Data</label>
+          <input class="input" id="bcm-data-inicial" type="date">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Saldo nessa data</label>
+          <input class="input" id="bcm-saldo-inicial" type="number" step="0.01">
+        </div>
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarBanco()" style="margin-top:4px">Salvar Alterações</button>
       <button class="btn btn-block" style="margin-top:8px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:var(--neg)" onclick="excluirBancoAtual()">🗑 Excluir Banco</button>
@@ -1922,21 +1932,42 @@ function editarBancoAtual() {
   if (_lnBancoAtivo === '_consolidado') return;
   const b = LITE.bancos.find(x=>x.code===_lnBancoAtivo);
   if (!b) return;
-  document.getElementById('bcm-nome').value  = b.nome;
-  document.getElementById('bcm-saldo').value = b.saldo;
+  document.getElementById('bcm-nome').value         = b.nome;
+  document.getElementById('bcm-saldo-atual').textContent = fmt(b.saldo||0);
+  document.getElementById('bcm-saldo-atual').style.color = (b.saldo||0) >= 0 ? 'var(--pos)' : 'var(--neg)';
+  document.getElementById('bcm-data-inicial').value = b.dataInicial || new Date().toISOString().split('T')[0];
+  document.getElementById('bcm-saldo-inicial').value = b.saldoInicial || 0;
   document.getElementById('modal-banco').classList.add('open');
 }
 function fecharModalBanco() {
   document.getElementById('modal-banco').classList.remove('open');
 }
+// Recalcula o saldo de um banco a partir do ponto de partida (saldoInicial em dataInicial) somado
+// aos lançamentos posteriores àquela data — em vez de somar cegamente tudo que foi importado, o
+// que dava número diferente cada vez que um extrato de período diferente era importado.
+function recalcularSaldoBanco(bancoCode) {
+  const b = LITE.bancos.find(x=>x.code===bancoCode);
+  if (!b) return;
+  const dataAncora = b.dataInicial || '1970-01-01';
+  const somaDesde = LITE.txs
+    .filter(t => t.tipo !== 'cartao' && t.banco === bancoCode && t.data > dataAncora)
+    .reduce((s,t)=>s+t.val, 0);
+  b.saldo = (b.saldoInicial || 0) + somaDesde;
+  b.updated = new Date().toISOString();
+}
 function salvarBanco() {
   const b = LITE.bancos.find(x=>x.code===_lnBancoAtivo);
   if (!b) return;
-  const nome  = document.getElementById('bcm-nome').value.trim();
-  const saldo = parseFloat(document.getElementById('bcm-saldo').value);
-  if (!nome)       { alert('Informe o nome do banco.'); return; }
-  if (isNaN(saldo)){ alert('Informe um saldo válido.'); return; }
-  b.nome = nome; b.saldo = saldo; b.updated = new Date().toISOString();
+  const nome         = document.getElementById('bcm-nome').value.trim();
+  const dataInicial  = document.getElementById('bcm-data-inicial').value;
+  const saldoInicial = parseFloat(document.getElementById('bcm-saldo-inicial').value);
+  if (!nome)             { alert('Informe o nome do banco.'); return; }
+  if (!dataInicial)      { alert('Informe a data do ponto de partida.'); return; }
+  if (isNaN(saldoInicial)){ alert('Informe um saldo válido.'); return; }
+  b.nome = nome;
+  b.dataInicial  = dataInicial;
+  b.saldoInicial = saldoInicial;
+  recalcularSaldoBanco(_lnBancoAtivo);
   salvarLite();
   fecharModalBanco();
   renderHome();
@@ -2146,6 +2177,20 @@ function fecharModalEditarTx() {
   _txEditandoId = null;
 }
 
+// Recalcula o saldo do banco ou a fatura do cartão associado a um lançamento, depois de editar/excluir
+function recalcularAposEdicao(tipo, bancoCode) {
+  if (!bancoCode) return;
+  if (tipo === 'cartao') {
+    const c = LITE.cartoes.find(x=>x.code===bancoCode);
+    if (c) {
+      c.fatura = Math.abs(LITE.txs.filter(x=>x.tipo==='cartao' && x.banco===bancoCode && x.val<0).reduce((s,x)=>s+x.val,0));
+      c.updated = new Date().toISOString();
+    }
+  } else if (LITE.bancos.find(b=>b.code===bancoCode)) {
+    recalcularSaldoBanco(bancoCode);
+  }
+}
+
 function salvarEdicaoTx() {
   if (!_txEditandoId) return;
   const t = LITE.txs.find(x=>x.id===_txEditandoId);
@@ -2162,6 +2207,7 @@ function salvarEdicaoTx() {
   t.desc = desc;
   t.cat  = cat;
   t.data = data;
+  recalcularAposEdicao(t.tipo, t.banco);
   salvarLite();
   fecharModalEditarTx();
   rerenderizarPaginaAtual();
@@ -2170,7 +2216,10 @@ function salvarEdicaoTx() {
 function excluirTxDoModal() {
   if (!_txEditandoId) return;
   if (!confirm('Excluir este lançamento?')) return;
-  LITE.txs = LITE.txs.filter(t => t.id !== _txEditandoId);
+  const t = LITE.txs.find(x=>x.id===_txEditandoId);
+  const tipoRef = t ? t.tipo : null, bancoRef = t ? t.banco : null;
+  LITE.txs = LITE.txs.filter(x => x.id !== _txEditandoId);
+  recalcularAposEdicao(tipoRef, bancoRef);
   salvarLite();
   fecharModalEditarTx();
   rerenderizarPaginaAtual();
@@ -3563,6 +3612,7 @@ const OFX_INSTRUCOES = {
 
 let _ofxTipo    = 'banco';   // 'banco' ou 'cartao'
 let _ofxTxsParsed = [];
+let _ofxSaldoDetectado = null; // {saldo, data} — só OFX costuma trazer isso; CSV/PDF não
 
 function abrirImportOFX(tipo) {
   _ofxTipo = tipo || 'banco';
@@ -3604,6 +3654,7 @@ function fecharImportOFX() {
 
 function ofxReset() {
   _ofxTxsParsed = [];
+  _ofxSaldoDetectado = null;
   document.getElementById('ofx-step1').style.display = '';
   document.getElementById('ofx-step2').style.display = 'none';
   document.getElementById('ofx-step3').style.display = 'none';
@@ -3801,6 +3852,21 @@ function parseOFXLite(raw) {
   const periEl = document.getElementById('ofx-periodo-txt');
   if(periEl && dtStM && dtEnM) {
     periEl.textContent = 'Período: ' + ofxFmtDate(dtStM[1]) + ' → ' + ofxFmtDate(dtEnM[1]);
+  }
+
+  // Saldo informado pelo próprio banco (LEDGERBAL/BALAMT + data) — quando existe, é a fonte mais
+  // confiável pra ancorar o saldo (mais confiável do que somar só os lançamentos do arquivo).
+  _ofxSaldoDetectado = null;
+  const ledgerM = raw.match(/<LEDGERBAL>([\s\S]*?)(?:<\/LEDGERBAL>|<AVAILBAL>|<BANKTRANLIST>|$)/i);
+  if (ledgerM) {
+    const balM = ledgerM[1].match(/<BALAMT>(-?[\d.,]+)/i);
+    const dtM  = ledgerM[1].match(/<DTASOF>(\d{8})/i);
+    if (balM) {
+      _ofxSaldoDetectado = {
+        saldo: parseFloat(balM[1].replace(',','.')),
+        data:  dtM ? ofxParseDate(dtM[1]) : new Date().toISOString().split('T')[0],
+      };
+    }
   }
 
   // Extrair transações OFX 1.x (flat) e 2.x (XML)
@@ -4136,14 +4202,29 @@ function ofxConfirmar() {
 
   // Atualizar/adicionar banco na lista
   if(_ofxTipo==='banco') {
-    const saldoBanco = _ofxTxsParsed.reduce((s,t)=>s+t.val,0);
     const idx = LITE.bancos.findIndex(b=>b.code===bankCode);
-    if(idx>=0) {
-      LITE.bancos[idx].saldo    = saldoBanco;
-      LITE.bancos[idx].updated  = new Date().toISOString();
+    if (idx>=0) {
+      // Já existe: só reancora se o ARQUIVO trouxer um saldo confiável (LEDGERBAL do OFX).
+      // Sem isso, preserva a âncora atual — o saldo certo sai do recálculo com os lançamentos novos.
+      if (_ofxSaldoDetectado) {
+        LITE.bancos[idx].saldoInicial = _ofxSaldoDetectado.saldo;
+        LITE.bancos[idx].dataInicial  = _ofxSaldoDetectado.data;
+      }
     } else {
-      LITE.bancos.push({ code:bankCode, nome:banco.nome, cor:banco.cor, saldo:saldoBanco, updated:new Date().toISOString() });
+      // Banco novo: usa o saldo do OFX se veio; senão, assume 0 no dia ANTERIOR ao lançamento mais
+      // antigo do arquivo — o recálculo soma só datas estritamente posteriores à âncora, então
+      // ancorar no mesmo dia do lançamento mais antigo deixaria ele de fora da soma.
+      const dataMaisAntiga = _ofxTxsParsed.reduce((min,t)=> t.data < min ? t.data : min, _ofxTxsParsed[0].data);
+      const diaAnterior = new Date(dataMaisAntiga + 'T00:00:00');
+      diaAnterior.setDate(diaAnterior.getDate() - 1);
+      LITE.bancos.push({
+        code: bankCode, nome: banco.nome, cor: banco.cor,
+        saldoInicial: _ofxSaldoDetectado ? _ofxSaldoDetectado.saldo : 0,
+        dataInicial:  _ofxSaldoDetectado ? _ofxSaldoDetectado.data  : diaAnterior.toISOString().split('T')[0],
+        saldo: 0, updated: new Date().toISOString(),
+      });
     }
+    recalcularSaldoBanco(bankCode);
   } else {
     // Cartão
     const totalFatura = Math.abs(_ofxTxsParsed.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
