@@ -711,6 +711,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <!-- Seletor de banco -->
       <div id="ln-banco-chips" style="display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
 
+      <!-- Editar banco selecionado -->
+      <div id="ln-editar-row" style="display:none;padding:0 16px 12px;text-align:right">
+        <button class="sec-link" onclick="editarBancoAtual()">✎ Editar Banco</button>
+      </div>
+
       <!-- Resumo do banco/consolidado selecionado -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px">
         <div class="mini-card"><div class="mini-lbl">Saldo</div><div class="mini-val" style="font-size:16px" id="ln-saldo">—</div></div>
@@ -1196,6 +1201,27 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 </div>
 
 <!-- ══ MODAL CADASTRAR CARTÃO ══ -->
+<!-- ══ MODAL EDITAR BANCO ══ -->
+<div class="modal-overlay" id="modal-banco" onclick="if(event.target===this)fecharModalBanco()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar Banco</div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Nome do Banco</label>
+        <input class="input" id="bcm-nome" type="text">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Saldo</label>
+        <input class="input" id="bcm-saldo" type="number" step="0.01">
+        <div style="font-size:10px;color:var(--tx4);margin-top:4px">Normalmente atualizado sozinho ao importar um extrato novo — mude aqui só se precisar de um ajuste manual.</div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="salvarBanco()" style="margin-top:4px">Salvar Alterações</button>
+      <button class="btn btn-block" style="margin-top:8px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:var(--neg)" onclick="excluirBancoAtual()">🗑 Excluir Banco</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-cartao" onclick="if(event.target===this)fecharModalCartao()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -1891,6 +1917,47 @@ function lnSelecionarBanco(codigo) {
   renderLancamentos();
 }
 
+// ══ MODAL EDITAR BANCO ══
+function editarBancoAtual() {
+  if (_lnBancoAtivo === '_consolidado') return;
+  const b = LITE.bancos.find(x=>x.code===_lnBancoAtivo);
+  if (!b) return;
+  document.getElementById('bcm-nome').value  = b.nome;
+  document.getElementById('bcm-saldo').value = b.saldo;
+  document.getElementById('modal-banco').classList.add('open');
+}
+function fecharModalBanco() {
+  document.getElementById('modal-banco').classList.remove('open');
+}
+function salvarBanco() {
+  const b = LITE.bancos.find(x=>x.code===_lnBancoAtivo);
+  if (!b) return;
+  const nome  = document.getElementById('bcm-nome').value.trim();
+  const saldo = parseFloat(document.getElementById('bcm-saldo').value);
+  if (!nome)       { alert('Informe o nome do banco.'); return; }
+  if (isNaN(saldo)){ alert('Informe um saldo válido.'); return; }
+  b.nome = nome; b.saldo = saldo; b.updated = new Date().toISOString();
+  salvarLite();
+  fecharModalBanco();
+  renderHome();
+  renderLancamentos();
+  atualizarMenuLateral();
+}
+function excluirBancoAtual() {
+  const b = LITE.bancos.find(x=>x.code===_lnBancoAtivo);
+  if (!b) return;
+  if (!confirm(`Excluir o banco "${b.nome}"? Isso também apaga todos os lançamentos associados a ele.`)) return;
+  const codigo = _lnBancoAtivo;
+  LITE.bancos = LITE.bancos.filter(x=>x.code!==codigo);
+  LITE.txs    = LITE.txs.filter(t=>!(t.tipo!=='cartao' && t.banco===codigo));
+  _lnBancoAtivo = '_consolidado';
+  salvarLite();
+  fecharModalBanco();
+  renderHome();
+  renderLancamentos();
+  atualizarMenuLateral();
+}
+
 function renderLancamentos() {
   if (!LITE.bancos) LITE.bancos = [];
   const days = parseInt(document.getElementById('ln-period')?.value || 30);
@@ -1907,6 +1974,9 @@ function renderLancamentos() {
     }).join('');
     chipsEl.innerHTML = html;
     chipsEl.style.display = LITE.bancos.length ? 'flex' : 'none';
+
+    const editarRowLn = document.getElementById('ln-editar-row');
+    if (editarRowLn) editarRowLn.style.display = consolidadoAtivo ? 'none' : '';
   }
 
   // ── Pool de lançamentos: consolidado = todos (soltos + de todos os bancos); banco específico = só os daquele banco ──
@@ -3686,6 +3756,7 @@ async function parsePDFLite(arrayBuffer) {
     // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento), não pelo
     // sinal que o arquivo trouxe — bancos diferentes usam convenções opostas
     if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, desc);
+    else if (_ofxTipo === 'banco') amount = ajustarSinalPagamentoCartaoBanco(amount, desc);
 
     txs.push({
       id: 'pdf_' + i + '_' + dataStr.replace(/-/g,''),
@@ -3752,6 +3823,7 @@ function parseOFXLite(raw) {
     // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento) — algumas
     // instituições exportam OFX de cartão com a mesma convenção invertida do CSV/PDF
     if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, memo);
+    else if (_ofxTipo === 'banco') amount = ajustarSinalPagamentoCartaoBanco(amount, memo);
     txs.push({
       id:   'ofx_'+fitid+'_'+dtposted.slice(0,8)+'_'+Math.random().toString(36).slice(2,5),
       data: ofxParseDate(dtposted.slice(0,8)),
@@ -3881,6 +3953,7 @@ function parseCSVLite(raw) {
     // Fatura de cartão: sinal final decidido pelo tipo de linha (compra vs pagamento), não pelo
     // sinal que o arquivo trouxe — bancos diferentes usam convenções opostas
     if (_ofxTipo === 'cartao') amount = ajustarSinalCartao(amount, desc);
+    else if (_ofxTipo === 'banco') amount = ajustarSinalPagamentoCartaoBanco(amount, desc);
     // Categoria: prioriza a categoria que já vem do próprio banco/cartão no arquivo; só usa
     // a categorização por palavra-chave da descrição quando o arquivo não traz essa coluna
     const catBanco = iCat>=0 ? mapCategoriaBanco(cols[iCat]) : null;
@@ -3934,6 +4007,18 @@ function ofxEhPagamentoFatura(desc) {
       || d.includes('estorno')    || d.includes('credito de pagamento') || d.includes('crédito de pagamento');
 }
 
+// Detector específico pra "isso é o pagamento de uma fatura de cartão dentro do EXTRATO BANCÁRIO"
+// (não confundir com "recebi um pagamento" de cliente/salário, que também contém a palavra
+// "pagamento" mas é uma entrada de dinheiro, não uma saída pagando cartão). Exige as duas coisas:
+// palavra de pagamento/débito automático E menção a cartão/fatura.
+function ofxEhPagamentoCartaoNoBanco(desc) {
+  const d = (desc||'').toLowerCase();
+  const temPagamento = d.includes('pagamento') || d.includes('pgto') || d.includes('pagto')
+    || d.includes('debito aut') || d.includes('déb aut') || d.includes('deb aut') || d.includes('liquidaç') || d.includes('liquidac');
+  const temCartao = d.includes('cartao') || d.includes('cartão') || d.includes('fatura');
+  return temPagamento && temCartao;
+}
+
 // Normaliza o sinal de lançamentos de fatura de cartão pelo QUE a linha é, não pelo sinal que o
 // arquivo trouxe — bancos diferentes usam convenções opostas (ex: Banco Inter marca compra como
 // positivo e pagamento da fatura como negativo, o oposto do que este app usa internamente).
@@ -3942,6 +4027,13 @@ function ajustarSinalCartao(amount, desc) {
   const ehPagamento = ofxEhPagamentoFatura(desc);
   if (ehPagamento && amount < 0) return -amount;
   if (!ehPagamento && amount > 0) return -amount;
+  return amount;
+}
+
+// No EXTRATO BANCÁRIO, pagar a fatura do cartão é sempre uma saída (dinheiro sai da conta) — sem
+// ambiguidade de convenção como no lado do cartão. Se por algum motivo vier positivo, corrige.
+function ajustarSinalPagamentoCartaoBanco(amount, desc) {
+  if (ofxEhPagamentoCartaoNoBanco(desc) && amount > 0) return -amount;
   return amount;
 }
 
@@ -3958,7 +4050,7 @@ function ofxCategoria(desc, amount, tipo) {
     return 'Cartão';
   }
   const d=(desc||'').toLowerCase();
-  if(ofxEhPagamentoFatura(d)) return 'Pagamento de Fatura';
+  if(ofxEhPagamentoCartaoNoBanco(d)) return 'Pagamento de Cartão de Crédito';
   if(amount>0) {
     if(d.includes('salario')||d.includes('salário')||d.includes('folha')) return 'Salário';
     if(d.includes('freela')||d.includes('servico')||d.includes('servico')) return 'Freelance';
