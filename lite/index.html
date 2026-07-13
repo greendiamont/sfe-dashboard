@@ -788,6 +788,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-pareto" checked onchange="renderRelatorio()"> 🎯 Pareto 80/20</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-extrato" onchange="renderRelatorio()"> 📄 Extrato de Lançamentos</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-cpcr" checked onchange="renderRelatorio()"> 💰 Posição CP/CR</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-pagas" onchange="renderRelatorio()"> ✓ Contas Pagas</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-recebidas" onchange="renderRelatorio()"> ✓ Contas Recebidas</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;grid-column:1/-1"><input type="checkbox" id="blk-ia" onchange="renderRelatorio()"> 🤖 Análise IA (Claude)</label>
         </div>
         <button class="btn btn-gold btn-block" style="margin-top:14px" onclick="exportarRelatorioPDF()">📄 Exportar Relatório PDF</button>
@@ -851,6 +853,30 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
         <div class="card" style="padding:0;margin-bottom:12px">
           <div id="rel-cpcr-list"></div>
+        </div>
+      </div>
+
+      <!-- Bloco: Contas Pagas (histórico, dentro do período selecionado) -->
+      <div id="blk-pagas-sec">
+        <div class="sec-title"><span>✓ Contas Pagas no Período</span></div>
+        <div class="card" style="padding:0;margin-bottom:12px">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--tx4)" id="rel-pagas-n">0 contas</span>
+            <span style="font-size:14px;font-weight:700;color:var(--neg)" id="rel-pagas-total">R$ 0</span>
+          </div>
+          <div id="rel-pagas-list"></div>
+        </div>
+      </div>
+
+      <!-- Bloco: Contas Recebidas (histórico, dentro do período selecionado) -->
+      <div id="blk-recebidas-sec">
+        <div class="sec-title"><span>✓ Contas Recebidas no Período</span></div>
+        <div class="card" style="padding:0;margin-bottom:12px">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:var(--tx4)" id="rel-recebidas-n">0 contas</span>
+            <span style="font-size:14px;font-weight:700;color:var(--pos)" id="rel-recebidas-total">R$ 0</span>
+          </div>
+          <div id="rel-recebidas-list"></div>
         </div>
       </div>
 
@@ -1770,36 +1796,41 @@ function renderHome() {
   if(!LITE.bancos)  LITE.bancos  = [];
   if(!LITE.cartoes) LITE.cartoes = [];
 
-  // ── Situação do Mês (badge no cabeçalho) ──
-  const situacao = calcularSituacaoMes(ent, sai);
-  const badgeEl = document.getElementById('home-situacao-badge');
-  if (badgeEl) {
-    badgeEl.style.display = '';
-    badgeEl.textContent = situacao.label;
-    badgeEl.style.color = situacao.cor;
-    badgeEl.style.background = situacao.cor + '18';
-    badgeEl.style.border = '1px solid ' + situacao.cor + '40';
-  }
-
-  // ── Alertas Críticos ──
-  const alertas = calcularAlertasCriticos(ent, sai);
-  const alertasSec  = document.getElementById('home-alertas-sec');
-  const alertasList = document.getElementById('home-alertas-list');
-  if (alertasSec && alertasList) {
-    if (alertas.length) {
-      alertasSec.style.display = '';
-      alertasList.innerHTML = alertas.map((a,idx) => {
-        const cor = a.tipo === 'critico' ? 'var(--neg)' : '#fbbf24';
-        const icone = a.tipo === 'critico' ? '⚠' : '↑';
-        const borda = idx < alertas.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
-          <div style="width:28px;height:28px;border-radius:8px;background:${cor}18;display:flex;align-items:center;justify-content:center;font-size:13px;color:${cor};flex-shrink:0">${icone}</div>
-          <div style="font-size:13px;color:var(--tx1);flex:1">${a.msg}</div>
-        </div>`;
-      }).join('');
-    } else {
-      alertasSec.style.display = 'none';
+  // ── Situação do Mês (badge no cabeçalho) + Alertas Críticos ──
+  // Protegido com try/catch: um erro aqui não pode impedir o resto do painel (gráfico, últimos
+  // lançamentos etc.) de renderizar — antes, um erro nesse trecho travava a função inteira no meio.
+  try {
+    const situacao = calcularSituacaoMes(ent, sai);
+    const badgeEl = document.getElementById('home-situacao-badge');
+    if (badgeEl) {
+      badgeEl.style.display = '';
+      badgeEl.textContent = situacao.label;
+      badgeEl.style.color = situacao.cor;
+      badgeEl.style.background = situacao.cor + '18';
+      badgeEl.style.border = '1px solid ' + situacao.cor + '40';
     }
+
+    const alertas = calcularAlertasCriticos(ent, sai);
+    const alertasSec  = document.getElementById('home-alertas-sec');
+    const alertasList = document.getElementById('home-alertas-list');
+    if (alertasSec && alertasList) {
+      if (alertas.length) {
+        alertasSec.style.display = '';
+        alertasList.innerHTML = alertas.map((a,idx) => {
+          const cor = a.tipo === 'critico' ? 'var(--neg)' : '#fbbf24';
+          const icone = a.tipo === 'critico' ? '⚠' : '↑';
+          const borda = idx < alertas.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+            <div style="width:28px;height:28px;border-radius:8px;background:${cor}18;display:flex;align-items:center;justify-content:center;font-size:13px;color:${cor};flex-shrink:0">${icone}</div>
+            <div style="font-size:13px;color:var(--tx1);flex:1">${a.msg}</div>
+          </div>`;
+        }).join('');
+      } else {
+        alertasSec.style.display = 'none';
+      }
+    }
+  } catch(errAlertas) {
+    console.error('Erro ao calcular Situação do Mês / Alertas Críticos:', errAlertas);
   }
 
   // Bancos consolidados
@@ -1875,24 +1906,28 @@ function renderHome() {
   resEl.className   = 'chip ' + (res >= 0 ? 'chip-pos' : 'chip-neg');
 
   // Gráfico fluxo (linha 15 dias)
-  if (_relCharts['home']) _relCharts['home'].destroy();
-  const lb=[], ins=[], outs=[];
-  for (let i=14; i>=0; i--) {
-    const d = new Date(Date.now() - i*86400000);
-    lb.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-    const slc = txsBanco.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
-    ins.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
-    outs.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+  try {
+    if (_relCharts['home']) _relCharts['home'].destroy();
+    const lb=[], ins=[], outs=[];
+    for (let i=14; i>=0; i--) {
+      const d = new Date(Date.now() - i*86400000);
+      lb.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+      const slc = txsBanco.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+      ins.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
+      outs.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+    }
+    const hEl = document.getElementById('home-chart');
+    if (hEl) _relCharts['home'] = new Chart(hEl, {
+      type:'bar',
+      data:{labels:lb,datasets:[
+        {label:'Entradas',data:ins,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
+        {label:'Saídas',data:outs,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+    });
+  } catch(errChartHome) {
+    console.error('Erro ao renderizar gráfico de fluxo do Painel Geral:', errChartHome);
   }
-  const hEl = document.getElementById('home-chart');
-  if (hEl) _relCharts['home'] = new Chart(hEl, {
-    type:'bar',
-    data:{labels:lb,datasets:[
-      {label:'Entradas',data:ins,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
-      {label:'Saídas',data:outs,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
-  });
 
   // Últimos lançamentos (5)
   const listaEl = document.getElementById('home-txs-list');
@@ -1931,7 +1966,8 @@ function renderHome() {
             <div style="font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.desc}</div>
             <div style="font-size:10px;color:${tagCor};font-weight:600">${tag}</div>
           </div>
-          <div style="font-size:14px;font-weight:700;color:${cor};flex-shrink:0">${fmt(i.val)}</div>
+          <div style="font-size:14px;font-weight:700;color:${cor};flex-shrink:0;margin-right:6px">${fmt(i.val)}</div>
+          <button onclick="marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:28px;height:28px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:14px;cursor:pointer;flex-shrink:0">✓</button>
         </div>`;
       }).join('');
     } else {
@@ -2168,30 +2204,34 @@ function renderLancamentos() {
     const bancoNome = consolidado ? 'Consolidado' : (LITE.bancos.find(b=>b.code===_lnBancoAtivo)?.nome || _lnBancoAtivo);
     evoTituloEl.textContent = 'Evolução do Caixa — ' + bancoNome;
   }
-  if (_relCharts['lnEvo']) _relCharts['lnEvo'].destroy();
-  const lbE=[], insE=[], outsE=[];
-  for (let i=14; i>=0; i--) {
-    const d = new Date(Date.now() - i*86400000);
-    lbE.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-    const slc = poolTxs.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
-    insE.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
-    outsE.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+  try {
+    if (_relCharts['lnEvo']) _relCharts['lnEvo'].destroy();
+    const lbE=[], insE=[], outsE=[];
+    for (let i=14; i>=0; i--) {
+      const d = new Date(Date.now() - i*86400000);
+      lbE.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
+      const slc = poolTxs.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+      insE.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
+      outsE.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
+    }
+    const resEvo = insE.reduce((s,v)=>s+v,0) - outsE.reduce((s,v)=>s+v,0);
+    const evoResEl = document.getElementById('ln-evo-res');
+    if (evoResEl) {
+      evoResEl.textContent = (resEvo >= 0 ? '+' : '') + fmt(resEvo);
+      evoResEl.className = 'chip ' + (resEvo >= 0 ? 'chip-pos' : 'chip-neg');
+    }
+    const evoEl = document.getElementById('ln-evo-chart');
+    if (evoEl) _relCharts['lnEvo'] = new Chart(evoEl, {
+      type:'bar',
+      data:{labels:lbE,datasets:[
+        {label:'Entradas',data:insE,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
+        {label:'Saídas',data:outsE,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+    });
+  } catch(errChartLn) {
+    console.error('Erro ao renderizar Evolução do Caixa da Posição Bancária:', errChartLn);
   }
-  const resEvo = insE.reduce((s,v)=>s+v,0) - outsE.reduce((s,v)=>s+v,0);
-  const evoResEl = document.getElementById('ln-evo-res');
-  if (evoResEl) {
-    evoResEl.textContent = (resEvo >= 0 ? '+' : '') + fmt(resEvo);
-    evoResEl.className = 'chip ' + (resEvo >= 0 ? 'chip-pos' : 'chip-neg');
-  }
-  const evoEl = document.getElementById('ln-evo-chart');
-  if (evoEl) _relCharts['lnEvo'] = new Chart(evoEl, {
-    type:'bar',
-    data:{labels:lbE,datasets:[
-      {label:'Entradas',data:insE,backgroundColor:'rgba(74,222,128,.4)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3},
-      {label:'Saídas',data:outsE,backgroundColor:'rgba(248,113,113,.25)',borderColor:'rgba(248,113,113,.7)',borderWidth:1,borderRadius:3},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
-  });
 
   // ── Lista de lançamentos (banco selecionado + filtro tipo) ──
   let txs = [...poolTxs].sort((a,b)=> _lnOrdem === 'desc'
@@ -2322,6 +2362,26 @@ function excluirTxDoModal() {
   recalcularAposEdicao(tipoRef, bancoRef);
   salvarLite();
   fecharModalEditarTx();
+  rerenderizarPaginaAtual();
+}
+
+// Marca uma conta a pagar/receber como quitada, registrando a data — sem isso não dá pra ter
+// relatório de "contas pagas"/"contas recebidas" no histórico, só o que ainda está em aberto.
+function marcarContaQuitada(tipo, id) {
+  if (tipo === 'pagar') {
+    const item = (LITE.cp||[]).find(i=>i.id===id);
+    if (!item) return;
+    if (!confirm(`Marcar "${item.desc}" como paga?`)) return;
+    item.pago = true;
+    item.pagoEm = new Date().toISOString().split('T')[0];
+  } else {
+    const item = (LITE.cr||[]).find(i=>i.id===id);
+    if (!item) return;
+    if (!confirm(`Marcar "${item.desc}" como recebida?`)) return;
+    item.recebido = true;
+    item.recebidoEm = new Date().toISOString().split('T')[0];
+  }
+  salvarLite();
   rerenderizarPaginaAtual();
 }
 
@@ -2916,7 +2976,7 @@ function renderRelatorio() {
   const res  = ent - sai;
 
   // Visibilidade dos blocos, conforme os checkboxes do construtor
-  const blocos = ['resumo','categoria','evolucao','pareto','extrato','cpcr','ia'];
+  const blocos = ['resumo','categoria','evolucao','pareto','extrato','cpcr','pagas','recebidas','ia'];
   const ativo = {};
   blocos.forEach(b => {
     ativo[b] = blocoAtivo('blk-' + b);
@@ -3080,13 +3140,61 @@ function renderRelatorio() {
                 <div style="font-size:13px;font-weight:600;color:var(--tx1)">${i.desc}</div>
                 <div style="font-size:10px;color:var(--tx4)">Vence em ${fmtD(i.venc)}</div>
               </div>
-              <div style="font-size:13px;font-weight:700;color:${cor}">${fmt(i.val)}</div>
+              <div style="font-size:13px;font-weight:700;color:${cor};margin-right:6px">${fmt(i.val)}</div>
+              <button onclick="marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:26px;height:26px;border-radius:7px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:13px;cursor:pointer;flex-shrink:0">✓</button>
             </div>`;
           }).join('')
         : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhum título em aberto</div>';
     }
   }
+
+  // ── Contas Pagas no período (histórico) ──
+  if (ativo.pagas) {
+    const pagas = LITE.cp.filter(i => i.pago && i.pagoEm && new Date(i.pagoEm) >= from);
+    document.getElementById('rel-pagas-n').textContent = `${pagas.length} conta${pagas.length!==1?'s':''}`;
+    document.getElementById('rel-pagas-total').textContent = fmt(pagas.reduce((s,i)=>s+i.val,0));
+    const pagasListEl = document.getElementById('rel-pagas-list');
+    if (pagasListEl) {
+      const ordenadas = [...pagas].sort((a,b)=>new Date(b.pagoEm)-new Date(a.pagoEm));
+      pagasListEl.innerHTML = ordenadas.length
+        ? ordenadas.map((i,idx)=>{
+            const borda = idx < ordenadas.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--tx1)">${i.desc}</div>
+                <div style="font-size:10px;color:var(--tx4)">Pago em ${fmtD(i.pagoEm)}</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--neg)">${fmt(i.val)}</div>
+            </div>`;
+          }).join('')
+        : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhuma conta paga no período</div>';
+    }
+  }
+
+  // ── Contas Recebidas no período (histórico) ──
+  if (ativo.recebidas) {
+    const recebidas = LITE.cr.filter(i => i.recebido && i.recebidoEm && new Date(i.recebidoEm) >= from);
+    document.getElementById('rel-recebidas-n').textContent = `${recebidas.length} conta${recebidas.length!==1?'s':''}`;
+    document.getElementById('rel-recebidas-total').textContent = fmt(recebidas.reduce((s,i)=>s+i.val,0));
+    const recebidasListEl = document.getElementById('rel-recebidas-list');
+    if (recebidasListEl) {
+      const ordenadas = [...recebidas].sort((a,b)=>new Date(b.recebidoEm)-new Date(a.recebidoEm));
+      recebidasListEl.innerHTML = ordenadas.length
+        ? ordenadas.map((i,idx)=>{
+            const borda = idx < ordenadas.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--tx1)">${i.desc}</div>
+                <div style="font-size:10px;color:var(--tx4)">Recebido em ${fmtD(i.recebidoEm)}</div>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:var(--pos)">${fmt(i.val)}</div>
+            </div>`;
+          }).join('')
+        : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhuma conta recebida no período</div>';
+    }
+  }
 }
+
 
 // ══ EXPORT PDF RELATÓRIO ══
 function exportarRelatorioPDF() {
@@ -3169,6 +3277,32 @@ function exportarRelatorioPDF() {
       + `<div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#888;text-transform:uppercase">A Pagar</div><div style="font-size:16px;font-weight:800;color:#dc2626">${cpTotal}</div><div style="font-size:9px;color:#999">${cpN}</div></div>`
       + `<div style="background:#f0fdf4;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#888;text-transform:uppercase">A Receber</div><div style="font-size:16px;font-weight:800;color:#16a34a">${crTotal}</div><div style="font-size:9px;color:#999">${crN}</div></div>`
       + '</div></div>';
+  }
+
+  if (blocoAtivo('blk-pagas')) {
+    const n = document.getElementById('rel-pagas-n')?.textContent || '';
+    const total = document.getElementById('rel-pagas-total')?.textContent || '—';
+    const rows = (LITE.cp||[]).filter(i => i.pago && i.pagoEm && new Date(i.pagoEm) >= from)
+      .sort((a,b)=>new Date(b.pagoEm)-new Date(a.pagoEm))
+      .map(i => '<tr><td style="font-size:10px;padding:4px 6px;border-bottom:1px solid #eee">'+i.desc+'</td>'
+        + '<td style="font-family:monospace;font-size:9px;padding:4px 6px;border-bottom:1px solid #eee;color:#555">'+fmtD(i.pagoEm)+'</td>'
+        + '<td style="font-family:monospace;font-size:10px;font-weight:700;text-align:right;padding:4px 6px;border-bottom:1px solid #eee;color:#dc2626">'+fmt(i.val)+'</td></tr>').join('');
+    secoes += '<div class="sec"><div class="sec-h">✓ Contas Pagas no Período</div>'
+      + `<div style="font-size:11px;color:#555;margin-bottom:8px">${n} — total ${total}</div>`
+      + '<table style="width:100%;border-collapse:collapse">' + (rows || '<tr><td style="padding:10px;text-align:center;color:#999;font-size:10px">Nenhuma conta paga no período</td></tr>') + '</table></div>';
+  }
+
+  if (blocoAtivo('blk-recebidas')) {
+    const n = document.getElementById('rel-recebidas-n')?.textContent || '';
+    const total = document.getElementById('rel-recebidas-total')?.textContent || '—';
+    const rows = (LITE.cr||[]).filter(i => i.recebido && i.recebidoEm && new Date(i.recebidoEm) >= from)
+      .sort((a,b)=>new Date(b.recebidoEm)-new Date(a.recebidoEm))
+      .map(i => '<tr><td style="font-size:10px;padding:4px 6px;border-bottom:1px solid #eee">'+i.desc+'</td>'
+        + '<td style="font-family:monospace;font-size:9px;padding:4px 6px;border-bottom:1px solid #eee;color:#555">'+fmtD(i.recebidoEm)+'</td>'
+        + '<td style="font-family:monospace;font-size:10px;font-weight:700;text-align:right;padding:4px 6px;border-bottom:1px solid #eee;color:#16a34a">'+fmt(i.val)+'</td></tr>').join('');
+    secoes += '<div class="sec"><div class="sec-h">✓ Contas Recebidas no Período</div>'
+      + `<div style="font-size:11px;color:#555;margin-bottom:8px">${n} — total ${total}</div>`
+      + '<table style="width:100%;border-collapse:collapse">' + (rows || '<tr><td style="padding:10px;text-align:center;color:#999;font-size:10px">Nenhuma conta recebida no período</td></tr>') + '</table></div>';
   }
 
   if (blocoAtivo('blk-ia')) {
