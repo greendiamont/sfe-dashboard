@@ -2278,28 +2278,19 @@ function listarMesesCartao(cartaoCode) {
   const diaFech  = cartao ? cartao.fechamento : null;
   const chavesComDados = new Set();
   LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chavesComDados.add(getCicloChave(t.data, diaFech)));
-  chavesComDados.add(getCicloChave(new Date().toISOString().split('T')[0], diaFech));
-  if (!chavesComDados.size) return [];
+  const chaveAtual = getCicloChave(new Date().toISOString().split('T')[0], diaFech);
+  chavesComDados.add(chaveAtual);
 
+  // Janela fixa: sempre os últimos 12 meses a partir do ciclo atual, preenchendo os vazios —
+  // não estica pra trás mesmo que exista algum lançamento antigo isolado (ex: parcela de anos atrás)
+  const JANELA_MESES = 12;
   const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const ordenadasAsc = Array.from(chavesComDados).sort(); // strings "YYYY-MM" ordenam certo em ordem ascendente
-  const [anoMin, mesMin] = ordenadasAsc[0].split('-').map(Number);
-  const [anoMax, mesMax] = ordenadasAsc[ordenadasAsc.length-1].split('-').map(Number);
-  const totalMeses = (anoMax-anoMin)*12 + (mesMax-mesMin) + 1;
-
-  // Preenche todos os meses entre o mais antigo e o mais recente, sem buracos — evita a sensação de
-  // "fora de ordem" quando falta um mês no meio. Trava em 36 meses pra um lançamento com data errada
-  // não gerar uma lista gigante de chips vazios.
-  let chaves;
-  if (totalMeses > 0 && totalMeses <= 36) {
-    chaves = [];
-    let ano = anoMin, mes = mesMin;
-    while (ano < anoMax || (ano === anoMax && mes <= mesMax)) {
-      chaves.push(ano + '-' + String(mes).padStart(2,'0'));
-      mes++; if (mes > 12) { mes = 1; ano++; }
-    }
-  } else {
-    chaves = Array.from(chavesComDados);
+  const [anoAtual, mesAtual] = chaveAtual.split('-').map(Number);
+  const chaves = [];
+  let ano = anoAtual, mes = mesAtual;
+  for (let i = 0; i < JANELA_MESES; i++) {
+    chaves.push(ano + '-' + String(mes).padStart(2,'0'));
+    mes--; if (mes < 1) { mes = 12; ano--; }
   }
 
   return chaves.sort((a,b)=> b.localeCompare(a)).map(chave => {
