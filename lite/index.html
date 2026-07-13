@@ -2277,7 +2277,7 @@ function listarMesesCartao(cartaoCode) {
   const cartao   = LITE.cartoes.find(c=>c.code===cartaoCode);
   const diaFech  = cartao ? cartao.fechamento : null;
   const chavesComDados = new Set();
-  LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chavesComDados.add(getCicloChave(t.data, diaFech)));
+  LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chavesComDados.add(t.ciclo || getCicloChave(t.data, diaFech)));
   const chaveAtual = getCicloChave(new Date().toISOString().split('T')[0], diaFech);
   chavesComDados.add(chaveAtual);
 
@@ -2415,8 +2415,12 @@ function renderCartoes() {
   if (consolidado) {
     faturaEl.textContent = fmt(LITE.cartoes.reduce((s,c)=>s+(c.fatura||0),0));
   } else {
-    const totalMes = poolTxs.filter(t => t.cat !== 'Pagamento de Fatura' && t.val < 0 && new Date(t.data) >= from && new Date(t.data) <= until)
-                             .reduce((s,t)=>s+Math.abs(t.val), 0);
+    const totalMes = poolTxs.filter(t => {
+        if (t.cat === 'Pagamento de Fatura' || t.val >= 0) return false;
+        if (_ctMesSelecionado && t.ciclo) return t.ciclo === _ctMesSelecionado;
+        return new Date(t.data) >= from && new Date(t.data) <= until;
+      })
+      .reduce((s,t)=>s+Math.abs(t.val), 0);
     faturaEl.textContent = fmt(totalMes);
   }
 
@@ -2461,7 +2465,12 @@ function renderCartoes() {
   }
 
   // Gasto no período (exclui pagamentos/liquidação de fatura — isso não é gasto, é quitação da dívida)
-  const txsPeriodo = poolTxs.filter(t => new Date(t.data) >= from && new Date(t.data) <= until);
+  // Com um cartão específico selecionado, filtra pelo CICLO gravado no lançamento (quando existir) —
+  // não pela data crua, porque parcela mantém a data da compra original, não a do mês da fatura atual.
+  const txsPeriodo = poolTxs.filter(t => {
+    if (!consolidado && _ctMesSelecionado && t.ciclo) return t.ciclo === _ctMesSelecionado;
+    return new Date(t.data) >= from && new Date(t.data) <= until;
+  });
   const txsGasto   = txsPeriodo.filter(t => t.cat !== 'Pagamento de Fatura' && t.val < 0);
   document.getElementById('ct-gasto').textContent = fmt(txsGasto.reduce((s,t)=>s+Math.abs(t.val),0));
 
@@ -2660,8 +2669,9 @@ function salvarGastoCartao() {
     const total = parseInt(document.getElementById('gc-parcelas-total').value);
     if (total && total >= 2) parcela = { atual: 1, total };
   }
-  LITE.txs.push({ id: 'txc_' + Date.now(), data, desc, cat, val: -Math.abs(val), tipo: 'cartao', banco: cardCode, parcela });
   const cObj = LITE.cartoes.find(c=>c.code===cardCode);
+  const ciclo = getCicloChave(data, cObj?.fechamento);
+  LITE.txs.push({ id: 'txc_' + Date.now(), data, desc, cat, val: -Math.abs(val), tipo: 'cartao', banco: cardCode, parcela, ciclo });
   if (cObj) { cObj.fatura = (cObj.fatura||0) + Math.abs(val); cObj.updated = new Date().toISOString(); }
   salvarLite();
   fecharModalGastoCartao();
@@ -4000,6 +4010,24 @@ function ofxConfirmar() {
   const banco    = OFX_BANCOS_INFO[bankCode] || OFX_BANCOS_INFO['XX'];
   let novas=0, duplas=0;
 
+  // Um arquivo de fatura representa UM MÊS só — mas compras parceladas mantêm a data da compra
+  // ORIGINAL (ex: parcela 4/12 comprada em março aparece na fatura de julho com data de março).
+  // Por isso não dá pra descobrir a qual fatura um lançamento pertence olhando só a data dele — o
+  // ciclo é calculado uma vez pro arquivo inteiro (pelas datas dos lançamentos NÃO parcelados, que
+  // são confiáveis) e gravado em cada lançamento, em vez de recalculado depois.
+  if (_ofxTipo === 'cartao') {
+    const cObjImp = LITE.cartoes.find(c=>c.code===bankCode);
+    const baseParaTally = _ofxTxsParsed.filter(t=>!t.parcela);
+    const tally = {};
+    (baseParaTally.length ? baseParaTally : _ofxTxsParsed).forEach(t => {
+      const chave = getCicloChave(t.data, cObjImp?.fechamento);
+      tally[chave] = (tally[chave]||0) + 1;
+    });
+    const chaveDoArquivo = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    if (chaveDoArquivo) _ofxTxsParsed.forEach(t => { t.ciclo = chaveDoArquivo; });
+    _ultimoImportCartao = { bankCode, chave: chaveDoArquivo };
+  }
+
   if(modo==='substituir') {
     if(_ofxTipo==='cartao') LITE.txs = LITE.txs.filter(t=>t.tipo!=='cartao'||t.banco!==bankCode);
     else                    LITE.txs = LITE.txs.filter(t=>t.banco!==bankCode||t.tipo==='cartao');
@@ -4038,18 +4066,6 @@ function ofxConfirmar() {
 
   LITE.txs.sort((a,b)=>new Date(b.data)-new Date(a.data));
   salvarLite();
-
-  // Guarda o cartão/mês importado pra abrir automaticamente na página de Cartões ao fechar o modal
-  if (_ofxTipo === 'cartao') {
-    const cObjImp = LITE.cartoes.find(c=>c.code===bankCode);
-    const tally = {};
-    _ofxTxsParsed.forEach(t => {
-      const chave = getCicloChave(t.data, cObjImp?.fechamento);
-      tally[chave] = (tally[chave]||0) + 1;
-    });
-    const chaveMaisComum = Object.entries(tally).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
-    _ultimoImportCartao = { bankCode, chave: chaveMaisComum };
-  }
 
   // Mostrar resultado
   document.getElementById('ofx-step2').style.display = 'none';
