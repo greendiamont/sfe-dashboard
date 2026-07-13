@@ -1275,6 +1275,35 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 </div>
 
+<!-- ══ MODAL EDITAR LANÇAMENTO ══ -->
+<div class="modal-overlay" id="modal-editar-tx" onclick="if(event.target===this)fecharModalEditarTx()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar Lançamento</div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Valor (R$)</label>
+        <input class="input" id="etx-valor" type="number" inputmode="decimal" placeholder="0,00" step="0.01" style="font-size:24px;font-weight:700">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Descrição</label>
+        <input class="input" id="etx-desc" type="text">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Categoria</label>
+        <select class="input" id="etx-cat"></select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Data</label>
+        <input class="input" id="etx-data" type="date">
+      </div>
+      <div id="etx-parcela-info" style="display:none;font-size:11px;color:var(--tx4);margin-bottom:12px"></div>
+      <button class="btn btn-gold btn-block" onclick="salvarEdicaoTx()" style="margin-top:4px">Salvar Alterações</button>
+      <button class="btn btn-block" style="margin-top:8px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:var(--neg)" onclick="excluirTxDoModal()">🗑 Excluir Lançamento</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL TROCAR SENHA ══ -->
 <div class="modal-overlay" id="modal-senha" onclick="if(event.target===this)fecharTrocarSenha()">
   <div class="modal-sheet">
@@ -1990,7 +2019,7 @@ function renderTxItem(t) {
   const cats = pos ? CATS_ENTRADA : CATS_SAIDA;
   const catObj = cats.find(c=>c.v===t.cat) || {ic:'💸'};
   const tagParcela = t.parcela ? ` · Parcela ${t.parcela.atual}/${t.parcela.total}` : '';
-  return `<div class="tx-item" onclick="excluirTx('${t.id}')">
+  return `<div class="tx-item" onclick="abrirModalEditarTx('${t.id}')">
     <div class="tx-icon" style="background:${col}18">${catObj.ic}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.desc || t.cat}</div>
@@ -2006,10 +2035,75 @@ function excluirTx(id) {
   if (!confirm('Excluir este lançamento?')) return;
   LITE.txs = LITE.txs.filter(t => t.id !== id);
   salvarLite();
+  rerenderizarPaginaAtual();
+}
+
+function rerenderizarPaginaAtual() {
   renderHome();
   if (_paginaAtual === 'lancamentos') renderLancamentos();
   if (_paginaAtual === 'relatorio')   renderRelatorio();
   if (_paginaAtual === 'cartoes')     renderCartoes();
+}
+
+// ══ MODAL EDITAR LANÇAMENTO ══
+let _txEditandoId = null;
+
+function abrirModalEditarTx(id) {
+  const t = LITE.txs.find(x=>x.id===id);
+  if (!t) return;
+  _txEditandoId = id;
+  const pos = t.val > 0;
+  document.getElementById('etx-valor').value = Math.abs(t.val);
+  document.getElementById('etx-desc').value  = t.desc || '';
+  document.getElementById('etx-data').value  = t.data;
+  const selCat = document.getElementById('etx-cat');
+  const cats = pos ? CATS_ENTRADA : CATS_SAIDA;
+  selCat.innerHTML = cats.map(c => `<option value="${c.v}">${c.ic} ${c.v}</option>`).join('')
+    + (cats.find(c=>c.v===t.cat) ? '' : `<option value="${t.cat}">${t.cat}</option>`);
+  selCat.value = t.cat;
+  const parcelaInfoEl = document.getElementById('etx-parcela-info');
+  if (t.parcela) {
+    parcelaInfoEl.style.display = '';
+    parcelaInfoEl.textContent = `Parcela ${t.parcela.atual} de ${t.parcela.total} — editar aqui não altera as outras parcelas.`;
+  } else {
+    parcelaInfoEl.style.display = 'none';
+  }
+  document.getElementById('modal-editar-tx').classList.add('open');
+}
+
+function fecharModalEditarTx() {
+  document.getElementById('modal-editar-tx').classList.remove('open');
+  _txEditandoId = null;
+}
+
+function salvarEdicaoTx() {
+  if (!_txEditandoId) return;
+  const t = LITE.txs.find(x=>x.id===_txEditandoId);
+  if (!t) return;
+  const val  = parseFloat(document.getElementById('etx-valor').value);
+  const desc = document.getElementById('etx-desc').value.trim();
+  const cat  = document.getElementById('etx-cat').value;
+  const data = document.getElementById('etx-data').value;
+  if (!val || val <= 0) { alert('Informe um valor válido.'); return; }
+  if (!desc)            { alert('Informe a descrição.'); return; }
+  if (!data)            { alert('Informe a data.'); return; }
+  const eraPositivo = t.val > 0;
+  t.val  = eraPositivo ? Math.abs(val) : -Math.abs(val);
+  t.desc = desc;
+  t.cat  = cat;
+  t.data = data;
+  salvarLite();
+  fecharModalEditarTx();
+  rerenderizarPaginaAtual();
+}
+
+function excluirTxDoModal() {
+  if (!_txEditandoId) return;
+  if (!confirm('Excluir este lançamento?')) return;
+  LITE.txs = LITE.txs.filter(t => t.id !== _txEditandoId);
+  salvarLite();
+  fecharModalEditarTx();
+  rerenderizarPaginaAtual();
 }
 
 // ══ MODAL LANÇAMENTO ══
@@ -2182,13 +2276,35 @@ function getCicloBoundsPorChave(chave, diaFechamento) {
 function listarMesesCartao(cartaoCode) {
   const cartao   = LITE.cartoes.find(c=>c.code===cartaoCode);
   const diaFech  = cartao ? cartao.fechamento : null;
-  const chaves   = new Set();
-  LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chaves.add(getCicloChave(t.data, diaFech)));
-  chaves.add(getCicloChave(new Date().toISOString().split('T')[0], diaFech));
+  const chavesComDados = new Set();
+  LITE.txs.filter(t=>t.tipo==='cartao' && t.banco===cartaoCode).forEach(t => chavesComDados.add(getCicloChave(t.data, diaFech)));
+  chavesComDados.add(getCicloChave(new Date().toISOString().split('T')[0], diaFech));
+  if (!chavesComDados.size) return [];
+
   const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  return Array.from(chaves).sort().reverse().map(chave => {
+  const ordenadasAsc = Array.from(chavesComDados).sort(); // strings "YYYY-MM" ordenam certo em ordem ascendente
+  const [anoMin, mesMin] = ordenadasAsc[0].split('-').map(Number);
+  const [anoMax, mesMax] = ordenadasAsc[ordenadasAsc.length-1].split('-').map(Number);
+  const totalMeses = (anoMax-anoMin)*12 + (mesMax-mesMin) + 1;
+
+  // Preenche todos os meses entre o mais antigo e o mais recente, sem buracos — evita a sensação de
+  // "fora de ordem" quando falta um mês no meio. Trava em 36 meses pra um lançamento com data errada
+  // não gerar uma lista gigante de chips vazios.
+  let chaves;
+  if (totalMeses > 0 && totalMeses <= 36) {
+    chaves = [];
+    let ano = anoMin, mes = mesMin;
+    while (ano < anoMax || (ano === anoMax && mes <= mesMax)) {
+      chaves.push(ano + '-' + String(mes).padStart(2,'0'));
+      mes++; if (mes > 12) { mes = 1; ano++; }
+    }
+  } else {
+    chaves = Array.from(chavesComDados);
+  }
+
+  return chaves.sort((a,b)=> b.localeCompare(a)).map(chave => {
     const [ano, mes] = chave.split('-').map(Number);
-    return { chave, label: nomesMes[mes-1] + '/' + ano };
+    return { chave, label: nomesMes[mes-1] + '/' + ano, semDados: !chavesComDados.has(chave) };
   });
 }
 
@@ -2288,7 +2404,8 @@ function renderCartoes() {
       mesChipsEl.style.display = 'flex';
       mesChipsEl.innerHTML = meses.map(m => {
         const ativo = m.chave === _ctMesSelecionado;
-        return `<button class="chip${ativo?' chip-gold':''}" onclick="ctSelecionarMes('${m.chave}')" style="padding:7px 14px;cursor:pointer;border:1px solid ${ativo?'rgba(212,160,23,.4)':'var(--b1)'};white-space:nowrap">${m.label}</button>`;
+        const opacidade = (m.semDados && !ativo) ? 'opacity:.45;' : '';
+        return `<button class="chip${ativo?' chip-gold':''}" onclick="ctSelecionarMes('${m.chave}')" style="padding:7px 14px;cursor:pointer;border:1px solid ${ativo?'rgba(212,160,23,.4)':'var(--b1)'};white-space:nowrap;${opacidade}">${m.label}</button>`;
       }).join('');
     }
     if (_ctMesSelecionado) {
