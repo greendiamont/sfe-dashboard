@@ -1676,10 +1676,14 @@ function iniciarApp() {
 function renderHome() {
   const days = parseInt(document.getElementById('home-period')?.value || 30);
   const from = new Date(Date.now() - days*86400000);
-  const txs  = LITE.txs.filter(t => new Date(t.data) >= from);
+  // Exclui tipo='cartao' — uma compra no cartão não é dinheiro saindo do bolso naquele dia (isso só
+  // acontece quando a fatura é paga, e aí já entra como lançamento bancário próprio). Misturar os
+  // dois faz o saldo/entradas/saídas do Painel Geral contarem a mesma coisa duas vezes.
+  const txsBanco = LITE.txs.filter(t => t.tipo !== 'cartao');
+  const txs  = txsBanco.filter(t => new Date(t.data) >= from);
   const ent  = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
   const sai  = Math.abs(txs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
-  const saldo= LITE.txs.reduce((s,t)=>s+t.val,0);
+  const saldo= txsBanco.reduce((s,t)=>s+t.val,0);
   const res  = ent - sai;
 
   // Saudação
@@ -1783,7 +1787,7 @@ function renderHome() {
   for (let i=14; i>=0; i--) {
     const d = new Date(Date.now() - i*86400000);
     lb.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-    const slc = LITE.txs.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+    const slc = txsBanco.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
     ins.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
     outs.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
   }
@@ -1799,7 +1803,7 @@ function renderHome() {
 
   // Últimos lançamentos (5)
   const listaEl = document.getElementById('home-txs-list');
-  const recentes = [...LITE.txs].sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,5);
+  const recentes = [...txsBanco].sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,5);
   if (!recentes.length) {
     listaEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--tx4);font-size:13px">Nenhum lançamento ainda<br><span style="font-size:12px">Clique em + para adicionar</span></div>';
   } else {
@@ -1886,7 +1890,7 @@ function renderHome() {
     const lbM = [], entM = [], saiM = [];
     for (let i=5; i>=0; i--) {
       const ref = new Date(); ref.setDate(1); ref.setMonth(ref.getMonth() - i);
-      const mesTxs = LITE.txs.filter(t => {
+      const mesTxs = txsBanco.filter(t => {
         const d = new Date(t.data);
         return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
       });
@@ -2011,8 +2015,11 @@ function renderLancamentos() {
   }
 
   // ── Pool de lançamentos: consolidado = todos (soltos + de todos os bancos); banco específico = só os daquele banco ──
+  // Sempre exclui tipo='cartao' — mesmo código de banco pode ser usado tanto pra conta corrente
+  // quanto pro cartão daquele banco (ex: Inter), e cartão tem sua própria página (Cartões).
   const consolidado = _lnBancoAtivo === '_consolidado';
-  let poolTxs = consolidado ? LITE.txs : LITE.txs.filter(t => t.banco === _lnBancoAtivo);
+  const txsBanco = LITE.txs.filter(t => t.tipo !== 'cartao');
+  let poolTxs = consolidado ? txsBanco : txsBanco.filter(t => t.banco === _lnBancoAtivo);
 
   // ── Saldo do cabeçalho ──
   const saldoEl = document.getElementById('ln-saldo');
@@ -2807,7 +2814,10 @@ function blocoAtivo(id) {
 function renderRelatorio() {
   const days = parseInt(document.getElementById('rel-period')?.value || 30);
   const from = new Date(Date.now() - days*86400000);
-  const txs  = LITE.txs.filter(t => new Date(t.data) >= from);
+  // Exclui tipo='cartao' — mesmo motivo do Painel Geral: compra no cartão não é saída de caixa no
+  // dia da compra, e o pagamento da fatura já entra separado como lançamento bancário.
+  const txsBanco = LITE.txs.filter(t => t.tipo !== 'cartao');
+  const txs  = txsBanco.filter(t => new Date(t.data) >= from);
   const ent  = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
   const sai  = Math.abs(txs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
   const res  = ent - sai;
@@ -2892,7 +2902,7 @@ function renderRelatorio() {
         const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
         const fim = new Date(d); fim.setMonth(fim.getMonth()+1); fim.setDate(0);
         lb2.push(d.toLocaleDateString('pt-BR',{month:'short'}));
-        const slc = LITE.txs.filter(t => { const td=new Date(t.data); return td>=d&&td<=fim; });
+        const slc = txsBanco.filter(t => { const td=new Date(t.data); return td>=d&&td<=fim; });
         ins2.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
         outs2.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
       }
