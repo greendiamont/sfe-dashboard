@@ -1233,6 +1233,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <input class="input" id="conta-venc" type="date">
       </div>
       <button class="btn btn-gold btn-block" onclick="salvarConta()" style="margin-top:4px">Salvar Conta</button>
+      <button class="btn btn-block" id="conta-excluir-btn" style="display:none;margin-top:8px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);color:var(--neg)" onclick="excluirContaAtual()">🗑 Excluir Conta</button>
     </div>
   </div>
 </div>
@@ -1960,14 +1961,14 @@ function renderHome() {
         const cor = i.tipo === 'pagar' ? 'var(--neg)' : 'var(--pos)';
         const sinal = i.tipo === 'pagar' ? '↓' : '↑';
         const borda = idx < todos.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
-        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+        return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda};cursor:pointer" onclick="abrirModalConta('${i.tipo}','${i.id}')">
           <div style="width:32px;height:32px;border-radius:9px;background:${cor}18;display:flex;align-items:center;justify-content:center;font-size:14px;color:${cor};flex-shrink:0">${sinal}</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:600;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${i.desc}</div>
             <div style="font-size:10px;color:${tagCor};font-weight:600">${tag}</div>
           </div>
           <div style="font-size:14px;font-weight:700;color:${cor};flex-shrink:0;margin-right:6px">${fmt(i.val)}</div>
-          <button onclick="marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:28px;height:28px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:14px;cursor:pointer;flex-shrink:0">✓</button>
+          <button onclick="event.stopPropagation();marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:28px;height:28px;border-radius:8px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:14px;cursor:pointer;flex-shrink:0">✓</button>
         </div>`;
       }).join('');
     } else {
@@ -2438,17 +2439,26 @@ function salvarLancamento() {
 // ══ MODAL NOVA CONTA (A PAGAR / A RECEBER) ══
 let _contaTipo = 'pagar';
 
-function abrirModalConta(tipo) {
+let _contaEditandoId = null;
+
+function abrirModalConta(tipo, idParaEditar) {
+  _contaEditandoId = idParaEditar || null;
+  const item = _contaEditandoId
+    ? (tipo === 'pagar' ? (LITE.cp||[]).find(i=>i.id===_contaEditandoId) : (LITE.cr||[]).find(i=>i.id===_contaEditandoId))
+    : null;
   _contaTipo = tipo || 'pagar';
-  document.getElementById('conta-venc').value  = new Date().toISOString().split('T')[0];
-  document.getElementById('conta-valor').value = '';
-  document.getElementById('conta-desc').value  = '';
+  document.getElementById('conta-venc').value  = item ? item.venc : new Date().toISOString().split('T')[0];
+  document.getElementById('conta-valor').value = item ? item.val  : '';
+  document.getElementById('conta-desc').value  = item ? item.desc : '';
+  document.getElementById('conta-excluir-btn').style.display = item ? '' : 'none';
   setTipoConta(_contaTipo);
+  if (item) document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Editar Conta a Pagar' : 'Editar Conta a Receber';
   document.getElementById('modal-conta').classList.add('open');
 }
 
 function fecharModalConta() {
   document.getElementById('modal-conta').classList.remove('open');
+  _contaEditandoId = null;
 }
 
 function setTipoConta(tipo) {
@@ -2457,7 +2467,9 @@ function setTipoConta(tipo) {
   const btnR = document.getElementById('conta-tipo-receber');
   btnP.className = 'tipo-btn' + (tipo==='pagar'?' sel-neg':'');
   btnR.className = 'tipo-btn' + (tipo==='receber'?' sel-pos':'');
-  document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber';
+  if (!_contaEditandoId) {
+    document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber';
+  }
 }
 
 function salvarConta() {
@@ -2469,14 +2481,28 @@ function salvarConta() {
   if (!venc)            { alert('Informe a data de vencimento.'); return; }
   if (!LITE.cp) LITE.cp = [];
   if (!LITE.cr) LITE.cr = [];
-  if (_contaTipo === 'pagar') {
+  if (_contaEditandoId) {
+    const lista = _contaTipo === 'pagar' ? LITE.cp : LITE.cr;
+    const item = lista.find(i=>i.id===_contaEditandoId);
+    if (item) { item.desc = desc; item.val = val; item.venc = venc; }
+  } else if (_contaTipo === 'pagar') {
     LITE.cp.push({ id: 'cp_' + Date.now(), desc, val, venc, pago: false });
   } else {
     LITE.cr.push({ id: 'cr_' + Date.now(), desc, val, venc, recebido: false });
   }
   salvarLite();
   fecharModalConta();
-  renderHome();
+  rerenderizarPaginaAtual();
+}
+
+function excluirContaAtual() {
+  if (!_contaEditandoId) return;
+  if (!confirm('Excluir esta conta?')) return;
+  if (_contaTipo === 'pagar') LITE.cp = LITE.cp.filter(i=>i.id!==_contaEditandoId);
+  else                        LITE.cr = LITE.cr.filter(i=>i.id!==_contaEditandoId);
+  salvarLite();
+  fecharModalConta();
+  rerenderizarPaginaAtual();
 }
 
 // ══ CARTÕES DE CRÉDITO ══
@@ -3134,14 +3160,14 @@ function renderRelatorio() {
             const cor = i.tipo === 'pagar' ? 'var(--neg)' : 'var(--pos)';
             const sinal = i.tipo === 'pagar' ? '↓' : '↑';
             const borda = idx < todos.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
-            return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda}">
+            return `<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;${borda};cursor:pointer" onclick="abrirModalConta('${i.tipo}','${i.id}')">
               <div style="width:28px;height:28px;border-radius:8px;background:${cor}18;display:flex;align-items:center;justify-content:center;font-size:13px;color:${cor};flex-shrink:0">${sinal}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:600;color:var(--tx1)">${i.desc}</div>
                 <div style="font-size:10px;color:var(--tx4)">Vence em ${fmtD(i.venc)}</div>
               </div>
               <div style="font-size:13px;font-weight:700;color:${cor};margin-right:6px">${fmt(i.val)}</div>
-              <button onclick="marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:26px;height:26px;border-radius:7px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:13px;cursor:pointer;flex-shrink:0">✓</button>
+              <button onclick="event.stopPropagation();marcarContaQuitada('${i.tipo}','${i.id}')" title="${i.tipo==='pagar'?'Marcar como pago':'Marcar como recebido'}" style="width:26px;height:26px;border-radius:7px;background:var(--ink4);border:1px solid var(--b1);color:var(--pos);font-size:13px;cursor:pointer;flex-shrink:0">✓</button>
             </div>`;
           }).join('')
         : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhum título em aberto</div>';
