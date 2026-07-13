@@ -2283,7 +2283,7 @@ function listarMesesCartao(cartaoCode) {
 
   // Janela fixa: sempre os últimos 12 meses a partir do ciclo atual, preenchendo os vazios —
   // não estica pra trás mesmo que exista algum lançamento antigo isolado (ex: parcela de anos atrás)
-  const JANELA_MESES = 12;
+  const JANELA_MESES = 6;
   const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const [anoAtual, mesAtual] = chaveAtual.split('-').map(Number);
   const chaves = [];
