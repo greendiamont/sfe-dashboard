@@ -816,6 +816,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div class="card" style="padding:16px">
           <div style="height:200px"><canvas id="rel-pizza"></canvas></div>
           <div id="rel-cats" style="margin-top:12px"></div>
+          <div id="rel-cat-ia-aviso" style="display:none;font-size:11px;color:var(--tx4);margin-top:12px;padding-top:12px;border-top:1px solid var(--b1)"></div>
+          <button class="btn btn-block" id="rel-cat-ia-btn" style="margin-top:12px;border:1px solid var(--b1);background:var(--ink4);color:var(--tx2);font-size:12px" onclick="categorizarComIA()">🤖 Categorizar "Outros"/"Transferência" com IA</button>
         </div>
       </div>
 
@@ -1913,7 +1915,8 @@ function renderHome() {
     for (let i=14; i>=0; i--) {
       const d = new Date(Date.now() - i*86400000);
       lb.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-      const slc = txsBanco.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+      const diaKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const slc = txsBanco.filter(t => t.data === diaKey);
       ins.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
       outs.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
     }
@@ -2211,7 +2214,8 @@ function renderLancamentos() {
     for (let i=14; i>=0; i--) {
       const d = new Date(Date.now() - i*86400000);
       lbE.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
-      const slc = poolTxs.filter(t => fmtD(t.data) === fmtD(d.toISOString()));
+      const diaKey = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const slc = poolTxs.filter(t => t.data === diaKey);
       insE.push(slc.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0));
       outsE.push(Math.abs(slc.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0)));
     }
@@ -2348,6 +2352,11 @@ function salvarEdicaoTx() {
   t.desc = desc;
   t.cat  = cat;
   t.data = data;
+  // Ensina a categoria pra esse estabelecimento — próximas importações com descrição parecida já
+  // vêm categorizadas certo automaticamente, sem precisar corrigir de novo
+  if (!LITE.regrasCategorizacao) LITE.regrasCategorizacao = {};
+  const chaveMerchant = normalizarMerchant(desc);
+  if (chaveMerchant) LITE.regrasCategorizacao[chaveMerchant] = cat;
   recalcularAposEdicao(t.tipo, t.banco);
   salvarLite();
   fecharModalEditarTx();
@@ -3448,6 +3457,78 @@ function scrollChat() {
   if (c) c.scrollTop = c.scrollHeight;
 }
 
+// Manda pra IA os lançamentos ainda em "Outros"/"Transferência" (categorização por palavra-chave
+// não deu conta) e aplica a sugestão — também grava como regra aprendida, então da próxima vez
+// que esse mesmo estabelecimento aparecer numa importação, já vem categorizado certo sem custar IA de novo.
+async function categorizarComIA() {
+  const btn   = document.getElementById('rel-cat-ia-btn');
+  const aviso = document.getElementById('rel-cat-ia-aviso');
+  const days  = parseInt(document.getElementById('rel-period')?.value || 30);
+  const from  = new Date(Date.now() - days*86400000);
+
+  const alvo = LITE.txs.filter(t => t.tipo !== 'cartao' && new Date(t.data) >= from && t.val < 0 && (t.cat === 'Outros' || t.cat === 'Transferência'));
+
+  const porChave = {};
+  alvo.forEach(t => {
+    const chave = normalizarMerchant(t.desc);
+    if (chave && !porChave[chave]) porChave[chave] = t.desc;
+  });
+  const entradas = Object.entries(porChave);
+
+  aviso.style.display = '';
+  if (!entradas.length) {
+    aviso.textContent = 'Nada pra categorizar no período — tudo já está em categorias específicas.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Categorizando ' + entradas.length + ' estabelecimentos...';
+  aviso.textContent = '';
+
+  const categoriasValidas = CATS_SAIDA.map(c=>c.v).join(', ') + ', Transferência';
+  const listaDescricoes = entradas.map(([,desc], i) => `${i+1}. ${desc}`).join('\n');
+  const system = `Você categoriza lançamentos de extratos bancários brasileiros. Categorias válidas: ${categoriasValidas}.
+Responda APENAS com um array JSON, sem nenhum texto antes ou depois, no formato exato: [{"i":1,"cat":"Mercado"},{"i":2,"cat":"Transporte"}]
+Use "Transferência" só quando realmente não der pra inferir nada (ex: PIX pra uma pessoa física sem nenhuma pista de finalidade). Pra nomes de empresas/estabelecimentos reconhecíveis, infira a categoria mais provável pelo tipo de negócio.`;
+
+  try {
+    const r = await fetch(BE_URL + '/api/claude', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ system, messages: [{role:'user', content: listaDescricoes}], max_tokens: 2000 })
+    });
+    const d = await r.json();
+    const texto = d.content?.[0]?.text || '';
+    const jsonMatch = texto.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('resposta da IA veio num formato inesperado');
+    const resultado = JSON.parse(jsonMatch[0]);
+
+    if (!LITE.regrasCategorizacao) LITE.regrasCategorizacao = {};
+    let aplicadas = 0;
+    resultado.forEach(item => {
+      const idx = (item.i||0) - 1;
+      if (idx < 0 || idx >= entradas.length || !item.cat) return;
+      const [chave] = entradas[idx];
+      LITE.regrasCategorizacao[chave] = item.cat;
+      LITE.txs.forEach(t => {
+        if ((t.cat === 'Outros' || t.cat === 'Transferência') && normalizarMerchant(t.desc) === chave) {
+          t.cat = item.cat;
+          aplicadas++;
+        }
+      });
+    });
+    salvarLite();
+    aviso.textContent = `✓ ${entradas.length} estabelecimentos analisados, ${aplicadas} lançamentos recategorizados. As próximas importações desses mesmos estabelecimentos já vêm certas.`;
+    renderRelatorio();
+    renderHome();
+  } catch(e) {
+    aviso.textContent = 'Erro ao categorizar com IA: ' + e.message;
+  }
+
+  const btnAtual = document.getElementById('rel-cat-ia-btn');
+  if (btnAtual) { btnAtual.disabled = false; btnAtual.textContent = '🤖 Categorizar "Outros"/"Transferência" com IA'; }
+}
+
 async function gerarAnaliseIA() {
   const days  = parseInt(document.getElementById('rel-period')?.value||30);
   const from  = new Date(Date.now()-days*86400000);
@@ -4076,7 +4157,7 @@ async function parsePDFLite(arrayBuffer) {
       id: 'pdf_' + i + '_' + dataStr.replace(/-/g,''),
       data: dataStr,
       desc,
-      cat: ofxCategoria(desc, amount, _ofxTipo),
+      cat: categorizarComRegras(desc, amount, _ofxTipo),
       val: amount,
       banco: bankCode,
       bancoNome: banco.nome,
@@ -4157,7 +4238,7 @@ function parseOFXLite(raw) {
       id:   'ofx_'+fitid+'_'+dtposted.slice(0,8)+'_'+Math.random().toString(36).slice(2,5),
       data: ofxParseDate(dtposted.slice(0,8)),
       desc: ofxCleanMemo(memo),
-      cat:  ofxCategoria(memo, amount, _ofxTipo),
+      cat:  categorizarComRegras(memo, amount, _ofxTipo),
       val:  amount,
       banco: bankCode,
       bancoNome: banco.nome,
@@ -4286,7 +4367,7 @@ function parseCSVLite(raw) {
     // Categoria: prioriza a categoria que já vem do próprio banco/cartão no arquivo; só usa
     // a categorização por palavra-chave da descrição quando o arquivo não traz essa coluna
     const catBanco = iCat>=0 ? mapCategoriaBanco(cols[iCat]) : null;
-    const cat = ofxEhPagamentoFatura(desc) ? 'Pagamento de Fatura' : (catBanco || ofxCategoria(desc, amount, _ofxTipo));
+    const cat = ofxEhPagamentoFatura(desc) ? 'Pagamento de Fatura' : (catBanco || categorizarComRegras(desc, amount, _ofxTipo));
     const parcela = extrairParcela(iTp>=0 ? cols[iTp] : '') || extrairParcela(desc);
     txs.push({
       id:   'csv_'+i+'_'+dataStr.replace(/-/g,''),
@@ -4364,6 +4445,30 @@ function ajustarSinalCartao(amount, desc) {
 function ajustarSinalPagamentoCartaoBanco(amount, desc) {
   if (ofxEhPagamentoCartaoNoBanco(desc) && amount > 0) return -amount;
   return amount;
+}
+
+// Reduz a descrição de um lançamento a uma "chave" estável do estabelecimento — ignora números,
+// códigos de transação e variações de espaço, pra reconhecer o MESMO estabelecimento em compras
+// futuras mesmo que o sufixo (cidade, código da loja) mude entre uma importação e outra.
+function normalizarMerchant(desc) {
+  return (desc||'')
+    .toLowerCase()
+    .replace(/[0-9]/g, ' ')
+    .replace(/[^a-zà-ÿ\s]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .join(' ');
+}
+
+// Categoriza um lançamento: primeiro olha se o usuário já ensinou uma categoria pra esse mesmo
+// estabelecimento (corrigindo manualmente antes); só cai no chute por palavra-chave se não houver
+// regra aprendida ainda.
+function categorizarComRegras(desc, amount, tipo) {
+  if (!LITE.regrasCategorizacao) LITE.regrasCategorizacao = {};
+  const chave = normalizarMerchant(desc);
+  if (chave && LITE.regrasCategorizacao[chave]) return LITE.regrasCategorizacao[chave];
+  return ofxCategoria(desc, amount, tipo);
 }
 
 function ofxCategoria(desc, amount, tipo) {
