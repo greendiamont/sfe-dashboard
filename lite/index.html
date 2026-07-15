@@ -769,13 +769,21 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
     <!-- ▸ RELATÓRIO ── -->
     <div id="page-relatorio" class="page">
-      <div style="padding:16px;display:flex;justify-content:space-between;align-items:center">
+      <div style="padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <div style="font-size:18px;font-weight:700;color:var(--tx0)">Relatório</div>
-        <select id="rel-period" onchange="renderRelatorio()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
-          <option value="30">30 dias</option>
-          <option value="60">60 dias</option>
-          <option value="90">90 dias</option>
-        </select>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="rel-period" onchange="relPeriodoMudou()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 10px">
+            <option value="30">30 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+            <option value="custom">Personalizado</option>
+          </select>
+          <div id="rel-periodo-custom" style="display:none;gap:6px;align-items:center">
+            <input type="date" id="rel-data-de" onchange="renderRelatorio()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 8px">
+            <span style="color:var(--tx4);font-size:11px">até</span>
+            <input type="date" id="rel-data-ate" onchange="renderRelatorio()" style="background:var(--ink4);border:1px solid var(--b1);border-radius:8px;color:var(--tx2);font-size:11px;padding:6px 8px">
+          </div>
+        </div>
       </div>
 
       <!-- Construtor de Relatório -->
@@ -790,6 +798,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-cpcr" checked onchange="renderRelatorio()"> 💰 Posição CP/CR</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-pagas" onchange="renderRelatorio()"> ✓ Contas Pagas</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-recebidas" onchange="renderRelatorio()"> ✓ Contas Recebidas</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-pagascat" onchange="renderRelatorio()"> 🏷 Contas Pagas por Categoria</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer"><input type="checkbox" id="blk-recebidascat" onchange="renderRelatorio()"> 🏷 Contas Recebidas por Categoria</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;grid-column:1/-1"><input type="checkbox" id="blk-cartaocat" onchange="renderRelatorio()"> 💳 Despesas de Cartão por Categoria</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;grid-column:1/-1"><input type="checkbox" id="blk-entsai" checked onchange="renderRelatorio()"> 📊 Entradas x Saídas por Categoria</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2);cursor:pointer;grid-column:1/-1"><input type="checkbox" id="blk-ia" onchange="renderRelatorio()"> 🤖 Análise IA (Claude)</label>
         </div>
         <button class="btn btn-gold btn-block" style="margin-top:14px" onclick="exportarRelatorioPDF()">📄 Exportar Relatório PDF</button>
@@ -866,6 +878,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
             <span style="font-size:11px;color:var(--tx4)" id="rel-pagas-n">0 contas</span>
             <span style="font-size:14px;font-weight:700;color:var(--neg)" id="rel-pagas-total">R$ 0</span>
           </div>
+          <div style="padding:12px 16px 0;height:120px"><canvas id="rel-pagas-chart"></canvas></div>
           <div id="rel-pagas-list"></div>
         </div>
       </div>
@@ -878,7 +891,55 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
             <span style="font-size:11px;color:var(--tx4)" id="rel-recebidas-n">0 contas</span>
             <span style="font-size:14px;font-weight:700;color:var(--pos)" id="rel-recebidas-total">R$ 0</span>
           </div>
+          <div style="padding:12px 16px 0;height:120px"><canvas id="rel-recebidas-chart"></canvas></div>
           <div id="rel-recebidas-list"></div>
+        </div>
+      </div>
+
+      <!-- Bloco: Contas Pagas por Categoria -->
+      <div id="blk-pagascat-sec">
+        <div class="sec-title"><span>🏷 Contas Pagas por Categoria</span></div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="height:180px"><canvas id="rel-pagascat-chart"></canvas></div>
+          <div id="rel-pagascat-list" style="margin-top:12px"></div>
+          <div id="rel-pagascat-vazio" style="display:none;text-align:center;color:var(--tx4);font-size:12px;padding:16px 0">Nenhuma conta paga no período</div>
+        </div>
+      </div>
+
+      <!-- Bloco: Contas Recebidas por Categoria -->
+      <div id="blk-recebidascat-sec">
+        <div class="sec-title"><span>🏷 Contas Recebidas por Categoria</span></div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="height:180px"><canvas id="rel-recebidascat-chart"></canvas></div>
+          <div id="rel-recebidascat-list" style="margin-top:12px"></div>
+          <div id="rel-recebidascat-vazio" style="display:none;text-align:center;color:var(--tx4);font-size:12px;padding:16px 0">Nenhuma conta recebida no período</div>
+        </div>
+      </div>
+
+      <!-- Bloco: Despesas de Cartão por Categoria -->
+      <div id="blk-cartaocat-sec">
+        <div class="sec-title"><span>💳 Despesas de Cartão por Categoria</span></div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--tx4);margin-bottom:10px" id="rel-cartaocat-total">—</div>
+          <div style="height:180px"><canvas id="rel-cartaocat-chart"></canvas></div>
+          <div id="rel-cartaocat-list" style="margin-top:12px"></div>
+          <div id="rel-cartaocat-vazio" style="display:none;text-align:center;color:var(--tx4);font-size:12px;padding:16px 0">Nenhum gasto de cartão no período</div>
+        </div>
+      </div>
+
+      <!-- Bloco: Entradas x Saídas por Categoria -->
+      <div id="blk-entsai-sec">
+        <div class="sec-title"><span>📊 Entradas x Saídas por Categoria</span></div>
+        <div class="card" style="padding:0;margin-bottom:12px">
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:0;padding:10px 16px;border-bottom:1px solid var(--b1);font-size:9px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:.5px">
+            <div>Categoria</div><div style="text-align:right">Entrou</div><div style="text-align:right">Pago/Gasto</div>
+          </div>
+          <div id="rel-entsai-list"></div>
+          <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:0;padding:12px 16px;border-top:1px solid var(--b1);font-size:13px;font-weight:700">
+            <div style="color:var(--tx1)">Total</div>
+            <div style="text-align:right;color:var(--pos)" id="rel-entsai-total-ent">—</div>
+            <div style="text-align:right;color:var(--neg)" id="rel-entsai-total-sai">—</div>
+          </div>
         </div>
       </div>
 
@@ -1231,6 +1292,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <input class="input" id="conta-desc" type="text" placeholder="Ex: Aluguel, Cliente X, IPTU...">
       </div>
       <div class="input-group">
+        <label class="input-label">Categoria</label>
+        <select class="input" id="conta-cat"></select>
+      </div>
+      <div class="input-group">
         <label class="input-label">Data de Vencimento</label>
         <input class="input" id="conta-venc" type="date">
       </div>
@@ -1240,7 +1305,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 </div>
 
-<!-- ══ MODAL CADASTRAR CARTÃO ══ -->
 <!-- ══ MODAL EDITAR BANCO ══ -->
 <div class="modal-overlay" id="modal-banco" onclick="if(event.target===this)fecharModalBanco()">
   <div class="modal-sheet">
@@ -2461,6 +2525,7 @@ function abrirModalConta(tipo, idParaEditar) {
   document.getElementById('conta-desc').value  = item ? item.desc : '';
   document.getElementById('conta-excluir-btn').style.display = item ? '' : 'none';
   setTipoConta(_contaTipo);
+  if (item && item.cat) document.getElementById('conta-cat').value = item.cat;
   if (item) document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Editar Conta a Pagar' : 'Editar Conta a Receber';
   document.getElementById('modal-conta').classList.add('open');
 }
@@ -2479,12 +2544,16 @@ function setTipoConta(tipo) {
   if (!_contaEditandoId) {
     document.getElementById('modal-conta-title').textContent = tipo === 'pagar' ? 'Nova Conta a Pagar' : 'Nova Conta a Receber';
   }
+  const selCat = document.getElementById('conta-cat');
+  const cats = tipo === 'pagar' ? CATS_SAIDA : CATS_ENTRADA;
+  selCat.innerHTML = cats.map(c => `<option value="${c.v}">${c.ic} ${c.v}</option>`).join('');
 }
 
 function salvarConta() {
   const val  = parseFloat(document.getElementById('conta-valor').value);
   const desc = document.getElementById('conta-desc').value.trim();
   const venc = document.getElementById('conta-venc').value;
+  const cat  = document.getElementById('conta-cat').value;
   if (!val || val <= 0) { alert('Informe um valor válido.'); return; }
   if (!desc)            { alert('Informe a descrição.'); return; }
   if (!venc)            { alert('Informe a data de vencimento.'); return; }
@@ -2493,11 +2562,11 @@ function salvarConta() {
   if (_contaEditandoId) {
     const lista = _contaTipo === 'pagar' ? LITE.cp : LITE.cr;
     const item = lista.find(i=>i.id===_contaEditandoId);
-    if (item) { item.desc = desc; item.val = val; item.venc = venc; }
+    if (item) { item.desc = desc; item.val = val; item.venc = venc; item.cat = cat; }
   } else if (_contaTipo === 'pagar') {
-    LITE.cp.push({ id: 'cp_' + Date.now(), desc, val, venc, pago: false });
+    LITE.cp.push({ id: 'cp_' + Date.now(), desc, val, venc, cat, pago: false });
   } else {
-    LITE.cr.push({ id: 'cr_' + Date.now(), desc, val, venc, recebido: false });
+    LITE.cr.push({ id: 'cr_' + Date.now(), desc, val, venc, cat, recebido: false });
   }
   salvarLite();
   fecharModalConta();
@@ -2999,19 +3068,47 @@ function blocoAtivo(id) {
   return el ? el.checked : true;
 }
 
+// Mostra/esconde os campos de data personalizada conforme a opção escolhida no seletor de período
+function relPeriodoMudou() {
+  const modo = document.getElementById('rel-period')?.value;
+  const wrap = document.getElementById('rel-periodo-custom');
+  if (wrap) wrap.style.display = modo === 'custom' ? 'flex' : 'none';
+  if (modo === 'custom') {
+    const deEl = document.getElementById('rel-data-de');
+    const ateEl = document.getElementById('rel-data-ate');
+    if (deEl && !deEl.value)  deEl.value  = new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+    if (ateEl && !ateEl.value) ateEl.value = new Date().toISOString().split('T')[0];
+  }
+  renderRelatorio();
+}
+
+// Resolve o período selecionado (30/60/90 dias, ou datas personalizadas) num intervalo {from, until}
+function relObterPeriodo() {
+  const modo = document.getElementById('rel-period')?.value || '30';
+  if (modo === 'custom') {
+    const de  = document.getElementById('rel-data-de')?.value;
+    const ate = document.getElementById('rel-data-ate')?.value;
+    return {
+      from:  de  ? new Date(de + 'T00:00:00')  : new Date(Date.now()-30*86400000),
+      until: ate ? new Date(ate + 'T23:59:59') : new Date(),
+    };
+  }
+  const days = parseInt(modo || 30);
+  return { from: new Date(Date.now() - days*86400000), until: new Date() };
+}
+
 function renderRelatorio() {
-  const days = parseInt(document.getElementById('rel-period')?.value || 30);
-  const from = new Date(Date.now() - days*86400000);
+  const { from, until } = relObterPeriodo();
   // Exclui tipo='cartao' — mesmo motivo do Painel Geral: compra no cartão não é saída de caixa no
   // dia da compra, e o pagamento da fatura já entra separado como lançamento bancário.
   const txsBanco = LITE.txs.filter(t => t.tipo !== 'cartao');
-  const txs  = txsBanco.filter(t => new Date(t.data) >= from);
+  const txs  = txsBanco.filter(t => new Date(t.data) >= from && new Date(t.data) <= until);
   const ent  = txs.filter(t=>t.val>0).reduce((s,t)=>s+t.val,0);
   const sai  = Math.abs(txs.filter(t=>t.val<0).reduce((s,t)=>s+t.val,0));
   const res  = ent - sai;
 
   // Visibilidade dos blocos, conforme os checkboxes do construtor
-  const blocos = ['resumo','categoria','evolucao','pareto','extrato','cpcr','pagas','recebidas','ia'];
+  const blocos = ['resumo','categoria','evolucao','pareto','extrato','cpcr','pagas','recebidas','pagascat','recebidascat','cartaocat','entsai','ia'];
   const ativo = {};
   blocos.forEach(b => {
     ativo[b] = blocoAtivo('blk-' + b);
@@ -3077,6 +3174,34 @@ function renderRelatorio() {
         <span style="font-size:12px;color:var(--tx3);min-width:70px;text-align:right">${fmt(v)}</span>
       </div>`;
     }).join('');
+  }
+
+  // ── Bloco: Entradas x Saídas por Categoria ──
+  if (ativo.entsai) {
+    const mapEntSai = {};
+    txs.forEach(t => {
+      if (!mapEntSai[t.cat]) mapEntSai[t.cat] = { ent: 0, sai: 0 };
+      if (t.val > 0) mapEntSai[t.cat].ent += t.val;
+      else mapEntSai[t.cat].sai += Math.abs(t.val);
+    });
+    const categoriasComDados = Object.entries(mapEntSai).sort((a,b) => (b[1].ent+b[1].sai) - (a[1].ent+a[1].sai));
+    const entsaiListEl = document.getElementById('rel-entsai-list');
+    if (entsaiListEl) {
+      entsaiListEl.innerHTML = categoriasComDados.length
+        ? categoriasComDados.map(([cat, v], idx) => {
+            const borda = idx < categoriasComDados.length-1 ? 'border-bottom:1px solid var(--b1);' : '';
+            return `<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:0;padding:10px 16px;${borda}">
+              <div style="font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${cat}</div>
+              <div style="text-align:right;font-size:12px;color:var(--pos)">${v.ent ? fmt(v.ent) : '—'}</div>
+              <div style="text-align:right;font-size:12px;color:var(--neg)">${v.sai ? fmt(v.sai) : '—'}</div>
+            </div>`;
+          }).join('')
+        : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhum lançamento no período</div>';
+    }
+    const totEntEl = document.getElementById('rel-entsai-total-ent');
+    const totSaiEl = document.getElementById('rel-entsai-total-sai');
+    if (totEntEl) totEntEl.textContent = fmt(ent);
+    if (totSaiEl) totSaiEl.textContent = fmt(sai);
   }
 
   // ── Bloco: Evolução mensal ──
@@ -3185,9 +3310,20 @@ function renderRelatorio() {
 
   // ── Contas Pagas no período (histórico) ──
   if (ativo.pagas) {
-    const pagas = LITE.cp.filter(i => i.pago && i.pagoEm && new Date(i.pagoEm) >= from);
+    const pagas = LITE.cp.filter(i => i.pago && i.pagoEm && new Date(i.pagoEm) >= from && new Date(i.pagoEm) <= until);
     document.getElementById('rel-pagas-n').textContent = `${pagas.length} conta${pagas.length!==1?'s':''}`;
     document.getElementById('rel-pagas-total').textContent = fmt(pagas.reduce((s,i)=>s+i.val,0));
+    if (_relCharts['pagas']) _relCharts['pagas'].destroy();
+    const pagasChartEl = document.getElementById('rel-pagas-chart');
+    if (pagasChartEl) {
+      const semanas = semanasNoPeriodo(from, until);
+      const valores = semanas.map(s => pagas.filter(i => new Date(i.pagoEm) >= s.inicio && new Date(i.pagoEm) <= s.fim).reduce((sm,i)=>sm+i.val,0));
+      _relCharts['pagas'] = new Chart(pagasChartEl, {
+        type:'bar',
+        data:{labels:semanas.map(s=>s.label),datasets:[{data:valores,backgroundColor:'rgba(248,113,113,.35)',borderColor:'rgba(248,113,113,.8)',borderWidth:1,borderRadius:3}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+      });
+    }
     const pagasListEl = document.getElementById('rel-pagas-list');
     if (pagasListEl) {
       const ordenadas = [...pagas].sort((a,b)=>new Date(b.pagoEm)-new Date(a.pagoEm));
@@ -3208,9 +3344,20 @@ function renderRelatorio() {
 
   // ── Contas Recebidas no período (histórico) ──
   if (ativo.recebidas) {
-    const recebidas = LITE.cr.filter(i => i.recebido && i.recebidoEm && new Date(i.recebidoEm) >= from);
+    const recebidas = LITE.cr.filter(i => i.recebido && i.recebidoEm && new Date(i.recebidoEm) >= from && new Date(i.recebidoEm) <= until);
     document.getElementById('rel-recebidas-n').textContent = `${recebidas.length} conta${recebidas.length!==1?'s':''}`;
     document.getElementById('rel-recebidas-total').textContent = fmt(recebidas.reduce((s,i)=>s+i.val,0));
+    if (_relCharts['recebidas']) _relCharts['recebidas'].destroy();
+    const recebidasChartEl = document.getElementById('rel-recebidas-chart');
+    if (recebidasChartEl) {
+      const semanas = semanasNoPeriodo(from, until);
+      const valores = semanas.map(s => recebidas.filter(i => new Date(i.recebidoEm) >= s.inicio && new Date(i.recebidoEm) <= s.fim).reduce((sm,i)=>sm+i.val,0));
+      _relCharts['recebidas'] = new Chart(recebidasChartEl, {
+        type:'bar',
+        data:{labels:semanas.map(s=>s.label),datasets:[{data:valores,backgroundColor:'rgba(74,222,128,.35)',borderColor:'rgba(74,222,128,.8)',borderWidth:1,borderRadius:3}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${fmt(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:'#4a5a7a',font:{size:8}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5a7a',font:{size:8},callback:v=>fmtK(v)}}}}
+      });
+    }
     const recebidasListEl = document.getElementById('rel-recebidas-list');
     if (recebidasListEl) {
       const ordenadas = [...recebidas].sort((a,b)=>new Date(b.recebidoEm)-new Date(a.recebidoEm));
@@ -3228,14 +3375,91 @@ function renderRelatorio() {
         : '<div style="padding:20px;text-align:center;color:var(--tx4);font-size:12px">Nenhuma conta recebida no período</div>';
     }
   }
+
+  // ── Contas Pagas por Categoria ──
+  if (ativo.pagascat) {
+    const pagas = LITE.cp.filter(i => i.pago && i.pagoEm && new Date(i.pagoEm) >= from && new Date(i.pagoEm) <= until);
+    renderizarDoughnutCategoria(pagas, 'rel-pagascat-chart', 'rel-pagascat-list', 'rel-pagascat-vazio', 'neg');
+  }
+
+  // ── Contas Recebidas por Categoria ──
+  if (ativo.recebidascat) {
+    const recebidas = LITE.cr.filter(i => i.recebido && i.recebidoEm && new Date(i.recebidoEm) >= from && new Date(i.recebidoEm) <= until);
+    renderizarDoughnutCategoria(recebidas, 'rel-recebidascat-chart', 'rel-recebidascat-list', 'rel-recebidascat-vazio', 'pos');
+  }
+
+  // ── Despesas de Cartão por Categoria (todos os cartões, período selecionado) ──
+  if (ativo.cartaocat) {
+    const gastosCartao = LITE.txs.filter(t => t.tipo==='cartao' && t.cat!=='Pagamento de Fatura' && t.val<0 && new Date(t.data)>=from && new Date(t.data)<=until)
+                                  .map(t => ({ desc: t.desc, val: Math.abs(t.val), cat: t.cat }));
+    const totalCartaoEl = document.getElementById('rel-cartaocat-total');
+    if (totalCartaoEl) totalCartaoEl.textContent = gastosCartao.length ? `Total: ${fmt(gastosCartao.reduce((s,i)=>s+i.val,0))} em ${gastosCartao.length} lançamentos` : '—';
+    renderizarDoughnutCategoria(gastosCartao, 'rel-cartaocat-chart', 'rel-cartaocat-list', 'rel-cartaocat-vazio', 'neg');
+  }
+}
+
+// Gera as semanas (segunda a domingo) que cobrem o intervalo [from, until], pra gráficos de linha do tempo
+function semanasNoPeriodo(from, until) {
+  const semanas = [];
+  let d = new Date(from); d.setHours(0,0,0,0);
+  const diaSemana = (d.getDay() + 6) % 7; // 0 = segunda
+  d.setDate(d.getDate() - diaSemana);
+  let guard = 0;
+  while (d <= until && guard < 60) {
+    const inicio = new Date(d);
+    const fim = new Date(d); fim.setDate(fim.getDate()+6); fim.setHours(23,59,59,999);
+    semanas.push({ inicio, fim, label: inicio.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) });
+    d.setDate(d.getDate()+7);
+    guard++;
+  }
+  return semanas.length ? semanas : [{ inicio: from, fim: until, label: '—' }];
+}
+
+// Doughnut genérico por categoria — reaproveitado pelos blocos de Contas Pagas/Recebidas/Cartão por Categoria
+function renderizarDoughnutCategoria(itens, chartId, listId, vazioId, corBase) {
+  const map = {};
+  itens.forEach(i => { const c = i.cat || 'Outros'; map[c] = (map[c]||0) + Math.abs(i.val); });
+  const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const total = entries.reduce((s,e)=>s+e[1],0);
+  const chartKey = chartId;
+  if (_relCharts[chartKey]) _relCharts[chartKey].destroy();
+  const chartEl = document.getElementById(chartId);
+  const vazioEl = document.getElementById(vazioId);
+  if (chartEl) {
+    if (entries.length) {
+      chartEl.style.display = '';
+      if (vazioEl) vazioEl.style.display = 'none';
+      _relCharts[chartKey] = new Chart(chartEl, {
+        type:'doughnut',
+        data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>(CAT_COLORS_LITE[e[0]]||'#445566')+'44'),borderColor:entries.map(e=>CAT_COLORS_LITE[e[0]]||'#445566'),borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a2332',callbacks:{label:c=>` ${c.label}: ${fmt(c.raw)}`}}}}
+      });
+    } else {
+      chartEl.style.display = 'none';
+      if (vazioEl) vazioEl.style.display = '';
+    }
+  }
+  const listEl = document.getElementById(listId);
+  if (listEl) {
+    listEl.innerHTML = entries.slice(0,8).map(([cat,v]) => {
+      const col = CAT_COLORS_LITE[cat] || '#445566';
+      const pct = total ? (v/total*100).toFixed(1) : '0';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:8px;height:8px;border-radius:2px;background:${col};flex-shrink:0"></div>
+        <span style="flex:1;font-size:12px;color:var(--tx2)">${cat}</span>
+        <span style="font-size:12px;font-weight:600;color:${col}">${pct}%</span>
+        <span style="font-size:12px;color:var(--tx3);min-width:70px;text-align:right">${fmt(v)}</span>
+      </div>`;
+    }).join('');
+  }
 }
 
 
 // ══ EXPORT PDF RELATÓRIO ══
 function exportarRelatorioPDF() {
-  const days  = parseInt(document.getElementById('rel-period')?.value || 30);
-  const from  = new Date(Date.now() - days*86400000);
-  const txs   = LITE.txs.filter(t => new Date(t.data) >= from);
+  const { from, until } = relObterPeriodo();
+  const days  = Math.round((until - from) / 86400000);
+  const txs   = LITE.txs.filter(t => t.tipo !== 'cartao' && new Date(t.data) >= from && new Date(t.data) <= until);
   const nome  = document.getElementById('tb-nome')?.textContent || 'Usuário';
   const ts    = new Date().toLocaleString('pt-BR');
 
@@ -3338,6 +3562,40 @@ function exportarRelatorioPDF() {
     secoes += '<div class="sec"><div class="sec-h">✓ Contas Recebidas no Período</div>'
       + `<div style="font-size:11px;color:#555;margin-bottom:8px">${n} — total ${total}</div>`
       + '<table style="width:100%;border-collapse:collapse">' + (rows || '<tr><td style="padding:10px;text-align:center;color:#999;font-size:10px">Nenhuma conta recebida no período</td></tr>') + '</table></div>';
+  }
+
+  // Helper: seção de PDF genérica pra um bloco "por categoria", reaproveitando a imagem do gráfico
+  // já renderizado na tela e a lista de categoria/percentual/valor
+  const secaoPdfCategoria = (titulo, chartId, listId, vazioTexto) => {
+    const img = chartImg(chartId);
+    const listaTxt = document.getElementById(listId)?.innerText.split('\n').filter(Boolean).join(' · ') || vazioTexto;
+    return '<div class="sec"><div class="sec-h">'+titulo+'</div>'
+      + (img ? `<img src="${img}" style="width:150px;display:block;margin:0 auto 10px">` : '')
+      + `<div style="font-size:11px;color:#555;text-align:center">${listaTxt}</div></div>`;
+  };
+
+  if (blocoAtivo('blk-pagascat'))       secoes += secaoPdfCategoria('🏷 Contas Pagas por Categoria', 'rel-pagascat-chart', 'rel-pagascat-list', 'Nenhuma conta paga no período');
+  if (blocoAtivo('blk-recebidascat'))   secoes += secaoPdfCategoria('🏷 Contas Recebidas por Categoria', 'rel-recebidascat-chart', 'rel-recebidascat-list', 'Nenhuma conta recebida no período');
+  if (blocoAtivo('blk-cartaocat'))      secoes += secaoPdfCategoria('💳 Despesas de Cartão por Categoria', 'rel-cartaocat-chart', 'rel-cartaocat-list', 'Nenhum gasto de cartão no período');
+
+  if (blocoAtivo('blk-entsai')) {
+    const mapEntSaiPdf = {};
+    txs.forEach(t => {
+      if (!mapEntSaiPdf[t.cat]) mapEntSaiPdf[t.cat] = { ent: 0, sai: 0 };
+      if (t.val > 0) mapEntSaiPdf[t.cat].ent += t.val; else mapEntSaiPdf[t.cat].sai += Math.abs(t.val);
+    });
+    const catsOrdenadas = Object.entries(mapEntSaiPdf).sort((a,b) => (b[1].ent+b[1].sai) - (a[1].ent+a[1].sai));
+    const rows = catsOrdenadas.map(([cat,v]) => '<tr>'
+      + '<td style="font-size:10px;padding:4px 6px;border-bottom:1px solid #eee">'+cat+'</td>'
+      + '<td style="font-family:monospace;font-size:10px;font-weight:700;text-align:right;padding:4px 6px;border-bottom:1px solid #eee;color:#16a34a">'+(v.ent?fmt(v.ent):'—')+'</td>'
+      + '<td style="font-family:monospace;font-size:10px;font-weight:700;text-align:right;padding:4px 6px;border-bottom:1px solid #eee;color:#dc2626">'+(v.sai?fmt(v.sai):'—')+'</td>'
+      + '</tr>').join('');
+    secoes += '<div class="sec"><div class="sec-h">📊 Entradas x Saídas por Categoria</div>'
+      + '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:#f2f2f2">'
+      + '<th style="font-size:8px;text-align:left;padding:4px 6px;text-transform:uppercase;color:#888">Categoria</th>'
+      + '<th style="font-size:8px;text-align:right;padding:4px 6px;text-transform:uppercase;color:#888">Entrou</th>'
+      + '<th style="font-size:8px;text-align:right;padding:4px 6px;text-transform:uppercase;color:#888">Pago/Gasto</th>'
+      + '</tr></thead><tbody>' + (rows || '<tr><td colspan="3" style="padding:10px;text-align:center;color:#999;font-size:10px">Nenhum lançamento no período</td></tr>') + '</tbody></table></div>';
   }
 
   if (blocoAtivo('blk-ia')) {
