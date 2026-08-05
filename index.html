@@ -1526,6 +1526,7 @@ body {
       ⬆ Importar Dados
     </button>
     <button class="btn btn-gold" id="sync-btn" onclick="doSync()">↻ Sincronizar</button>
+    <button class="btn btn-gold" id="sync-ca-btn" onclick="doSyncContaAzul()" style="background:linear-gradient(135deg,#0088cc,#005580)">↻ Conta Azul</button>
     <button class="btn btn-ghost" onclick="logout()" style="padding:9px 12px" title="Sair">⏏</button>
   </div>
 </header>
@@ -4122,7 +4123,7 @@ function renderCP() {
     const dStr = s==='pago' ? '—' : d===0 ? 'HOJE' : d<0 ? `${Math.abs(d)}d atraso` : `${d}d`;
     return `<tr>
       <td>${statusBadge(s)}</td>
-      <td><div class="ename" style="font-size:13px">${item.fornecedor}</div><div class="ecode">${item.doc||'—'}</div></td>
+      <td><div class="ename" style="font-size:13px">${item.fornecedor}${item.origem==='contaazul'?' <span style="font-size:8px;color:#4db8ff;border:1px solid #4db8ff;border-radius:2px;padding:1px 4px;margin-left:4px">CA</span>':''}</div><div class="ecode">${item.doc||'—'}</div></td>
       <td style="font-size:12px;color:var(--s2)">${item.descricao}</td>
       <td><span style="font-family:var(--mono);font-size:9px;color:${CAT_COLORS[item.categoria]||'#446688'}">${item.categoria}</span></td>
       <td class="ecode">${item.emissao}</td>
@@ -4186,7 +4187,7 @@ function renderCR() {
     const dStr = s==='recebido' ? '—' : d===0 ? 'HOJE' : d<0 ? `${Math.abs(d)}d atraso` : `${d}d`;
     return `<tr>
       <td>${statusBadge(s)}</td>
-      <td><div class="ename" style="font-size:13px">${item.cliente}</div><div class="ecode">${item.cnpj||'—'}</div></td>
+      <td><div class="ename" style="font-size:13px">${item.cliente}${item.origem==='contaazul'?' <span style="font-size:8px;color:#4db8ff;border:1px solid #4db8ff;border-radius:2px;padding:1px 4px;margin-left:4px">CA</span>':''}</div><div class="ecode">${item.cnpj||'—'}</div></td>
       <td style="font-size:12px;color:var(--s2)">${item.descricao}<br><span class="ecode">${item.tipo}</span></td>
       <td class="ecode">${item.emissao}</td>
       <td class="ecode" style="color:${s==='vencido'?'var(--rlt)':s==='hoje'?'var(--alt)':'var(--s3)'}">${item.vencimento}<br><span style="font-size:9px">${dStr}</span></td>
@@ -6740,6 +6741,91 @@ async function doSync() {
     if(btn){btn.textContent='↻ Sincronizar';btn.disabled=false;}
     renderAll();
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// SINCRONIZAÇÃO CONTA AZUL — Contas a Pagar / Contas a Receber
+// ══════════════════════════════════════════════════════════
+// Segue o mesmo padrão do doSync() (Pluggy), mas em vez de popular extrato
+// bancário, mescla dentro de CP/CR (localStorage) — a mesma tela que já existe,
+// sem aba separada. Cada item recebe origem:'contaazul' pra sabermos depois
+// quais itens vieram de lá (e não apagar o que foi cadastrado manualmente).
+//
+// ⚠️ ATENÇÃO: os nomes de campo dentro de mapContaAzulParaCP/CR são a MELHOR
+// ESTIMATIVA baseada na documentação da Conta Azul — ainda não validados contra
+// uma resposta real (a conta de teste ficou sem plano ativo antes de conseguirmos
+// ver um item de verdade). Assim que tiver plano ativo, rodar de novo e comparar
+// a resposta real com o que está aqui — provavelmente vai precisar ajustar os
+// nomes exatos dos campos (ex: item.fornecedor?.nome pode ser item.nome_fornecedor,
+// ou outra estrutura).
+
+async function doSyncContaAzul() {
+  const session = SFE_SESSION || JSON.parse(localStorage.getItem('sfe_session')||'null');
+  if (!session || session.demo || !session.empresa?.cnpj) return;
+
+  const btn = document.getElementById('sync-ca-btn');
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    const doc = session.empresa.cnpj.replace(/\D/g,'');
+    const [rCP, rCR] = await Promise.all([
+      fetch(BE_URL + '/api/contaazul/contas-a-pagar?doc=' + doc),
+      fetch(BE_URL + '/api/contaazul/contas-a-receber?doc=' + doc),
+    ]);
+    if (!rCP.ok) throw new Error('Contas a Pagar HTTP ' + rCP.status);
+    if (!rCR.ok) throw new Error('Contas a Receber HTTP ' + rCR.status);
+
+    const dataCP = await rCP.json();
+    const dataCR = await rCR.json();
+
+    const itensCP = (dataCP.itens || []).map(mapContaAzulParaCP);
+    const itensCR = (dataCR.itens || []).map(mapContaAzulParaCR);
+
+    // Mescla: mantém tudo que NÃO veio da Conta Azul intacto, substitui só os
+    // itens marcados origem:'contaazul' pela versão mais recente sincronizada
+    const cpAtual = loadCP().filter(i => i.origem !== 'contaazul');
+    const crAtual = loadCR().filter(i => i.origem !== 'contaazul');
+    saveCP_data([...cpAtual, ...itensCP]);
+    saveCR_data([...crAtual, ...itensCR]);
+
+    renderCP();
+    renderCR();
+  } catch(e) {
+    console.warn('Sync Conta Azul:', e.message);
+    alert('Erro ao sincronizar com a Conta Azul: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '↻ Conta Azul'; btn.disabled = false; }
+  }
+}
+
+function mapContaAzulParaCP(item) {
+  return {
+    id:         'ca_' + (item.id || item.uuid || (Date.now() + Math.random())),
+    fornecedor: item.fornecedor?.nome || item.nome_fornecedor || item.pessoa?.nome || 'Fornecedor Conta Azul',
+    doc:        item.fornecedor?.documento || item.cpf_cnpj || '',
+    descricao:  item.descricao || item.historico || 'Conta a pagar (Conta Azul)',
+    categoria:  item.categoria?.nome || 'Outros',
+    emissao:    (item.data_emissao || item.data_competencia || '').slice(0,10),
+    vencimento: (item.data_vencimento || '').slice(0,10),
+    valor:      Number(item.valor || item.valor_total || 0),
+    status:     (item.situacao === 'PAGO' || item.pago) ? 'pago' : undefined,
+    origem:     'contaazul',
+  };
+}
+
+function mapContaAzulParaCR(item) {
+  return {
+    id:         'ca_' + (item.id || item.uuid || (Date.now() + Math.random())),
+    cliente:    item.cliente?.nome || item.nome_cliente || item.pessoa?.nome || 'Cliente Conta Azul',
+    cnpj:       item.cliente?.documento || item.cpf_cnpj || '',
+    descricao:  item.descricao || item.historico || 'Conta a receber (Conta Azul)',
+    tipo:       item.categoria?.nome || 'Outros',
+    emissao:    (item.data_emissao || item.data_competencia || '').slice(0,10),
+    vencimento: (item.data_vencimento || '').slice(0,10),
+    valor:      Number(item.valor || item.valor_total || 0),
+    status:     (item.situacao === 'RECEBIDO' || item.recebido) ? 'recebido' : undefined,
+    origem:     'contaazul',
+  };
 }
 
 function logout(){localStorage.removeItem('sfe_session');SFE_SESSION=null;location.reload();}
