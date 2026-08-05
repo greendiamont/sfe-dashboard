@@ -1525,8 +1525,7 @@ body {
     <button class="btn btn-gold" onclick="abrirImportOFX()" style="background:linear-gradient(135deg,#1a6fa8,#0d4f7a);box-shadow:0 4px 16px rgba(26,111,168,.35);border-color:transparent" title="Importar extrato bancário OFX/CSV">
       ⬆ Importar Dados
     </button>
-    <button class="btn btn-gold" id="sync-btn" onclick="doSync()">↻ Sincronizar</button>
-    <button class="btn btn-gold" id="sync-ca-btn" onclick="doSyncContaAzul()" style="background:linear-gradient(135deg,#0088cc,#005580)">↻ Conta Azul</button>
+    <button class="btn btn-gold" id="sync-btn" onclick="doSyncAll()">↻ Sincronizar</button>
     <button class="btn btn-ghost" onclick="logout()" style="padding:9px 12px" title="Sair">⏏</button>
   </div>
 </header>
@@ -6715,6 +6714,17 @@ function loginDemo() {
   buildDemo(); renderAll();
   seedDemoData(); renderCP(); renderCR();
   seedCadastros(); renderClientes(); renderFornecedores();
+}
+
+// Botão único "↻ Sincronizar" — atualiza TODAS as fontes conectadas de uma vez
+// (Pluggy = extrato bancário, Conta Azul = contas a pagar/receber). Cada função
+// interna já verifica sozinha se aquela integração está conectada pra essa empresa;
+// se não estiver, ela simplesmente não faz nada, então é seguro chamar as duas sempre.
+async function doSyncAll() {
+  const btn = document.getElementById('sync-btn');
+  if (btn) { btn.textContent = '⏳ Sincronizando...'; btn.disabled = true; }
+  await Promise.allSettled([ doSync(), doSyncContaAzul() ]);
+  if (btn) { btn.textContent = '↻ Sincronizar'; btn.disabled = false; }
 }
 
 async function doSync() {
