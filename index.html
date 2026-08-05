@@ -6772,11 +6772,13 @@ async function doSyncContaAzul() {
       fetch(BE_URL + '/api/contaazul/contas-a-pagar?doc=' + doc),
       fetch(BE_URL + '/api/contaazul/contas-a-receber?doc=' + doc),
     ]);
-    if (!rCP.ok) throw new Error('Contas a Pagar HTTP ' + rCP.status);
-    if (!rCR.ok) throw new Error('Contas a Receber HTTP ' + rCR.status);
-
     const dataCP = await rCP.json();
     const dataCR = await rCR.json();
+
+    // Se o backend devolveu erro, ele vem como { error: "mensagem detalhada" } —
+    // mostra essa mensagem real em vez de só o código HTTP genérico
+    if (!rCP.ok) throw new Error('Contas a Pagar: ' + (dataCP.error || ('HTTP ' + rCP.status)));
+    if (!rCR.ok) throw new Error('Contas a Receber: ' + (dataCR.error || ('HTTP ' + rCR.status)));
 
     const itensCP = (dataCP.itens || []).map(mapContaAzulParaCP);
     const itensCR = (dataCR.itens || []).map(mapContaAzulParaCR);
