@@ -6849,30 +6849,30 @@ async function doSyncContaAzul() {
 
 function mapContaAzulParaCP(item) {
   return {
-    id:         'ca_' + (item.id || item.uuid || (Date.now() + Math.random())),
-    fornecedor: item.fornecedor?.nome || item.nome_fornecedor || item.pessoa?.nome || 'Fornecedor Conta Azul',
-    doc:        item.fornecedor?.documento || item.cpf_cnpj || '',
-    descricao:  item.descricao || item.historico || 'Conta a pagar (Conta Azul)',
-    categoria:  item.categoria?.nome || 'Outros',
-    emissao:    (item.data_emissao || item.data_competencia || '').slice(0,10),
+    id:         'ca_' + (item.id || (Date.now() + Math.random())),
+    fornecedor: item.fornecedor?.nome || 'Fornecedor Conta Azul',
+    doc:        '',
+    descricao:  item.descricao || 'Conta a pagar (Conta Azul)',
+    categoria:  item.categorias?.[0]?.nome || 'Outros',
+    emissao:    (item.data_competencia || item.data_criacao || '').slice(0,10),
     vencimento: (item.data_vencimento || '').slice(0,10),
-    valor:      Number(item.valor || item.valor_total || 0),
-    status:     (item.situacao === 'PAGO' || item.pago) ? 'pago' : undefined,
+    valor:      Number(item.total || 0),
+    status:     item.status === 'ACQUITTED' ? 'pago' : undefined,
     origem:     'contaazul',
   };
 }
 
 function mapContaAzulParaCR(item) {
   return {
-    id:         'ca_' + (item.id || item.uuid || (Date.now() + Math.random())),
-    cliente:    item.cliente?.nome || item.nome_cliente || item.pessoa?.nome || 'Cliente Conta Azul',
-    cnpj:       item.cliente?.documento || item.cpf_cnpj || '',
-    descricao:  item.descricao || item.historico || 'Conta a receber (Conta Azul)',
-    tipo:       item.categoria?.nome || 'Outros',
-    emissao:    (item.data_emissao || item.data_competencia || '').slice(0,10),
+    id:         'ca_' + (item.id || (Date.now() + Math.random())),
+    cliente:    item.cliente?.nome || item.fornecedor?.nome || 'Cliente Conta Azul',
+    cnpj:       '',
+    descricao:  item.descricao || 'Conta a receber (Conta Azul)',
+    tipo:       item.categorias?.[0]?.nome || 'Outros',
+    emissao:    (item.data_competencia || item.data_criacao || '').slice(0,10),
     vencimento: (item.data_vencimento || '').slice(0,10),
-    valor:      Number(item.valor || item.valor_total || 0),
-    status:     (item.situacao === 'RECEBIDO' || item.recebido) ? 'recebido' : undefined,
+    valor:      Number(item.total || 0),
+    status:     item.status === 'ACQUITTED' ? 'recebido' : undefined,
     origem:     'contaazul',
   };
 }
