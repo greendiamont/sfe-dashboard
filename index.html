@@ -2961,15 +2961,16 @@ document.addEventListener('DOMContentLoaded', () => {
   try { buildQuickQueries(); } catch(e) {}
 
   if (sessionOk) {
-    // ── Cliente real logado — iniciar com dados ZERADOS ──
-    // Limpar qualquer dado demo que possa ter sobrado no localStorage
+    // ── Cliente real logado ──
+    // Limpa só o dado de DEMONSTRAÇÃO — NÃO apaga mais Contas a Pagar/Receber,
+    // Clientes ou Fornecedores, porque essas chaves agora podem conter dado
+    // sincronizado de verdade (Conta Azul), que precisa sobreviver a um refresh
+    // da página. Apagar isso a cada carregamento fazia o usuário "perder" tudo
+    // que tinha acabado de sincronizar.
     localStorage.removeItem('sfe_demo_v2');
-    localStorage.removeItem('sfe_cp_v1');
-    localStorage.removeItem('sfe_cr_v1');
-    localStorage.removeItem('sfe_cli_v1');
-    localStorage.removeItem('sfe_frn_v1');
 
-    // Iniciar estado vazio
+    // Zera só o estado em memória do extrato bancário (Pluggy) — não é dado
+    // persistente, e o sync automático abaixo já repopula na sequência
     S.accounts     = [];
     S.transactions = [];
 
@@ -7273,4 +7274,3 @@ function extExportCSV(){
 
 </body>
 </html>
-
