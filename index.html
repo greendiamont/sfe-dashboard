@@ -2182,6 +2182,7 @@ body {
       <button class="rel-tab active" id="rel-tab-gastos"    onclick="relSetTab('gastos')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid var(--gold);background:transparent;color:var(--gold)">📊 Categorização de Gastos</button>
       <button class="rel-tab"        id="rel-tab-prev"      onclick="relSetTab('prev')"      style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">📈 Previsionamento de Caixa</button>
       <button class="rel-tab"        id="rel-tab-pareto"    onclick="relSetTab('pareto')"    style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">🎯 Análise de Pareto</button>
+      <button class="rel-tab"        id="rel-tab-comparativo" onclick="relSetTab('comparativo')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">📅 Comparativo</button>
       <button class="rel-tab"        id="rel-tab-custom"    onclick="relSetTab('custom')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--t1)">⚙ Meu Relatório</button>
     </div>
 
@@ -2295,6 +2296,37 @@ body {
     </div>
 
   </div>
+</div>
+
+<!-- ══ TAB — COMPARATIVO MÊS A MÊS / ANO A ANO ══ -->
+<div id="rel-panel-comparativo" style="display:none;border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:24px;margin-bottom:24px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div style="font-family:var(--f-display);font-size:15px;font-weight:700;color:var(--tx0)">Comparativo por Categoria</div>
+    <div style="display:flex;gap:0;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius-sm);overflow:hidden">
+      <button id="comp-modo-mensal" class="btn-sys" onclick="compSetModo('mensal')" style="border:none;border-radius:0;padding:8px 16px;background:var(--gold);color:#000;font-weight:700">Mês a Mês</button>
+      <button id="comp-modo-anual"  class="btn-sys" onclick="compSetModo('anual')"  style="border:none;border-radius:0;padding:8px 16px">Ano a Ano</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;margin-bottom:20px;overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:700px">
+      <thead><tr id="comp-thead" style="background:var(--ink4)"></tr></thead>
+      <tbody id="comp-tbody"></tbody>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--tx0);margin-bottom:12px">🏆 Top Clientes — Recebido no Período</div>
+      <div id="comp-top-clientes"></div>
+    </div>
+    <div class="card">
+      <div style="font-family:var(--f-display);font-size:13px;font-weight:700;color:var(--tx0);margin-bottom:12px">🏆 Top Fornecedores — Pago no Período</div>
+      <div id="comp-top-fornecedores"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ── PAINEL RELATÓRIO PERSONALIZADO ── -->
@@ -4165,7 +4197,12 @@ function renderCP() {
   // Summaries
   const vencidos  = data.filter(i=>statusCP(i)==='vencido');
   const prox7d    = data.filter(i=>['hoje','7d'].includes(statusCP(i)));
-  const pagos     = data.filter(i=>statusCP(i)==='pago');
+  // "Pago no Mês" precisa olhar QUANDO foi pago, dentro do período selecionado no topo —
+  // não simplesmente "todo título já marcado como pago alguma vez" (isso incluía anos de
+  // histórico sincronizado, virando um total enorme sem sentido pro rótulo "no Mês")
+  const diasPeriodo = parseInt(document.getElementById('period-sel')?.value || 30);
+  const corteData   = new Date(Date.now() - diasPeriodo*86400000).toISOString().slice(0,10);
+  const pagos     = data.filter(i => statusCP(i)==='pago' && (i.pagoEm || i.vencimento) >= corteData);
   const pendentes = data.filter(i=>statusCP(i)!=='pago');
   const sum = arr => arr.reduce((s,i)=>s+i.valor,0);
 
@@ -4229,7 +4266,11 @@ function renderCR() {
   // Summaries
   const vencidos  = data.filter(i=>statusCR(i)==='vencido');
   const prox7d    = data.filter(i=>['hoje','7d'].includes(statusCR(i)));
-  const recebidos = data.filter(i=>statusCR(i)==='recebido');
+  // Mesmo ajuste do CP: "Recebido no Mês" precisa olhar quando foi recebido, dentro do
+  // período selecionado — não todo título já marcado como recebido alguma vez no histórico
+  const diasPeriodoR = parseInt(document.getElementById('period-sel')?.value || 30);
+  const corteDataR   = new Date(Date.now() - diasPeriodoR*86400000).toISOString().slice(0,10);
+  const recebidos = data.filter(i => statusCR(i)==='recebido' && (i.recebidoEm || i.vencimento) >= corteDataR);
   const pendentes = data.filter(i=>statusCR(i)!=='recebido');
   const sum = arr => arr.reduce((s,i)=>s+i.valor,0);
 
@@ -5863,14 +5904,43 @@ function ofxConfirmarImport() {
 let _relTab = 'gastos';
 let _relCharts = {};
 
-function renderRelatorios() {
-  const days = parseInt(document.getElementById('rel-period')?.value || 30);
-  const from = new Date(Date.now() - days * 86400000);
-  const txs  = S.transactions.filter(t => new Date(t.date) >= from);
+// Combina extrato bancário (Pluggy) + Contas a Pagar já PAGAS + Contas a Receber já
+// RECEBIDAS numa única lista de eventos, no mesmo formato que os relatórios já esperam
+// ({date, amount, _category, description}) — assim as abas de relatório funcionam mesmo
+// pra empresas que não têm Pluggy conectado e vivem 100% de dados sincronizados da Conta
+// Azul (como o Timbó). Usa a data REAL de pagamento/recebimento, não o vencimento.
+function getEventosFinanceiros(from, until) {
+  const eventos = S.transactions.filter(t => { const d = new Date(t.date); return d >= from && d <= until; }).slice();
 
-  if (_relTab === 'gastos')  renderRelGastos(txs, days);
-  if (_relTab === 'prev')    renderRelPrev(txs, days);
-  if (_relTab === 'pareto')  renderRelPareto(txs, days);
+  loadCP().filter(i => statusCP(i) === 'pago').forEach(i => {
+    const dataRef = i.pagoEm || i.vencimento;
+    const d = new Date(dataRef);
+    if (dataRef && d >= from && d <= until) {
+      eventos.push({ date: dataRef, amount: -Math.abs(i.valor), _category: i.categoria || 'Outros', description: i.fornecedor || i.descricao || '', _origem: 'cp' });
+    }
+  });
+
+  loadCR().filter(i => statusCR(i) === 'recebido').forEach(i => {
+    const dataRef = i.recebidoEm || i.vencimento;
+    const d = new Date(dataRef);
+    if (dataRef && d >= from && d <= until) {
+      eventos.push({ date: dataRef, amount: Math.abs(i.valor), _category: i.tipo || 'Outros', description: i.cliente || i.descricao || '', _origem: 'cr' });
+    }
+  });
+
+  return eventos;
+}
+
+function renderRelatorios() {
+  const days  = parseInt(document.getElementById('rel-period')?.value || 30);
+  const from  = new Date(Date.now() - days * 86400000);
+  const until = new Date();
+  const txs   = getEventosFinanceiros(from, until);
+
+  if (_relTab === 'gastos')      renderRelGastos(txs, days);
+  if (_relTab === 'prev')        renderRelPrev(txs, days);
+  if (_relTab === 'pareto')      renderRelPareto(txs, days);
+  if (_relTab === 'comparativo') renderRelComparativo();
 }
 
 // ── TAB 1: CATEGORIZAÇÃO DE GASTOS ──────────────────────────
@@ -6086,7 +6156,7 @@ async function gerarPrevIA() {
   const iaEl   = document.getElementById('rel-prev-ia');
   const days   = parseInt(document.getElementById('rel-period')?.value||30);
   const from   = new Date(Date.now()-days*86400000);
-  const txs    = S.transactions.filter(t=>new Date(t.date)>=from);
+  const txs    = getEventosFinanceiros(from, new Date());
   const saldo  = S.accounts.reduce((s,a)=>s+(a.balance||0),0);
   const ent    = txs.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
   const sai    = Math.abs(txs.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0));
@@ -6223,9 +6293,109 @@ function customToggleTodos(cb, tipo) {
   }
 }
 
+// ── TAB — COMPARATIVO MÊS A MÊS / ANO A ANO ─────────────────
+let _compModo = 'mensal';
+
+function compSetModo(modo) {
+  _compModo = modo;
+  const mEl = document.getElementById('comp-modo-mensal');
+  const aEl = document.getElementById('comp-modo-anual');
+  if (mEl) { mEl.style.background = modo==='mensal' ? 'var(--gold)' : ''; mEl.style.color = modo==='mensal' ? '#000' : ''; }
+  if (aEl) { aEl.style.background = modo==='anual'  ? 'var(--gold)' : ''; aEl.style.color = modo==='anual'  ? '#000' : ''; }
+  renderRelComparativo();
+}
+
+function renderRelComparativo() {
+  const hoje = new Date();
+  let colunas = [];
+
+  if (_compModo === 'mensal') {
+    for (let i=11; i>=0; i--) {
+      const ref   = new Date(hoje.getFullYear(), hoje.getMonth()-i, 1);
+      const from  = new Date(ref.getFullYear(), ref.getMonth(), 1);
+      const until = new Date(ref.getFullYear(), ref.getMonth()+1, 0, 23,59,59);
+      colunas.push({ label: ref.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}), from, until });
+    }
+  } else {
+    const anoAtual = hoje.getFullYear();
+    for (let i=4; i>=0; i--) {
+      const ano = anoAtual - i;
+      colunas.push({ label: String(ano), from: new Date(ano,0,1), until: new Date(ano,11,31,23,59,59) });
+    }
+  }
+
+  const eventos = getEventosFinanceiros(colunas[0].from, colunas[colunas.length-1].until);
+
+  const catsEntrada = new Set(), catsSaida = new Set();
+  eventos.forEach(e => { (e.amount >= 0 ? catsEntrada : catsSaida).add(e._category || 'Outros'); });
+
+  function matriz(cats, sinal) {
+    return [...cats].sort().map(cat => {
+      const valores = colunas.map(col => eventos
+        .filter(e => (e._category||'Outros')===cat && Math.sign(e.amount)===sinal && new Date(e.date)>=col.from && new Date(e.date)<=col.until)
+        .reduce((s,e)=>s+Math.abs(e.amount),0));
+      return { cat, valores, total: valores.reduce((s,v)=>s+v,0) };
+    }).sort((a,b)=>b.total-a.total);
+  }
+
+  const linhasEntrada = matriz(catsEntrada, 1);
+  const linhasSaida   = matriz(catsSaida, -1);
+
+  const thead = document.getElementById('comp-thead');
+  if (thead) thead.innerHTML = `<th style="text-align:left;padding:10px 14px;font-size:9px;color:var(--tx4);text-transform:uppercase">Categoria</th>` +
+    colunas.map(c => `<th style="text-align:right;padding:10px 10px;font-size:9px;color:var(--tx4);text-transform:uppercase">${c.label}</th>`).join('') +
+    `<th style="text-align:right;padding:10px 14px;font-size:9px;color:var(--gold);text-transform:uppercase">Total</th>`;
+
+  function linhaHtml(l, cor) {
+    return `<tr style="border-bottom:1px solid var(--b1)">
+      <td style="padding:9px 14px;font-size:12px;color:var(--tx1)">${l.cat}</td>
+      ${l.valores.map(v => `<td style="text-align:right;padding:9px 10px;font-family:var(--f-mono);font-size:11px;color:${v?cor:'var(--tx4)'}">${v?fmtK(v):'—'}</td>`).join('')}
+      <td style="text-align:right;padding:9px 14px;font-family:var(--f-mono);font-size:12px;font-weight:700;color:${cor}">${fmt(l.total)}</td>
+    </tr>`;
+  }
+
+  const tbody = document.getElementById('comp-tbody');
+  if (tbody) {
+    let html = '';
+    if (linhasEntrada.length) {
+      html += `<tr style="background:var(--ink5)"><td colspan="${colunas.length+2}" style="padding:6px 14px;font-size:9px;font-weight:700;color:var(--pos);text-transform:uppercase">▲ Entradas</td></tr>`;
+      html += linhasEntrada.map(l => linhaHtml(l, 'var(--pos)')).join('');
+    }
+    if (linhasSaida.length) {
+      html += `<tr style="background:var(--ink5)"><td colspan="${colunas.length+2}" style="padding:6px 14px;font-size:9px;font-weight:700;color:var(--neg);text-transform:uppercase">▼ Saídas</td></tr>`;
+      html += linhasSaida.map(l => linhaHtml(l, 'var(--neg)')).join('');
+    }
+    tbody.innerHTML = html || `<tr><td colspan="${colunas.length+2}" style="padding:24px;text-align:center;color:var(--tx4)">Nenhum dado no período</td></tr>`;
+  }
+
+  // Top clientes/fornecedores — soma no intervalo total das colunas mostradas
+  const topClientes = {}, topFornecedores = {};
+  eventos.filter(e => e._origem === 'cr').forEach(e => {
+    const nome = e.description || 'Não identificado';
+    topClientes[nome] = (topClientes[nome]||0) + e.amount;
+  });
+  eventos.filter(e => e._origem === 'cp').forEach(e => {
+    const nome = e.description || 'Não identificado';
+    topFornecedores[nome] = (topFornecedores[nome]||0) + Math.abs(e.amount);
+  });
+
+  function renderTop(mapa, elId, cor) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const entries = Object.entries(mapa).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    el.innerHTML = entries.length ? entries.map(([nome,val],i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--b1)">
+        <span style="font-size:12px;color:var(--tx2)">${i+1}. ${nome}</span>
+        <span style="font-family:var(--f-mono);font-size:12px;font-weight:700;color:${cor}">${fmt(val)}</span>
+      </div>`).join('') : '<div style="color:var(--tx4);font-size:12px;padding:12px 0">Sem dados no período</div>';
+  }
+  renderTop(topClientes, 'comp-top-clientes', 'var(--pos)');
+  renderTop(topFornecedores, 'comp-top-fornecedores', 'var(--neg)');
+}
+
 function relSetTab(tab) {
   _relTab = tab;
-  ['gastos','prev','pareto','custom'].forEach(t => {
+  ['gastos','prev','pareto','comparativo','custom'].forEach(t => {
     const btn   = document.getElementById('rel-tab-' + t);
     const panel = t === 'custom' ? document.getElementById('rel-panel-custom') : document.getElementById('rel-panel-' + t);
     const active = t === tab;
@@ -6919,6 +7089,7 @@ function mapContaAzulParaCP(item) {
     vencimento: vencimento,
     valor:      Number(item.total || 0),
     status:     antesDoCorte ? 'pago' : (item.status === 'ACQUITTED' ? 'pago' : undefined),
+    pagoEm:     (item.data_alteracao || '').slice(0,10) || null,
     origem:     'contaazul',
   };
 }
@@ -6936,6 +7107,7 @@ function mapContaAzulParaCR(item) {
     vencimento: vencimento,
     valor:      Number(item.total || 0),
     status:     antesDoCorte ? 'recebido' : (item.status === 'ACQUITTED' ? 'recebido' : undefined),
+    recebidoEm: (item.data_alteracao || '').slice(0,10) || null,
     origem:     'contaazul',
   };
 }
@@ -7336,4 +7508,3 @@ function extExportCSV(){
 
 </body>
 </html>
-
