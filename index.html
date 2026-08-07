@@ -1543,6 +1543,7 @@ body {
         <button class="sync-menu-item" onclick="closeSyncMenuAnd(doSyncAll)">🔄&nbsp;&nbsp;Sincronizar Tudo</button>
         <button class="sync-menu-item" onclick="closeSyncMenuAnd(doSync)">🏦&nbsp;&nbsp;Pluggy — Extrato Bancário</button>
         <button class="sync-menu-item" onclick="closeSyncMenuAnd(doSyncContaAzul)">📊&nbsp;&nbsp;Conta Azul — CP/CR</button>
+        <button class="sync-menu-item" onclick="closeSyncMenuAnd(limparDadosNaoReais)" style="color:var(--neg)">🗑&nbsp;&nbsp;Limpar Dados de Teste</button>
       </div>
     </div>
 
@@ -6758,6 +6759,25 @@ document.addEventListener('click', function() {
   if (m) m.style.display = 'none';
 });
 
+// Remove tudo de Contas a Pagar/Receber que NÃO veio da sincronização com a Conta
+// Azul (dado de teste/demo que ficou de sobra) — mantém só o que tem origem:'contaazul',
+// que é o dado real. Não mexe em Clientes/Fornecedores nem no extrato bancário.
+function limparDadosNaoReais() {
+  const cpTotal = loadCP().length, crTotal = loadCR().length;
+  const cpReal  = loadCP().filter(i => i.origem === 'contaazul');
+  const crReal  = loadCR().filter(i => i.origem === 'contaazul');
+  const removidos = (cpTotal - cpReal.length) + (crTotal - crReal.length);
+
+  if (!removidos) { alert('Não havia dados de teste pra remover — já está tudo vindo da Conta Azul.'); return; }
+  if (!confirm(`Isso vai remover ${removidos} lançamento(s) de Contas a Pagar/Receber que não vieram da Conta Azul (dado manual/teste). Os dados sincronizados da Conta Azul não são afetados. Confirma?`)) return;
+
+  saveCP_data(cpReal);
+  saveCR_data(crReal);
+  renderCP();
+  renderCR();
+  alert(`${removidos} lançamento(s) de teste removido(s).`);
+}
+
 async function doSyncAll() {
   const btn = document.getElementById('sync-btn');
   if (btn) { btn.textContent = '⏳ Sincronizando...'; btn.disabled = true; }
@@ -6848,10 +6868,24 @@ async function doSyncContaAzul() {
   }
 }
 
+// Muitos lançamentos da Conta Azul não têm fornecedor/cliente vinculado no cadastro
+// deles (nome:null) — mas o nome geralmente já aparece dentro da própria descrição
+// (ex: "DEBITO PIX - JOICE QUELI DE SOUZA COUTO"). Extrai isso como fallback melhor
+// do que mostrar só um texto genérico.
+function extrairNomeDaDescricao(descricao) {
+  if (!descricao) return null;
+  const partes = String(descricao).split(/\s+[-–]\s+/);
+  if (partes.length > 1) {
+    const candidato = partes[partes.length - 1].trim();
+    if (candidato.length > 2) return candidato;
+  }
+  return null;
+}
+
 function mapContaAzulParaCP(item) {
   return {
     id:         'ca_' + (item.id || (Date.now() + Math.random())),
-    fornecedor: item.fornecedor?.nome || 'Fornecedor Conta Azul',
+    fornecedor: item.fornecedor?.nome || extrairNomeDaDescricao(item.descricao) || 'Fornecedor Conta Azul',
     doc:        '',
     descricao:  item.descricao || 'Conta a pagar (Conta Azul)',
     categoria:  item.categorias?.[0]?.nome || 'Outros',
@@ -6866,7 +6900,7 @@ function mapContaAzulParaCP(item) {
 function mapContaAzulParaCR(item) {
   return {
     id:         'ca_' + (item.id || (Date.now() + Math.random())),
-    cliente:    item.cliente?.nome || item.fornecedor?.nome || 'Cliente Conta Azul',
+    cliente:    item.cliente?.nome || item.fornecedor?.nome || extrairNomeDaDescricao(item.descricao) || 'Cliente Conta Azul',
     cnpj:       '',
     descricao:  item.descricao || 'Conta a receber (Conta Azul)',
     tipo:       item.categorias?.[0]?.nome || 'Outros',
