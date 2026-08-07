@@ -3114,8 +3114,12 @@ function navTo(page, navEl, sbEl) {
     const from = new Date(Date.now() - days * 86400000);
     const txs  = S.transactions.filter(t => new Date(t.date) >= from);
     if (page === 'relatorios') {
-      // Se não há dados, carregar demo automaticamente para visualizar relatórios
-      if (!S.transactions.length) {
+      // Só carrega demo automaticamente se JÁ estivermos em modo Demo de propósito.
+      // Pra uma empresa real (como o Timbó) sem extrato bancário conectado ainda, isso
+      // NÃO deve rodar — buildDemo() apaga sfe_cp_v1/sfe_cr_v1/sfe_cli_v1/sfe_frn_v1 do
+      // localStorage por conta própria, o que destruía o que a Conta Azul já tinha sincronizado
+      // só de o usuário visitar essa página, sem nem clicar em nada.
+      if (!S.transactions.length && SFE_SESSION?.demo) {
         buildDemo();
         seedDemoData(); renderCP(); renderCR();
         seedCadastros(); renderClientes(); renderFornecedores();
@@ -6764,18 +6768,33 @@ document.addEventListener('click', function() {
 // que é o dado real. Não mexe em Clientes/Fornecedores nem no extrato bancário.
 function limparDadosNaoReais() {
   const cpTotal = loadCP().length, crTotal = loadCR().length;
+  const cliTotal = loadCLI().length, frnTotal = loadFRN().length;
   const cpReal  = loadCP().filter(i => i.origem === 'contaazul');
   const crReal  = loadCR().filter(i => i.origem === 'contaazul');
-  const removidos = (cpTotal - cpReal.length) + (crTotal - crReal.length);
+  // Clientes/Fornecedores ainda não têm sincronização real de nenhuma fonte — o que
+  // existir aí hoje é 100% dado de demonstração (seedCadastros), então remove tudo.
+  const removidosCPCR = (cpTotal - cpReal.length) + (crTotal - crReal.length);
+  const removidosCadastro = cliTotal + frnTotal;
+  const removidos = removidosCPCR + removidosCadastro;
 
-  if (!removidos) { alert('Não havia dados de teste pra remover — já está tudo vindo da Conta Azul.'); return; }
-  if (!confirm(`Isso vai remover ${removidos} lançamento(s) de Contas a Pagar/Receber que não vieram da Conta Azul (dado manual/teste). Os dados sincronizados da Conta Azul não são afetados. Confirma?`)) return;
+  if (!removidos) { alert('Não havia dados de teste pra remover.'); return; }
+  if (!confirm(`Isso vai remover:\n- ${removidosCPCR} lançamento(s) de Contas a Pagar/Receber que não vieram da Conta Azul\n- ${cliTotal} cliente(s) e ${frnTotal} fornecedor(es) de demonstração\n\nOs dados sincronizados da Conta Azul não são afetados. Confirma?`)) return;
 
   saveCP_data(cpReal);
   saveCR_data(crReal);
+  saveCLI_data([]);
+  saveFRN_data([]);
+  // Se o extrato bancário estava com dado de demonstração (buildDemo), zera também
+  localStorage.removeItem('sfe_demo_v2');
+  S.accounts = [];
+  S.transactions = [];
+
   renderCP();
   renderCR();
-  alert(`${removidos} lançamento(s) de teste removido(s).`);
+  renderClientes();
+  renderFornecedores();
+  renderPainel(S.transactions);
+  alert(`${removidos} item(ns) de teste removido(s).`);
 }
 
 async function doSyncAll() {
