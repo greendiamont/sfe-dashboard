@@ -2184,6 +2184,7 @@ body {
       <button class="rel-tab"        id="rel-tab-pareto"    onclick="relSetTab('pareto')"    style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">🎯 Análise de Pareto</button>
       <button class="rel-tab"        id="rel-tab-comparativo" onclick="relSetTab('comparativo')" style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">📅 Comparativo</button>
       <button class="rel-tab"        id="rel-tab-custom"    onclick="relSetTab('custom')"    style="font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--t1)">⚙ Meu Relatório</button>
+      <button class="rel-tab"        id="rel-tab-poiema"    onclick="relSetTab('poiema')"    style="font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.5px;padding:12px 22px;border:none;cursor:pointer;border-bottom:2px solid transparent;background:transparent;color:var(--tx3)">💎 Relatórios Poiema</button>
     </div>
 
     <!-- ══ TAB 1 — CATEGORIZAÇÃO DE GASTOS ══ -->
@@ -2483,6 +2484,93 @@ body {
       <div id="custom-preview-content" style="display:none"></div>
     </div>
   </div>
+</div>
+
+<!-- ══ TAB POIEMA — RELATÓRIOS PASTORAIS (TBO) ══ -->
+<div id="rel-panel-poiema" style="display:none;border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:24px;margin-bottom:24px">
+
+  <!-- Barra de controle: tipo de relatório + ano + config -->
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px">
+    <select class="sel" id="poiema-tipo" onchange="poiemaRender()" style="min-width:280px">
+      <option value="saldoBancario">Posição Saldo Bancário</option>
+      <option value="investimentos">Investimentos</option>
+      <option value="preletores">Gastos com Preletores externos</option>
+      <option value="fluxoBanco">Fluxo de Caixa (Banco)</option>
+      <option value="eventosPagos">Eventos Pagos</option>
+      <option value="dizimos">Dízimos e ofertas</option>
+      <option value="caixaAdm">Caixa ADM — Local em dinheiro</option>
+      <option value="store">Fluxo de Caixa (Store)</option>
+    </select>
+    <select class="sel" id="poiema-ano" onchange="poiemaRender()"></select>
+    <button class="btn btn-ghost" onclick="poiemaToggleConfig()" id="poiema-config-btn" style="margin-left:auto">⚙ Configurar</button>
+  </div>
+
+  <!-- Painel de configuração (categorias + caixas manuais) -->
+  <div id="poiema-config-panel" style="display:none;background:var(--ink4);border:1px solid var(--b1);border-radius:var(--radius);padding:20px;margin-bottom:20px">
+
+    <div style="font-family:var(--f-display);font-size:14px;font-weight:700;color:var(--tx0);margin-bottom:14px">⚙ Configuração dos Relatórios Poiema</div>
+
+    <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Categorias da Conta Azul</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Investimentos</div><input class="form-input" id="poiema-cat-investimentos" placeholder="Nome exato da categoria" style="font-size:12px"></div>
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Preletores externos</div><input class="form-input" id="poiema-cat-preletores" placeholder="Nome exato da categoria" style="font-size:12px"></div>
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Eventos Pagos</div><input class="form-input" id="poiema-cat-eventosPagos" placeholder="Nome exato da categoria" style="font-size:12px"></div>
+    </div>
+
+    <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Saldos Iniciais (acerto do primeiro mês)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Banco — Saldo em</div><input class="form-input" type="date" id="poiema-si-banco-data" style="font-size:12px"></div>
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Banco — Valor (R$)</div><input class="form-input" type="number" step="0.01" id="poiema-si-banco-valor" style="font-size:12px"></div>
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Eventos Pagos — Saldo em</div><input class="form-input" type="date" id="poiema-si-eventos-data" style="font-size:12px"></div>
+      <div><div style="font-size:10px;color:var(--tx4);margin-bottom:4px">Eventos Pagos — Valor (R$)</div><input class="form-input" type="number" step="0.01" id="poiema-si-eventos-valor" style="font-size:12px"></div>
+    </div>
+
+    <button class="btn btn-gold" onclick="poiemaSalvarConfig()" style="margin-bottom:20px">💾 Salvar Configuração</button>
+
+    <div style="border-top:1px solid var(--b1);padding-top:16px">
+      <div style="font-family:var(--f-mono);font-size:9px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Caixas Manuais — Lançamentos</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <select class="sel" id="poiema-lc-caixa" onchange="poiemaCarregarLancamentos()">
+          <option value="caixaAdm">Caixa ADM — Local em dinheiro</option>
+          <option value="store">Store</option>
+        </select>
+        <div style="font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px">
+          Saldo inicial: <input class="form-input" type="date" id="poiema-lc-saldo-data" style="font-size:11px;width:130px">
+          <input class="form-input" type="number" step="0.01" id="poiema-lc-saldo-valor" style="font-size:11px;width:110px" placeholder="R$ 0,00">
+          <button class="btn btn-ghost" onclick="poiemaSalvarSaldoInicialCaixa()" style="font-size:10px">Salvar</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:120px 110px 100px 1fr 90px;gap:8px;margin-bottom:10px">
+        <input class="form-input" type="date" id="poiema-lc-data" style="font-size:11px">
+        <input class="form-input" type="number" step="0.01" id="poiema-lc-valor" placeholder="Valor" style="font-size:11px">
+        <select class="sel" id="poiema-lc-tipo" style="font-size:11px">
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <input class="form-input" id="poiema-lc-desc" placeholder="Descrição / Categoria (opcional)" style="font-size:11px">
+        <button class="btn btn-gold" onclick="poiemaAdicionarLancamento()" style="font-size:11px">+ Add</button>
+      </div>
+
+      <div id="poiema-lc-lista" style="max-height:260px;overflow-y:auto;font-size:12px"></div>
+    </div>
+  </div>
+
+  <!-- Cabeçalho do relatório (estilo dos modelos TBO) -->
+  <div style="border:1px solid var(--b1);border-radius:var(--radius) var(--radius) 0 0;background:var(--ink4);display:flex;align-items:center;justify-content:space-between;padding:14px 20px">
+    <div id="poiema-titulo" style="font-family:var(--f-display);font-size:18px;font-weight:700;color:var(--tx0)"></div>
+    <div id="poiema-data" style="font-family:var(--f-mono);font-size:12px;color:var(--tx3)"></div>
+  </div>
+
+  <!-- Blocos de resumo (saldo início / fim / resultado / totais) -->
+  <div id="poiema-resumo" style="border:1px solid var(--b1);border-top:none;background:var(--ink3);padding:14px 20px;display:flex;gap:32px;flex-wrap:wrap;font-size:12px"></div>
+
+  <!-- Gráfico -->
+  <div style="border:1px solid var(--b1);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--ink3);padding:20px;height:380px">
+    <canvas id="poiema-chart"></canvas>
+  </div>
+
+  <div style="font-size:10px;color:var(--tx5);font-style:italic;margin-top:8px">Relatórios Pastorais — SFE Pro</div>
 </div>
 
 
@@ -5931,6 +6019,346 @@ function getEventosFinanceiros(from, until) {
   return eventos;
 }
 
+// ══ RELATÓRIOS POIEMA (TBO) ═══════════════════════════════════
+// 8 relatórios pastorais reproduzindo os modelos em PDF da Poiema/TBO.
+// Dados: Dízimos/Eventos Pagos/Investimentos/Preletores vêm da Conta Azul
+// (via getEventosFinanceiros + categorias configuráveis). Caixa ADM e Store
+// são lançados manualmente e ficam salvos no backend (empresa.poiema).
+
+const MESES_PT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+let poiemaConfig = null;
+let poiemaChart  = null;
+
+function poiemaAuthHeaders() {
+  const token = (SFE_SESSION && SFE_SESSION.token) || JSON.parse(localStorage.getItem('sfe_session')||'{}').token;
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (token || '') };
+}
+function poiemaDoc() {
+  return ((SFE_SESSION && SFE_SESSION.empresa && SFE_SESSION.empresa.cnpj) || DEMO.cnpj || '').replace(/\D/g,'');
+}
+async function poiemaFetch(path, opts) {
+  const beUrl = (S.cfg && S.cfg.be) || BE_URL;
+  const r = await fetch(`${beUrl}/api/empresa/${poiemaDoc()}${path}`, Object.assign({ headers: poiemaAuthHeaders() }, opts||{}));
+  const data = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(data.error || 'Erro na requisição');
+  return data;
+}
+
+function poiemaInit() {
+  // Popular seletor de anos (ano atual -2 até +1)
+  const anoSel = document.getElementById('poiema-ano');
+  if (anoSel && !anoSel.dataset.pop) {
+    const anoAtual = new Date().getFullYear();
+    let opts = '';
+    for (let a = anoAtual - 2; a <= anoAtual + 1; a++) opts += `<option value="${a}" ${a===anoAtual?'selected':''}>${a}</option>`;
+    anoSel.innerHTML = opts;
+    anoSel.dataset.pop = '1';
+  }
+  poiemaCarregarConfig().then(poiemaRender);
+}
+
+async function poiemaCarregarConfig() {
+  try {
+    const data = await poiemaFetch('/poiema-config', { method: 'GET' });
+    poiemaConfig = data;
+    document.getElementById('poiema-cat-investimentos').value = data.categorias?.investimentos || '';
+    document.getElementById('poiema-cat-preletores').value    = data.categorias?.preletores || '';
+    document.getElementById('poiema-cat-eventosPagos').value  = data.categorias?.eventosPagos || '';
+    document.getElementById('poiema-si-banco-data').value     = data.saldosIniciais?.banco?.data || '';
+    document.getElementById('poiema-si-banco-valor').value    = data.saldosIniciais?.banco?.valor || 0;
+    document.getElementById('poiema-si-eventos-data').value   = data.saldosIniciais?.eventosPagos?.data || '';
+    document.getElementById('poiema-si-eventos-valor').value  = data.saldosIniciais?.eventosPagos?.valor || 0;
+  } catch(e) {
+    console.warn('[Poiema] Não foi possível carregar config:', e.message);
+    poiemaConfig = { categorias:{investimentos:'',preletores:'',eventosPagos:''}, saldosIniciais:{banco:{valor:0,data:''},eventosPagos:{valor:0,data:''}}, caixas:{caixaAdm:{saldoInicial:0},store:{saldoInicial:0}} };
+  }
+}
+
+function poiemaToggleConfig() {
+  const p = document.getElementById('poiema-config-panel');
+  const abrir = p.style.display === 'none';
+  p.style.display = abrir ? '' : 'none';
+  if (abrir) poiemaCarregarLancamentos();
+}
+
+async function poiemaSalvarConfig() {
+  try {
+    await poiemaFetch('/poiema-config', { method:'PUT', body: JSON.stringify({
+      categorias: {
+        investimentos: document.getElementById('poiema-cat-investimentos').value,
+        preletores:    document.getElementById('poiema-cat-preletores').value,
+        eventosPagos:  document.getElementById('poiema-cat-eventosPagos').value,
+      },
+      saldosIniciais: {
+        banco:        { valor: parseFloat(document.getElementById('poiema-si-banco-valor').value)||0,   data: document.getElementById('poiema-si-banco-data').value },
+        eventosPagos: { valor: parseFloat(document.getElementById('poiema-si-eventos-valor').value)||0, data: document.getElementById('poiema-si-eventos-data').value },
+      }
+    })});
+    await poiemaCarregarConfig();
+    poiemaRender();
+    alert('Configuração salva!');
+  } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+async function poiemaCarregarLancamentos() {
+  const caixa = document.getElementById('poiema-lc-caixa').value;
+  try {
+    const data = await poiemaFetch(`/poiema-caixa/${caixa}/lancamentos`, { method:'GET' });
+    document.getElementById('poiema-lc-saldo-data').value  = data.dataSaldoInicial || '';
+    document.getElementById('poiema-lc-saldo-valor').value = data.saldoInicial || 0;
+    const lista = document.getElementById('poiema-lc-lista');
+    if (!data.lancamentos.length) { lista.innerHTML = '<div style="color:var(--tx5);padding:10px 0">Nenhum lançamento ainda.</div>'; return; }
+    lista.innerHTML = data.lancamentos.map(l => `
+      <div style="display:grid;grid-template-columns:90px 100px 70px 1fr 30px;gap:8px;padding:6px 0;border-bottom:1px solid var(--b1);align-items:center">
+        <span>${l.data}</span>
+        <span style="color:${l.tipo==='entrada'?'var(--pos)':'var(--neg)'}">${l.tipo==='entrada'?'+':'-'} R$ ${l.valor.toFixed(2)}</span>
+        <span style="font-size:10px;color:var(--tx4)">${l.tipo}</span>
+        <span style="font-size:11px;color:var(--tx3)">${l.descricao||l.categoria||'—'}</span>
+        <button onclick="poiemaRemoverLancamento('${caixa}','${l.id}')" style="background:none;border:none;color:var(--neg);cursor:pointer">✕</button>
+      </div>`).join('');
+  } catch(e) { console.warn('[Poiema] erro ao carregar lançamentos:', e.message); }
+}
+
+async function poiemaSalvarSaldoInicialCaixa() {
+  const caixa = document.getElementById('poiema-lc-caixa').value;
+  try {
+    await poiemaFetch(`/poiema-caixa/${caixa}/saldo-inicial`, { method:'PUT', body: JSON.stringify({
+      saldoInicial: parseFloat(document.getElementById('poiema-lc-saldo-valor').value)||0,
+      dataSaldoInicial: document.getElementById('poiema-lc-saldo-data').value,
+    })});
+    poiemaRender();
+    alert('Saldo inicial salvo!');
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function poiemaAdicionarLancamento() {
+  const caixa = document.getElementById('poiema-lc-caixa').value;
+  const data  = document.getElementById('poiema-lc-data').value;
+  const valor = parseFloat(document.getElementById('poiema-lc-valor').value);
+  const tipo  = document.getElementById('poiema-lc-tipo').value;
+  const desc  = document.getElementById('poiema-lc-desc').value;
+  if (!data || !valor) { alert('Preencha data e valor'); return; }
+  try {
+    await poiemaFetch(`/poiema-caixa/${caixa}/lancamentos`, { method:'POST', body: JSON.stringify({ data, valor, tipo, descricao: desc }) });
+    document.getElementById('poiema-lc-valor').value = '';
+    document.getElementById('poiema-lc-desc').value  = '';
+    await poiemaCarregarLancamentos();
+    poiemaRender();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function poiemaRemoverLancamento(caixa, id) {
+  if (!confirm('Remover este lançamento?')) return;
+  try {
+    await poiemaFetch(`/poiema-caixa/${caixa}/lancamentos/${id}`, { method:'DELETE' });
+    await poiemaCarregarLancamentos();
+    poiemaRender();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+// ── Helpers de cálculo mensal ──
+
+// Soma mensal (jan..dez) de um array de eventos {date, amount}, filtrado por predicado opcional
+function poiemaMensal(eventos, year, filtro) {
+  const entradas = Array(12).fill(0), saidas = Array(12).fill(0);
+  eventos.forEach(ev => {
+    const d = new Date(ev.date);
+    if (d.getFullYear() !== year) return;
+    if (filtro && !filtro(ev)) return;
+    const m = d.getMonth();
+    if (ev.amount >= 0) entradas[m] += ev.amount; else saidas[m] += Math.abs(ev.amount);
+  });
+  return { entradas, saidas, resultado: entradas.map((e,i) => e - saidas[i]) };
+}
+
+// Saldo bancário estimado no fim de cada mês, calculado de trás pra frente
+// a partir do saldo atual das contas Pluggy (evita depender de saldo inicial manual pro banco real)
+function poiemaSaldoBancarioMensal(year) {
+  const saldoAtual = S.accounts.reduce((s,a) => s + (a.balance||0), 0);
+  const hoje = new Date();
+  const txsOrdenadas = S.transactions.slice();
+  const out = [];
+  for (let m = 0; m < 12; m++) {
+    const fimMes = new Date(year, m+1, 0, 23, 59, 59);
+    if (fimMes > hoje) { out.push(null); continue; }
+    const somaFutura = txsOrdenadas.filter(t => new Date(t.date) > fimMes).reduce((s,t) => s + t.amount, 0);
+    out.push(saldoAtual - somaFutura);
+  }
+  return out;
+}
+
+function poiemaLancamentosParaEventos(lancamentos) {
+  return lancamentos.map(l => ({ date: l.data, amount: l.tipo === 'entrada' ? Math.abs(l.valor) : -Math.abs(l.valor) }));
+}
+
+function poiemaSaldoAcumulado(saldoInicial, resultadoMensal) {
+  const out = [];
+  let acc = saldoInicial;
+  resultadoMensal.forEach(r => { acc += r; out.push(acc); });
+  return out;
+}
+
+function fmtR(v) { return 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+
+// ── Renderização principal ──
+
+function poiemaRender() {
+  if (!poiemaConfig) return;
+  const tipo = document.getElementById('poiema-tipo').value;
+  const year = parseInt(document.getElementById('poiema-ano').value);
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  document.getElementById('poiema-data').textContent = hoje;
+
+  const eventos = getEventosFinanceiros(new Date(year-1,0,1), new Date(year,11,31,23,59,59));
+
+  const titulos = {
+    saldoBancario:'Posição Saldo Bancário', investimentos:`Investimentos ${year}`,
+    preletores:'Gastos com Preletores externos', fluxoBanco:`Fluxo de Caixa ${year} (Banco)`,
+    eventosPagos:'Eventos Pagos', dizimos:`Dízimos e ofertas ${year}`,
+    caixaAdm:`Caixa ADM — Local em dinheiro ${year}`, store:`Fluxo de Caixa ${year} (Store)`,
+  };
+  document.getElementById('poiema-titulo').textContent = titulos[tipo] || '';
+
+  if      (tipo === 'saldoBancario') poiemaRenderSaldoBancario(year);
+  else if (tipo === 'investimentos') poiemaRenderInvestimentos(eventos, year);
+  else if (tipo === 'preletores')    poiemaRenderPreletores(eventos, year);
+  else if (tipo === 'fluxoBanco')    poiemaRenderFluxo(year, 'banco');
+  else if (tipo === 'eventosPagos')  poiemaRenderFluxo(year, 'eventosPagos', eventos);
+  else if (tipo === 'dizimos')       poiemaRenderDizimos(eventos, year);
+  else if (tipo === 'caixaAdm')      poiemaRenderFluxo(year, 'caixaAdm');
+  else if (tipo === 'store')         poiemaRenderFluxo(year, 'store');
+}
+
+function poiemaChartDestroy() { if (poiemaChart) { try{poiemaChart.destroy();}catch(e){} } }
+function poiemaResumo(html) { document.getElementById('poiema-resumo').innerHTML = html; }
+
+// Tipo A — linha de saldo bancário mensal
+function poiemaRenderSaldoBancario(year) {
+  poiemaResumo('');
+  const saldos = poiemaSaldoBancarioMensal(year);
+  poiemaChartDestroy();
+  const ctx = document.getElementById('poiema-chart');
+  poiemaChart = new Chart(ctx, { type:'line', data:{ labels: MESES_PT.map(m=>m+'/'+String(year).slice(2)), datasets:[{
+    label:'Saldo', data: saldos, borderColor:'#2ecc71', backgroundColor:'rgba(46,204,113,.1)', borderWidth:2, pointRadius:4, tension:.3, fill:true,
+    datalabels:{} }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>fmtR(c.raw) } } },
+      scales:{ x:{ grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#9aa0b4',font:{size:9}} }, y:{ grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#9aa0b4',font:{size:9}, callback:v=>fmtR(v)} } } } });
+}
+
+// Tipo B — barras de investimentos + linha % sobre dízimos
+function poiemaRenderInvestimentos(eventos, year) {
+  const catInv = poiemaConfig.categorias.investimentos;
+  const mInv  = poiemaMensal(eventos, year, ev => !catInv || ev._category === catInv);
+  const mDiz  = poiemaMensal(eventos, year, ev => ev.amount > 0); // dízimos = toda receita
+  const totalAnoAnterior = poiemaMensal(eventos, year-1, ev => !catInv || ev._category === catInv).saidas.reduce((a,b)=>a+b,0);
+  const totalAno = mInv.saidas.reduce((a,b)=>a+b,0);
+
+  poiemaResumo(`
+    <div><div style="color:var(--tx4);font-size:10px">INVESTIMENTOS ${year-1}</div><div style="font-size:16px;font-weight:700;color:var(--tx1)">${fmtR(totalAnoAnterior)}</div></div>
+    <div><div style="color:var(--tx4);font-size:10px">INVESTIMENTOS ${year}</div><div style="font-size:16px;font-weight:700;color:var(--gold)">${fmtR(totalAno)}</div></div>`);
+
+  const pct = mInv.saidas.map((v,i) => mDiz.entradas[i] ? (v/mDiz.entradas[i]*100) : 0);
+  poiemaChartDestroy();
+  poiemaChart = new Chart(document.getElementById('poiema-chart'), { data:{ labels: MESES_PT.map(m=>m+'/'+String(year).slice(2)), datasets:[
+    { type:'bar',  label:'Investimentos', data: mInv.saidas, backgroundColor:'rgba(74,144,226,.5)', borderColor:'#4a90e2', borderWidth:1, yAxisID:'y' },
+    { type:'line', label:'% sobre (Entradas de Dízimos e ofertas)', data: pct, borderColor:'#e74c3c', borderWidth:2, pointRadius:3, yAxisID:'y1' },
+  ]}, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'}, tooltip:{ callbacks:{ label:c=> c.dataset.yAxisID==='y1' ? ` ${c.dataset.label}: ${c.raw.toFixed(1)}%` : ` ${c.dataset.label}: ${fmtR(c.raw)}` } } },
+    scales:{ x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}},
+      y:{ position:'left', grid:{color:'rgba(255,255,255,.06)'}, ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtR(v)} },
+      y1:{ position:'right', grid:{display:false}, ticks:{color:'#9aa0b4',font:{size:9},callback:v=>v+'%'} } } } });
+}
+
+// Tipo C — barras de preletores + acumulado ano anterior vs atual
+function poiemaRenderPreletores(eventos, year) {
+  const cat = poiemaConfig.categorias.preletores;
+  const m = poiemaMensal(eventos, year, ev => !cat || ev._category === cat);
+  const totalAnoAnterior = poiemaMensal(eventos, year-1, ev => !cat || ev._category === cat).saidas.reduce((a,b)=>a+b,0);
+  const totalAno = m.saidas.reduce((a,b)=>a+b,0);
+
+  poiemaResumo(`
+    <div><div style="color:var(--tx4);font-size:10px">ACUMULADO ${year-1}</div><div style="font-size:16px;font-weight:700;color:var(--tx1)">${fmtR(totalAnoAnterior)}</div></div>
+    <div><div style="color:var(--tx4);font-size:10px">ACUMULADO ${year}</div><div style="font-size:16px;font-weight:700;color:var(--gold)">${fmtR(totalAno)}</div></div>`);
+
+  poiemaChartDestroy();
+  poiemaChart = new Chart(document.getElementById('poiema-chart'), { type:'bar', data:{ labels: MESES_PT.map(mm=>mm+'/'+String(year).slice(2)), datasets:[
+    { label:'Preletores', data: m.saidas, backgroundColor:'rgba(74,144,226,.6)', borderColor:'#4a90e2', borderWidth:1 } ] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>fmtR(c.raw) } } },
+      scales:{ x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}}, y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtR(v)}} } } });
+}
+
+// Tipo E — barras de dízimos/ofertas + linha de média
+function poiemaRenderDizimos(eventos, year) {
+  const m = poiemaMensal(eventos, year, ev => ev.amount > 0);
+  const media = m.entradas.reduce((a,b)=>a+b,0) / 12;
+  const custoOperacional = poiemaMensal(eventos, year, ev => ev.amount < 0).saidas;
+  const mesAtual = Math.min(new Date().getMonth(), 11);
+  const custoMesAtual = custoOperacional[mesAtual];
+  const custoMedio = custoOperacional.slice(0, mesAtual+1).reduce((a,b)=>a+b,0) / (mesAtual+1);
+
+  poiemaResumo(`
+    <div style="color:#e74c3c"><b>Custo operacional ${MESES_PT[mesAtual]}/${String(year).slice(2)} = ${fmtR(custoMesAtual)}</b></div>
+    <div style="color:#e74c3c"><b>Custo médio operacional Jan a ${MESES_PT[mesAtual]}/${String(year).slice(2)} = ${fmtR(custoMedio)}</b></div>`);
+
+  poiemaChartDestroy();
+  poiemaChart = new Chart(document.getElementById('poiema-chart'), { data:{ labels: MESES_PT.map(mm=>mm+'/'+String(year).slice(2)), datasets:[
+    { type:'bar',  label:'Dízimos e ofertas', data: m.entradas, backgroundColor:'rgba(74,144,226,.6)', borderColor:'#4a90e2', borderWidth:1 },
+    { type:'line', label:'Entrada Média', data: Array(12).fill(media), borderColor:'#2ecc71', borderWidth:2, pointRadius:0 },
+  ]}, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'}, tooltip:{ callbacks:{ label:c=>` ${c.dataset.label}: ${fmtR(c.raw)}` } } },
+    scales:{ x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}}, y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtR(v)}} } } });
+}
+
+// Tipo D — Entradas x Saídas x Resultado (Banco / Eventos Pagos / Caixa ADM / Store)
+async function poiemaRenderFluxo(year, caixa, eventosBanco) {
+  let entradas, saidas, resultado, saldoInicial, saldoInicialData;
+
+  if (caixa === 'banco') {
+    const m = poiemaMensal(S.transactions, year);
+    entradas = m.entradas; saidas = m.saidas; resultado = m.resultado;
+    const saldos = poiemaSaldoBancarioMensal(year - 1);
+    saldoInicial = saldos[11] != null ? saldos[11] : (poiemaConfig.saldosIniciais.banco.valor || 0);
+    saldoInicialData = `31/12/${year-1}`;
+  } else if (caixa === 'eventosPagos') {
+    const cat = poiemaConfig.categorias.eventosPagos;
+    const m = poiemaMensal(eventosBanco, year, ev => !cat || ev._category === cat);
+    entradas = m.entradas; saidas = m.saidas; resultado = m.resultado;
+    saldoInicial = poiemaConfig.saldosIniciais.eventosPagos.valor || 0;
+    saldoInicialData = poiemaConfig.saldosIniciais.eventosPagos.data || `31/12/${year-1}`;
+  } else {
+    // caixaAdm ou store — lançamentos manuais
+    try {
+      const data = await poiemaFetch(`/poiema-caixa/${caixa}/lancamentos`, { method:'GET' });
+      const eventosManual = poiemaLancamentosParaEventos(data.lancamentos);
+      const m = poiemaMensal(eventosManual, year);
+      entradas = m.entradas; saidas = m.saidas; resultado = m.resultado;
+      saldoInicial = data.saldoInicial || 0;
+      saldoInicialData = data.dataSaldoInicial || `31/12/${year-1}`;
+    } catch(e) {
+      entradas = saidas = resultado = Array(12).fill(0);
+      saldoInicial = 0; saldoInicialData = `31/12/${year-1}`;
+    }
+  }
+
+  const saldoAcumulado = poiemaSaldoAcumulado(saldoInicial, resultado);
+  const saldoFim = saldoAcumulado[11];
+  const resultadoAcumulado = resultado.reduce((a,b)=>a+b,0);
+
+  poiemaResumo(`
+    <div><div style="color:var(--tx4);font-size:10px">SALDO EM ${saldoInicialData}</div><div style="font-size:15px;font-weight:700;color:${saldoInicial>=0?'var(--pos)':'var(--neg)'}">${saldoInicial>=0?'(+) ':'(-) '}${fmtR(Math.abs(saldoInicial))}</div></div>
+    <div><div style="color:var(--tx4);font-size:10px">SALDO EM 31/12/${year}</div><div style="font-size:15px;font-weight:700;color:${saldoFim>=0?'var(--pos)':'var(--neg)'}">${saldoFim>=0?'(+) ':'(-) '}${fmtR(Math.abs(saldoFim))}</div></div>
+    <div><div style="color:var(--tx4);font-size:10px">RESULTADO ACUMULADO ${year}</div><div style="font-size:15px;font-weight:700;color:${resultadoAcumulado>=0?'var(--pos)':'var(--neg)'}">${resultadoAcumulado>=0?'(+) ':'(-) '}${fmtR(Math.abs(resultadoAcumulado))}</div></div>`);
+
+  poiemaChartDestroy();
+  poiemaChart = new Chart(document.getElementById('poiema-chart'), { data:{ labels: MESES_PT.map(mm=>mm+'/'+String(year).slice(2)), datasets:[
+    { type:'bar',  label:'Entradas',  data: entradas,  backgroundColor:'rgba(74,144,226,.6)', borderColor:'#4a90e2', borderWidth:1 },
+    { type:'bar',  label:'Saídas',    data: saidas,     backgroundColor:'rgba(243,156,18,.5)', borderColor:'#f39c12', borderWidth:1 },
+    { type:'line', label:'Resultado', data: resultado,  borderColor:'#1a1a1a', borderWidth:2, pointRadius:3, yAxisID:'y' },
+  ]}, options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{labels:{color:'#b0bdd4',font:{size:10}},position:'bottom'}, tooltip:{ callbacks:{ label:c=>` ${c.dataset.label}: ${fmtR(c.raw)}` } } },
+    scales:{ x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9}}}, y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#9aa0b4',font:{size:9},callback:v=>fmtR(v)}} } } });
+}
+
 function renderRelatorios() {
   const days  = parseInt(document.getElementById('rel-period')?.value || 30);
   const from  = new Date(Date.now() - days * 86400000);
@@ -6395,9 +6823,9 @@ function renderRelComparativo() {
 
 function relSetTab(tab) {
   _relTab = tab;
-  ['gastos','prev','pareto','comparativo','custom'].forEach(t => {
+  ['gastos','prev','pareto','comparativo','custom','poiema'].forEach(t => {
     const btn   = document.getElementById('rel-tab-' + t);
-    const panel = t === 'custom' ? document.getElementById('rel-panel-custom') : document.getElementById('rel-panel-' + t);
+    const panel = (t === 'custom' || t === 'poiema') ? document.getElementById('rel-panel-' + t) : document.getElementById('rel-panel-' + t);
     const active = t === tab;
     if(btn) {
       btn.style.borderBottomColor = active ? (t==='custom'?'var(--t1)':'var(--gold)') : 'transparent';
@@ -6406,8 +6834,9 @@ function relSetTab(tab) {
     }
     if(panel) panel.style.display = active ? '' : 'none';
   });
-  if(tab !== 'custom') setTimeout(() => renderRelatorios(), 50);
+  if(tab !== 'custom' && tab !== 'poiema') setTimeout(() => renderRelatorios(), 50);
   if(tab === 'custom') customPopularFiltros();
+  if(tab === 'poiema') setTimeout(() => poiemaInit(), 50);
 }
 
 function customPopularFiltros() {
